@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-Calc Final Prep</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <button class="brand" data-nav="home">∫ Pre-Calc Prep</button>
+    <nav class="topnav">
+      <button data-nav="home">Home</button>
+      <button data-nav="practice-setup">Practice</button>
+      <button data-nav="test-setup">Take a Test</button>
+      <button data-nav="reference">Cheat Sheet</button>
+    </nav>
+    <div class="topbar-right">
+      <span id="streak-badge" class="streak-badge" title="Best practice streak">🔥 0</span>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ============ HOME ============ -->
+  <section id="screen-home" class="screen">
+    <div class="hero">
+      <h1>Let's crush this final. 💪</h1>
+      <p id="countdown-line" class="muted">You've got this. A little every day beats cramming.</p>
+    </div>
+
+    <div class="card-grid">
+      <button class="big-card" data-nav="practice-setup">
+        <span class="big-card-emoji">🎯</span>
+        <span class="big-card-title">Practice Mode</span>
+        <span class="big-card-sub">Pick topics, get instant feedback &amp; explanations</span>
+      </button>
+      <button class="big-card" data-nav="test-setup">
+        <span class="big-card-emoji">⏱️</span>
+        <span class="big-card-title">Full Test Mode</span>
+        <span class="big-card-sub">Timed sections, Blue Book style — flag, review, submit</span>
+      </button>
+      <button class="big-card" id="btn-review-missed">
+        <span class="big-card-emoji">🩹</span>
+        <span class="big-card-title">Fix My Mistakes</span>
+        <span class="big-card-sub" id="missed-count-sub">Redo every question you've missed</span>
+      </button>
+      <button class="big-card" data-nav="reference">
+        <span class="big-card-emoji">📜</span>
+        <span class="big-card-title">Cheat Sheet</span>
+        <span class="big-card-sub">Unit circle, identities, log rules, conics — all in one page</span>
+      </button>
+    </div>
+
+    <h2 class="section-title">Your progress by topic</h2>
+    <div id="topic-progress" class="topic-progress"></div>
+
+    <h2 class="section-title">Recent tests</h2>
+    <div id="test-history" class="test-history muted">No tests taken yet.</div>
+
+    <div class="danger-zone">
+      <button id="btn-reset" class="link-btn">Reset all progress</button>
+    </div>
+  </section>
+
+  <!-- ============ PRACTICE SETUP ============ -->
+  <section id="screen-practice-setup" class="screen hidden">
+    <h1>Practice Mode 🎯</h1>
+    <p class="muted">Choose what to drill. You'll get instant feedback and a full explanation after every question.</p>
+
+    <h2 class="section-title">Topics</h2>
+    <div id="topic-chips" class="chips"></div>
+    <div class="chip-actions">
+      <button class="link-btn" id="chips-all">Select all</button>
+      <button class="link-btn" id="chips-none">Clear</button>
+    </div>
+
+    <h2 class="section-title">Calculator</h2>
+    <div class="chips" id="calc-chips">
+      <button class="chip selected" data-calc="both">Both</button>
+      <button class="chip" data-calc="no">No-Calculator only</button>
+      <button class="chip" data-calc="yes">Calculator only</button>
+    </div>
+
+    <h2 class="section-title">How many questions?</h2>
+    <div class="chips" id="count-chips">
+      <button class="chip" data-count="10">10</button>
+      <button class="chip selected" data-count="20">20</button>
+      <button class="chip" data-count="all">All of them</button>
+    </div>
+
+    <button id="btn-start-practice" class="primary-btn">Start practicing →</button>
+  </section>
+
+  <!-- ============ TEST SETUP ============ -->
+  <section id="screen-test-setup" class="screen hidden">
+    <h1>Full Test Mode ⏱️</h1>
+    <p class="muted">Just like the real thing: a timer, question palette, flagging, and a review screen before you submit. No feedback until the end.</p>
+    <div class="card-grid">
+      <button class="big-card" data-test="no">
+        <span class="big-card-emoji">🚫🧮</span>
+        <span class="big-card-title">No-Calculator Section</span>
+        <span class="big-card-sub">20 questions · 30 minutes · exact values &amp; mental math</span>
+      </button>
+      <button class="big-card" data-test="yes">
+        <span class="big-card-emoji">🧮</span>
+        <span class="big-card-title">Calculator Section</span>
+        <span class="big-card-sub">20 questions · 40 minutes · applications &amp; decimals</span>
+      </button>
+    </div>
+    <p class="muted">Questions are drawn fresh from the bank each time, so you can take these again and again.</p>
+  </section>
+
+  <!-- ============ QUIZ / TEST ============ -->
+  <section id="screen-quiz" class="screen hidden">
+    <div class="quiz-header">
+      <div class="quiz-header-left">
+        <span id="quiz-mode-label" class="pill"></span>
+        <span id="quiz-progress" class="muted"></span>
+      </div>
+      <div class="quiz-header-right">
+        <span id="quiz-streak" class="streak-badge hidden">🔥 0</span>
+        <span id="quiz-timer" class="timer hidden">30:00</span>
+        <button id="btn-quit" class="link-btn">Exit</button>
+      </div>
+    </div>
+
+    <div class="quiz-body">
+      <div class="q-meta">
+        <span id="q-topic" class="pill pill-soft"></span>
+        <span id="q-calc" class="pill pill-soft"></span>
+        <button id="btn-flag" class="flag-btn hidden">🚩 Flag for review</button>
+      </div>
+      <div id="q-text" class="q-text"></div>
+
+      <div id="choices" class="choices"></div>
+
+      <div id="input-area" class="input-area hidden">
+        <label for="input-answer" id="input-hint" class="muted">Type your answer (fractions like 3/4 are fine):</label>
+        <input id="input-answer" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
+      </div>
+
+      <div id="feedback" class="feedback hidden"></div>
+
+      <div class="quiz-actions">
+        <button id="btn-back" class="ghost-btn hidden">← Back</button>
+        <button id="btn-check" class="primary-btn">Check answer</button>
+        <button id="btn-next" class="primary-btn hidden">Next →</button>
+        <button id="btn-to-review" class="ghost-btn hidden">Review screen</button>
+      </div>
+
+      <div id="palette" class="palette hidden"></div>
+    </div>
+  </section>
+
+  <!-- ============ TEST REVIEW (before submit) ============ -->
+  <section id="screen-test-review" class="screen hidden">
+    <h1>Review your answers</h1>
+    <p class="muted">Click any question to jump back to it. Submit when you're ready.</p>
+    <div id="review-grid" class="review-grid"></div>
+    <div class="quiz-actions">
+      <button id="btn-review-back" class="ghost-btn">← Back to test</button>
+      <button id="btn-submit-test" class="primary-btn">Submit test</button>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="screen-results" class="screen hidden">
+    <div id="results-summary" class="results-summary"></div>
+    <div id="results-breakdown"></div>
+    <h2 class="section-title">Every question, explained</h2>
+    <div id="results-detail"></div>
+    <div class="quiz-actions">
+      <button class="primary-btn" data-nav="home">Back to home</button>
+      <button id="btn-retake" class="ghost-btn">Take another like this</button>
+    </div>
+  </section>
+
+  <!-- ============ REFERENCE ============ -->
+  <section id="screen-reference" class="screen hidden">
+    <h1>Cheat Sheet 📜</h1>
+    <p class="muted">The stuff worth having cold before the final.</p>
+    <div id="reference-body"></div>
+  </section>
+
+</main>
+
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
