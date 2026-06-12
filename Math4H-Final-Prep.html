@@ -1,0 +1,2928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-Calc Final Prep</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+/* ===== Pre-Calc Final Prep ===== */
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --ink: #1a2233;
+  --muted: #6b7385;
+  --accent: #3b5bdb;
+  --accent-soft: #e7ecff;
+  --good: #2b8a3e;
+  --good-soft: #e6f6ea;
+  --bad: #c92a2a;
+  --bad-soft: #fdecec;
+  --warn: #e8590c;
+  --border: #dde1ea;
+  --radius: 14px;
+  --shadow: 0 2px 10px rgba(20, 30, 60, 0.07);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+button { font-family: inherit; font-size: inherit; cursor: pointer; }
+
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+
+/* ===== Top bar ===== */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand {
+  background: none;
+  border: none;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--accent);
+  padding: 6px 4px;
+}
+.topnav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.topnav button {
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.topnav button:hover { background: var(--accent-soft); color: var(--accent); }
+
+.streak-badge {
+  background: #fff4e6;
+  color: #d9480f;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.95rem;
+}
+
+/* ===== Layout ===== */
+.screen {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 16px 80px;
+}
+h1 { font-size: 1.7rem; margin: 0 0 8px; }
+.section-title { font-size: 1.05rem; margin: 30px 0 10px; color: var(--ink); }
+
+.hero { margin-bottom: 22px; }
+.hero h1 { font-size: 2rem; }
+
+/* ===== Cards ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+.big-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 18px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.08s ease, border-color 0.08s ease;
+}
+.big-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.big-card-emoji { font-size: 1.6rem; }
+.big-card-title { font-weight: 800; font-size: 1.1rem; }
+.big-card-sub { color: var(--muted); font-size: 0.92rem; }
+
+/* ===== Topic progress ===== */
+.topic-progress { display: flex; flex-direction: column; gap: 10px; }
+.topic-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+}
+.topic-row .bar {
+  grid-column: 1 / -1;
+  height: 8px;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.topic-row .bar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+.topic-row .bar-fill.good { background: var(--good); }
+.topic-row .bar-fill.bad { background: var(--warn); }
+.topic-row .topic-name { font-weight: 600; }
+.topic-row .topic-stat { color: var(--muted); font-size: 0.9rem; }
+
+/* ===== Test history ===== */
+.test-history { display: flex; flex-direction: column; gap: 8px; }
+.history-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--ink);
+}
+.history-score { font-weight: 800; }
+
+.danger-zone { margin-top: 40px; }
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  text-decoration: underline;
+  padding: 4px;
+  font-size: 0.92rem;
+}
+.link-btn:hover { color: var(--bad); }
+
+/* ===== Chips ===== */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.chip-actions { margin-top: 8px; }
+
+.primary-btn {
+  margin-top: 26px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 26px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  box-shadow: var(--shadow);
+}
+.primary-btn:hover { filter: brightness(1.08); }
+.primary-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ghost-btn {
+  margin-top: 26px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-weight: 700;
+}
+.ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ===== Quiz ===== */
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+.quiz-header-left, .quiz-header-right { display: flex; align-items: center; gap: 12px; }
+.pill {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.pill-soft { background: var(--accent-soft); color: var(--accent); }
+.timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 1.15rem;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 12px;
+}
+.timer.low { color: var(--bad); border-color: var(--bad); }
+
+.q-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.flag-btn {
+  margin-left: auto;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.flag-btn.flagged { border-color: var(--warn); color: var(--warn); background: #fff4e6; }
+
+.q-text {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+  font-size: 1.18rem;
+  margin-bottom: 18px;
+}
+.q-text .katex { font-size: 1.12em; }
+
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 16px;
+  font-size: 1.08rem;
+  transition: border-color 0.08s ease;
+}
+.choice:hover { border-color: var(--accent); }
+.choice .letter {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.choice.selected { border-color: var(--accent); background: var(--accent-soft); }
+.choice.selected .letter { border-color: var(--accent); background: var(--accent); color: #fff; }
+.choice.correct { border-color: var(--good); background: var(--good-soft); }
+.choice.correct .letter { border-color: var(--good); background: var(--good); color: #fff; }
+.choice.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.choice.wrong .letter { border-color: var(--bad); background: var(--bad); color: #fff; }
+.choice:disabled { cursor: default; }
+
+.input-area { margin-top: 6px; display: flex; flex-direction: column; gap: 8px; }
+#input-answer {
+  font-size: 1.2rem;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  max-width: 320px;
+  background: var(--card);
+  color: var(--ink);
+}
+#input-answer:focus { outline: none; border-color: var(--accent); }
+#input-answer.correct { border-color: var(--good); background: var(--good-soft); }
+#input-answer.wrong { border-color: var(--bad); background: var(--bad-soft); }
+
+.feedback {
+  margin-top: 18px;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  font-size: 1.02rem;
+}
+.feedback.good { background: var(--good-soft); border: 1.5px solid var(--good); }
+.feedback.bad { background: var(--bad-soft); border: 1.5px solid var(--bad); }
+.feedback .verdict { font-weight: 800; margin-bottom: 6px; }
+.feedback.good .verdict { color: var(--good); }
+.feedback.bad .verdict { color: var(--bad); }
+
+.quiz-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* ===== Palette ===== */
+.palette {
+  margin-top: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+.palette-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  font-weight: 700;
+  color: var(--muted);
+  position: relative;
+}
+.palette-btn.answered { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.palette-btn.current { outline: 3px solid var(--accent); }
+.palette-btn.flagged::after {
+  content: "🚩";
+  position: absolute;
+  top: -10px;
+  right: -7px;
+  font-size: 0.7rem;
+}
+
+/* ===== Review grid ===== */
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+.review-cell {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+}
+.review-cell .status { display: block; font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+.review-cell.answered { border-color: var(--accent); }
+.review-cell.flagged { border-color: var(--warn); background: #fff4e6; }
+
+/* ===== Results ===== */
+.results-summary {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 26px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.results-summary .score-big { font-size: 3rem; font-weight: 900; }
+.results-summary .score-msg { font-size: 1.15rem; margin-top: 6px; }
+
+.result-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.result-item.right { border-left-color: var(--good); }
+.result-item.wrong { border-left-color: var(--bad); }
+.result-item .ri-head { font-weight: 700; margin-bottom: 8px; }
+.result-item .ri-q { margin-bottom: 8px; }
+.result-item .ri-ans { font-size: 0.97rem; margin-bottom: 6px; }
+.result-item .ri-expl { color: var(--muted); font-size: 0.95rem; border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; }
+
+/* ===== Reference ===== */
+.ref-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.ref-card h2 { margin: 0 0 10px; font-size: 1.15rem; color: var(--accent); }
+.ref-card table { border-collapse: collapse; width: 100%; }
+.ref-card td, .ref-card th { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+.ref-card ul { margin: 6px 0; padding-left: 22px; }
+.ref-card li { margin: 6px 0; }
+
+@media (max-width: 600px) {
+  html, body { font-size: 16px; }
+  .q-text { padding: 16px; font-size: 1.08rem; }
+  .topnav button { padding: 6px 8px; font-size: 0.9rem; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <button class="brand" data-nav="home">∫ Pre-Calc Prep</button>
+    <nav class="topnav">
+      <button data-nav="home">Home</button>
+      <button data-nav="practice-setup">Practice</button>
+      <button data-nav="test-setup">Take a Test</button>
+      <button data-nav="reference">Cheat Sheet</button>
+    </nav>
+    <div class="topbar-right">
+      <span id="streak-badge" class="streak-badge" title="Best practice streak">🔥 0</span>
+    </div>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ============ HOME ============ -->
+  <section id="screen-home" class="screen">
+    <div class="hero">
+      <h1>Let's crush that Math 4H final. 💪</h1>
+      <p id="countdown-line" class="muted">You've got this. A little every day beats cramming.</p>
+      <p class="muted">Built to match your review packets: derivatives, limits, Riemann sums, trig, polar &amp; parametric, conics, and the rest.</p>
+    </div>
+
+    <div class="card-grid">
+      <button class="big-card" data-nav="practice-setup">
+        <span class="big-card-emoji">🎯</span>
+        <span class="big-card-title">Practice Mode</span>
+        <span class="big-card-sub">Pick topics, get instant feedback &amp; explanations</span>
+      </button>
+      <button class="big-card" data-nav="test-setup">
+        <span class="big-card-emoji">⏱️</span>
+        <span class="big-card-title">Full Test Mode</span>
+        <span class="big-card-sub">Timed sections, Blue Book style — flag, review, submit</span>
+      </button>
+      <button class="big-card" id="btn-review-missed">
+        <span class="big-card-emoji">🩹</span>
+        <span class="big-card-title">Fix My Mistakes</span>
+        <span class="big-card-sub" id="missed-count-sub">Redo every question you've missed</span>
+      </button>
+      <button class="big-card" data-nav="reference">
+        <span class="big-card-emoji">📜</span>
+        <span class="big-card-title">Cheat Sheet</span>
+        <span class="big-card-sub">Unit circle, identities, log rules, conics — all in one page</span>
+      </button>
+    </div>
+
+    <h2 class="section-title">Your progress by topic</h2>
+    <div id="topic-progress" class="topic-progress"></div>
+
+    <h2 class="section-title">Recent tests</h2>
+    <div id="test-history" class="test-history muted">No tests taken yet.</div>
+
+    <div class="danger-zone">
+      <button id="btn-reset" class="link-btn">Reset all progress</button>
+    </div>
+  </section>
+
+  <!-- ============ PRACTICE SETUP ============ -->
+  <section id="screen-practice-setup" class="screen hidden">
+    <h1>Practice Mode 🎯</h1>
+    <p class="muted">Choose what to drill. You'll get instant feedback and a full explanation after every question.</p>
+
+    <h2 class="section-title">Topics</h2>
+    <div id="topic-chips" class="chips"></div>
+    <div class="chip-actions">
+      <button class="link-btn" id="chips-all">Select all</button>
+      <button class="link-btn" id="chips-none">Clear</button>
+    </div>
+
+    <h2 class="section-title">Calculator</h2>
+    <div class="chips" id="calc-chips">
+      <button class="chip selected" data-calc="both">Both</button>
+      <button class="chip" data-calc="no">No-Calculator only</button>
+      <button class="chip" data-calc="yes">Calculator only</button>
+    </div>
+
+    <h2 class="section-title">How many questions?</h2>
+    <div class="chips" id="count-chips">
+      <button class="chip" data-count="10">10</button>
+      <button class="chip selected" data-count="20">20</button>
+      <button class="chip" data-count="all">All of them</button>
+    </div>
+
+    <button id="btn-start-practice" class="primary-btn">Start practicing →</button>
+  </section>
+
+  <!-- ============ TEST SETUP ============ -->
+  <section id="screen-test-setup" class="screen hidden">
+    <h1>Full Test Mode ⏱️</h1>
+    <p class="muted">Sectioned like your actual Math 4H final (and only its topics): a timer, question palette, flagging, and a review screen before you submit. No feedback until the end.</p>
+    <div class="card-grid">
+      <button class="big-card" data-test="no">
+        <span class="big-card-emoji">🚫🧮</span>
+        <span class="big-card-title">No-Calculator Section</span>
+        <span class="big-card-sub">20 questions · 35 minutes · exact values, derivatives, limits &amp; conics</span>
+      </button>
+      <button class="big-card" data-test="yes">
+        <span class="big-card-emoji">🧮</span>
+        <span class="big-card-title">Calculator Section</span>
+        <span class="big-card-sub">15 questions · 35 minutes · tangent lines, motion, polar &amp; rounding</span>
+      </button>
+    </div>
+    <p class="muted">Questions are drawn fresh from the bank each time, so you can take these again and again.</p>
+  </section>
+
+  <!-- ============ QUIZ / TEST ============ -->
+  <section id="screen-quiz" class="screen hidden">
+    <div class="quiz-header">
+      <div class="quiz-header-left">
+        <span id="quiz-mode-label" class="pill"></span>
+        <span id="quiz-progress" class="muted"></span>
+      </div>
+      <div class="quiz-header-right">
+        <span id="quiz-streak" class="streak-badge hidden">🔥 0</span>
+        <span id="quiz-timer" class="timer hidden">30:00</span>
+        <button id="btn-quit" class="link-btn">Exit</button>
+      </div>
+    </div>
+
+    <div class="quiz-body">
+      <div class="q-meta">
+        <span id="q-topic" class="pill pill-soft"></span>
+        <span id="q-calc" class="pill pill-soft"></span>
+        <button id="btn-flag" class="flag-btn hidden">🚩 Flag for review</button>
+      </div>
+      <div id="q-text" class="q-text"></div>
+
+      <div id="choices" class="choices"></div>
+
+      <div id="input-area" class="input-area hidden">
+        <label for="input-answer" id="input-hint" class="muted">Type your answer (fractions like 3/4 are fine):</label>
+        <input id="input-answer" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
+      </div>
+
+      <div id="feedback" class="feedback hidden"></div>
+
+      <div class="quiz-actions">
+        <button id="btn-back" class="ghost-btn hidden">← Back</button>
+        <button id="btn-check" class="primary-btn">Check answer</button>
+        <button id="btn-next" class="primary-btn hidden">Next →</button>
+        <button id="btn-to-review" class="ghost-btn hidden">Review screen</button>
+      </div>
+
+      <div id="palette" class="palette hidden"></div>
+    </div>
+  </section>
+
+  <!-- ============ TEST REVIEW (before submit) ============ -->
+  <section id="screen-test-review" class="screen hidden">
+    <h1>Review your answers</h1>
+    <p class="muted">Click any question to jump back to it. Submit when you're ready.</p>
+    <div id="review-grid" class="review-grid"></div>
+    <div class="quiz-actions">
+      <button id="btn-review-back" class="ghost-btn">← Back to test</button>
+      <button id="btn-submit-test" class="primary-btn">Submit test</button>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section id="screen-results" class="screen hidden">
+    <div id="results-summary" class="results-summary"></div>
+    <div id="results-breakdown"></div>
+    <h2 class="section-title">Every question, explained</h2>
+    <div id="results-detail"></div>
+    <div class="quiz-actions">
+      <button class="primary-btn" data-nav="home">Back to home</button>
+      <button id="btn-retake" class="ghost-btn">Take another like this</button>
+    </div>
+  </section>
+
+  <!-- ============ REFERENCE ============ -->
+  <section id="screen-reference" class="screen hidden">
+    <h1>Cheat Sheet 📜</h1>
+    <p class="muted">The stuff worth having cold before the final.</p>
+    <div id="reference-body"></div>
+  </section>
+
+</main>
+
+<script>
+// ===== Pre-Calc Final Prep — Question Bank =====
+// Each question:
+//   id        unique number
+//   topic     key into TOPICS
+//   calc      true = calculator allowed/needed, false = no-calculator
+//   type      "mc" (multiple choice) | "input" (type-in, numeric or fraction)
+//   q         question text (KaTeX inside \( \))
+//   choices   for mc: array of 4 strings
+//   answer    for mc: index of correct choice; for input: array of accepted strings
+//   hint      for input: short format hint shown under the box
+//   expl      worked explanation
+
+const TOPICS = {
+  deriv:     "Derivatives: Rules",
+  derivapp:  "Derivatives: Tangent Lines & Motion",
+  limits:    "Limits & Continuity",
+  integ:     "Integrals & Riemann Sums",
+  trig:      "Trig: Unit Circle & Graphs",
+  trigid:    "Trig: Identities & Equations",
+  explog:    "Exponentials & Logarithms",
+  poly:      "Polynomials & Rationals",
+  functions: "Functions & Transformations",
+  conics:    "Conic Sections",
+  vectors:   "Vectors, Polar & Parametric",
+  triangles: "Triangles & Applications",
+  seqser:    "Sequences & Series",
+};
+
+// Topics that did NOT appear on the Math 4H final review packets.
+// Still available in Practice mode, but excluded from Test mode draws.
+const NON_FINAL_TOPICS = ["triangles", "seqser"];
+
+const QUESTIONS = [
+
+// ================= FUNCTIONS & TRANSFORMATIONS =================
+{
+  id: 1, topic: "functions", calc: false, type: "mc",
+  q: "If \\(f(x) = 2x^2 - 3x + 1\\), what is \\(f(-2)\\)?",
+  choices: ["\\(3\\)", "\\(15\\)", "\\(-13\\)", "\\(11\\)"],
+  answer: 1,
+  expl: "Substitute \\(x=-2\\): \\(f(-2) = 2(-2)^2 - 3(-2) + 1 = 2(4) + 6 + 1 = 8 + 6 + 1 = 15\\). Watch the signs: \\(-3(-2) = +6\\)."
+},
+{
+  id: 2, topic: "functions", calc: false, type: "mc",
+  q: "What is the domain of \\(f(x) = \\sqrt{x - 4}\\)?",
+  choices: ["\\(x > 4\\)", "\\(x \\ge 4\\)", "\\(x \\le 4\\)", "all real numbers"],
+  answer: 1,
+  expl: "You can't take the square root of a negative number, so you need \\(x - 4 \\ge 0\\), which gives \\(x \\ge 4\\). Note \\(x = 4\\) is allowed because \\(\\sqrt{0} = 0\\) is fine."
+},
+{
+  id: 3, topic: "functions", calc: false, type: "input",
+  q: "If \\(f(x) = x^2 + 1\\) and \\(g(x) = 3x - 2\\), find \\(f(g(1))\\).",
+  answer: ["2"],
+  expl: "Work inside-out. First \\(g(1) = 3(1) - 2 = 1\\). Then \\(f(1) = 1^2 + 1 = 2\\)."
+},
+{
+  id: 4, topic: "functions", calc: false, type: "mc",
+  q: "What is the inverse of \\(f(x) = \\dfrac{2x + 1}{3}\\)?",
+  choices: ["\\(f^{-1}(x) = \\dfrac{3x - 1}{2}\\)", "\\(f^{-1}(x) = \\dfrac{3}{2x+1}\\)", "\\(f^{-1}(x) = \\dfrac{2x - 1}{3}\\)", "\\(f^{-1}(x) = \\dfrac{x - 1}{3}\\)"],
+  answer: 0,
+  expl: "Swap \\(x\\) and \\(y\\), then solve: \\(x = \\dfrac{2y+1}{3} \\Rightarrow 3x = 2y + 1 \\Rightarrow y = \\dfrac{3x-1}{2}\\)."
+},
+{
+  id: 5, topic: "functions", calc: false, type: "mc",
+  q: "The graph of \\(y = f(x - 3) + 2\\) is the graph of \\(y = f(x)\\) shifted…",
+  choices: ["left 3, up 2", "right 3, up 2", "right 3, down 2", "left 3, down 2"],
+  answer: 1,
+  expl: "Inside the parentheses moves horizontally and is \\(\\textbf{opposite}\\) of the sign: \\(x - 3\\) shifts \\(\\textbf{right}\\) 3. Outside moves vertically and matches the sign: \\(+2\\) shifts up 2."
+},
+{
+  id: 6, topic: "functions", calc: false, type: "mc",
+  q: "The function \\(f(x) = x^3 - 4x\\) is…",
+  choices: ["even", "odd", "both even and odd", "neither"],
+  answer: 1,
+  expl: "Check \\(f(-x) = (-x)^3 - 4(-x) = -x^3 + 4x = -(x^3 - 4x) = -f(x)\\). Since \\(f(-x) = -f(x)\\), it's odd (symmetric about the origin). Every term has an odd power — that's the quick tell."
+},
+{
+  id: 7, topic: "functions", calc: false, type: "mc",
+  q: "What is the domain of \\(f(x) = \\dfrac{1}{x^2 - 9}\\)?",
+  choices: ["\\(x \\ne 9\\)", "\\(x \\ne 3\\)", "\\(x \\ne 3, x \\ne -3\\)", "\\(x > 3\\)"],
+  answer: 2,
+  expl: "The denominator can't be zero: \\(x^2 - 9 = 0\\) when \\(x = \\pm 3\\). Don't forget the negative root — \\(x^2 - 9\\) factors as \\((x-3)(x+3)\\)."
+},
+{
+  id: 8, topic: "functions", calc: false, type: "input",
+  q: "If \\(f(x) = |x|\\) and \\(g(x) = x - 5\\), find \\((f \\circ g)(2)\\).",
+  answer: ["3"],
+  expl: "\\((f \\circ g)(2)\\) means \\(f(g(2))\\). First \\(g(2) = 2 - 5 = -3\\), then \\(f(-3) = |-3| = 3\\)."
+},
+{
+  id: 9, topic: "functions", calc: false, type: "input",
+  q: "What is the minimum value of \\(f(x) = x^2 - 6x + 11\\)?",
+  answer: ["2"],
+  expl: "Complete the square: \\(x^2 - 6x + 11 = (x - 3)^2 + 2\\). The squared term is at least 0, so the minimum value is \\(2\\) (it happens at \\(x = 3\\)). Shortcut: vertex at \\(x = -\\frac{b}{2a} = 3\\), then \\(f(3) = 9 - 18 + 11 = 2\\)."
+},
+{
+  id: 10, topic: "functions", calc: false, type: "input",
+  q: "If \\(f(x) = 3x - 7\\), find \\(f^{-1}(5)\\).",
+  answer: ["4"],
+  expl: "\\(f^{-1}(5)\\) asks: what input gives output 5? Solve \\(3x - 7 = 5 \\Rightarrow 3x = 12 \\Rightarrow x = 4\\). No need to find the whole inverse formula."
+},
+{
+  id: 11, topic: "functions", calc: false, type: "mc",
+  q: "Compared to \\(y = f(x)\\), the graph of \\(y = -2f(x)\\) is…",
+  choices: [
+    "stretched vertically by 2 and reflected over the \\(x\\)-axis",
+    "compressed vertically by 2 and reflected over the \\(y\\)-axis",
+    "stretched horizontally by 2 and reflected over the \\(x\\)-axis",
+    "shifted down 2"
+  ],
+  answer: 0,
+  expl: "Multiplying the \\(\\textbf{output}\\) by \\(-2\\) does two things: the 2 stretches it vertically (taller), and the negative flips it over the \\(x\\)-axis."
+},
+{
+  id: 12, topic: "functions", calc: false, type: "mc",
+  q: "What is the range of \\(f(x) = x^2 + 4\\)?",
+  choices: ["\\(y \\ge 0\\)", "\\(y \\ge 4\\)", "\\(y > 4\\)", "all real numbers"],
+  answer: 1,
+  expl: "\\(x^2\\) is at least 0, so \\(x^2 + 4\\) is at least 4. The minimum \\(y = 4\\) actually happens (at \\(x = 0\\)), so the range is \\(y \\ge 4\\), including 4."
+},
+{
+  id: 13, topic: "functions", calc: false, type: "input",
+  q: "Find the average rate of change of \\(f(x) = x^2\\) on the interval \\([1, 4]\\).",
+  answer: ["5"],
+  expl: "Average rate of change = slope between endpoints: \\(\\dfrac{f(4) - f(1)}{4 - 1} = \\dfrac{16 - 1}{3} = \\dfrac{15}{3} = 5\\)."
+},
+{
+  id: 14, topic: "functions", calc: false, type: "mc",
+  q: "A function has an inverse function if and only if its graph passes the…",
+  choices: ["vertical line test", "horizontal line test", "symmetry test", "slope test"],
+  answer: 1,
+  expl: "To have an inverse, a function must be one-to-one: no two inputs share an output. Graphically, no horizontal line can hit the graph twice — the horizontal line test. (The vertical line test just checks that it's a function at all.)"
+},
+
+// ================= POLYNOMIALS & RATIONALS =================
+{
+  id: 15, topic: "poly", calc: false, type: "mc",
+  q: "What are the zeros of \\(f(x) = x^2 - 5x + 6\\)?",
+  choices: ["\\(x = -2, -3\\)", "\\(x = 2, 3\\)", "\\(x = 1, 6\\)", "\\(x = -1, 6\\)"],
+  answer: 1,
+  expl: "Factor: \\(x^2 - 5x + 6 = (x - 2)(x - 3)\\). You need two numbers that multiply to \\(+6\\) and add to \\(-5\\): that's \\(-2\\) and \\(-3\\), so the zeros are \\(x = 2\\) and \\(x = 3\\)."
+},
+{
+  id: 16, topic: "poly", calc: false, type: "mc",
+  q: "Describe the end behavior of \\(f(x) = -2x^3 + 5x^2 - 1\\).",
+  choices: [
+    "as \\(x \\to \\infty, f \\to \\infty\\); as \\(x \\to -\\infty, f \\to -\\infty\\)",
+    "as \\(x \\to \\infty, f \\to -\\infty\\); as \\(x \\to -\\infty, f \\to \\infty\\)",
+    "both ends go up",
+    "both ends go down"
+  ],
+  answer: 1,
+  expl: "Only the leading term \\(-2x^3\\) matters for end behavior. Odd degree means the ends go opposite directions; the negative coefficient flips the usual cubic, so it rises on the left and falls on the right."
+},
+{
+  id: 17, topic: "poly", calc: false, type: "input",
+  q: "What is the remainder when \\(f(x) = x^3 - 4x + 6\\) is divided by \\(x - 2\\)?",
+  answer: ["6"],
+  expl: "Remainder Theorem: the remainder when dividing by \\(x - 2\\) is just \\(f(2) = 8 - 8 + 6 = 6\\). No long division needed."
+},
+{
+  id: 18, topic: "poly", calc: false, type: "mc",
+  q: "Which polynomial has zeros \\(1, -2,\\) and \\(3\\) with leading coefficient 1?",
+  choices: [
+    "\\(x^3 - 2x^2 - 5x + 6\\)",
+    "\\(x^3 + 2x^2 - 5x - 6\\)",
+    "\\(x^3 - 2x^2 + 5x - 6\\)",
+    "\\(x^3 - 6x^2 + 11x - 6\\)"
+  ],
+  answer: 0,
+  expl: "Build from factors: \\((x-1)(x+2)(x-3)\\). First \\((x-1)(x+2) = x^2 + x - 2\\); times \\((x-3)\\): \\(x^3 + x^2 - 2x - 3x^2 - 3x + 6 = x^3 - 2x^2 - 5x + 6\\). Quick check: plug \\(x = 1\\) into each choice — only the right one gives 0."
+},
+{
+  id: 19, topic: "poly", calc: false, type: "mc",
+  q: "A polynomial has real coefficients. If \\(2 + i\\) is a zero, which must also be a zero?",
+  choices: ["\\(2 - i\\)", "\\(-2 + i\\)", "\\(-2 - i\\)", "\\(i\\)"],
+  answer: 0,
+  expl: "Complex zeros of polynomials with real coefficients always come in conjugate pairs: if \\(a + bi\\) is a zero, so is \\(a - bi\\). The conjugate of \\(2 + i\\) is \\(2 - i\\)."
+},
+{
+  id: 20, topic: "poly", calc: false, type: "mc",
+  q: "Find the vertical asymptote(s) of \\(f(x) = \\dfrac{x + 1}{x^2 - 4}\\).",
+  choices: ["\\(x = -1\\)", "\\(x = 2\\) only", "\\(x = 2\\) and \\(x = -2\\)", "\\(x = 4\\)"],
+  answer: 2,
+  expl: "Vertical asymptotes come from zeros of the denominator that don't cancel. \\(x^2 - 4 = (x-2)(x+2)\\), and neither factor cancels with the numerator \\(x + 1\\), so there are asymptotes at \\(x = 2\\) and \\(x = -2\\)."
+},
+{
+  id: 21, topic: "poly", calc: false, type: "mc",
+  q: "What is the horizontal asymptote of \\(f(x) = \\dfrac{3x^2 - 1}{x^2 + 5}\\)?",
+  choices: ["\\(y = 0\\)", "\\(y = 3\\)", "\\(y = -\\frac{1}{5}\\)", "there is none"],
+  answer: 1,
+  expl: "Degrees of top and bottom are equal (both 2), so the horizontal asymptote is the ratio of leading coefficients: \\(y = \\frac{3}{1} = 3\\). (Top degree smaller → \\(y=0\\); top degree bigger → no horizontal asymptote.)"
+},
+{
+  id: 22, topic: "poly", calc: false, type: "input",
+  q: "The graph of \\(f(x) = \\dfrac{x^2 - 9}{x - 3}\\) has a hole. What is the \\(y\\)-coordinate of the hole?",
+  answer: ["6"],
+  expl: "Factor and cancel: \\(\\dfrac{(x-3)(x+3)}{x-3} = x + 3\\) for \\(x \\ne 3\\). The cancelled factor means a hole at \\(x = 3\\), and its height is \\(3 + 3 = 6\\). So the hole is at \\((3, 6)\\)."
+},
+{
+  id: 23, topic: "poly", calc: false, type: "mc",
+  q: "Solve \\(x^3 - 9x = 0\\).",
+  choices: ["\\(x = 0, 3\\)", "\\(x = 3, -3\\)", "\\(x = 0, 3, -3\\)", "\\(x = 0, 9\\)"],
+  answer: 2,
+  expl: "Factor out the GCF first: \\(x(x^2 - 9) = x(x-3)(x+3) = 0\\), so \\(x = 0, 3, -3\\). Classic trap: dividing both sides by \\(x\\) loses the \\(x = 0\\) solution."
+},
+{
+  id: 24, topic: "poly", calc: false, type: "mc",
+  q: "Which quadratic has vertex \\((2, -3)\\) and opens upward with \\(a = 1\\)?",
+  choices: ["\\(y = x^2 + 4x + 1\\)", "\\(y = x^2 - 4x + 1\\)", "\\(y = x^2 - 4x - 3\\)", "\\(y = x^2 + 2x - 3\\)"],
+  answer: 1,
+  expl: "Vertex form: \\(y = (x - 2)^2 - 3\\). Expand: \\(x^2 - 4x + 4 - 3 = x^2 - 4x + 1\\)."
+},
+{
+  id: 25, topic: "poly", calc: false, type: "mc",
+  q: "For \\(f(x) = (x - 1)^2(x + 3)\\), what does the graph do at its \\(x\\)-intercepts?",
+  choices: [
+    "crosses at both \\(x = 1\\) and \\(x = -3\\)",
+    "touches (bounces) at \\(x = 1\\), crosses at \\(x = -3\\)",
+    "crosses at \\(x = 1\\), touches at \\(x = -3\\)",
+    "touches at both"
+  ],
+  answer: 1,
+  expl: "Even multiplicity → the graph touches and bounces; odd multiplicity → it crosses. \\((x-1)^2\\) has multiplicity 2 (bounce at \\(x=1\\)); \\((x+3)\\) has multiplicity 1 (cross at \\(x=-3\\))."
+},
+{
+  id: 26, topic: "poly", calc: false, type: "mc",
+  q: "How many real solutions does \\(2x^2 - 3x + 5 = 0\\) have?",
+  choices: ["0", "1", "2", "infinitely many"],
+  answer: 0,
+  expl: "Check the discriminant: \\(b^2 - 4ac = (-3)^2 - 4(2)(5) = 9 - 40 = -31\\). Negative discriminant → no real solutions (two complex conjugate solutions instead)."
+},
+{
+  id: 27, topic: "poly", calc: false, type: "mc",
+  q: "What is the slant (oblique) asymptote of \\(f(x) = \\dfrac{x^2 + 1}{x - 1}\\)?",
+  choices: ["\\(y = x\\)", "\\(y = x + 1\\)", "\\(y = x - 1\\)", "\\(y = 1\\)"],
+  answer: 1,
+  expl: "Top degree is exactly one more than bottom → slant asymptote. Divide: \\(x^2 + 1 = (x-1)(x+1) + 2\\), so \\(f(x) = x + 1 + \\frac{2}{x-1}\\). As \\(x\\) gets huge the \\(\\frac{2}{x-1}\\) vanishes, leaving \\(y = x + 1\\)."
+},
+{
+  id: 28, topic: "poly", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(\\dfrac{x}{x - 2} = 3\\)",
+  answer: ["3"],
+  expl: "Multiply both sides by \\(x - 2\\): \\(x = 3(x - 2) = 3x - 6\\), so \\(-2x = -6\\) and \\(x = 3\\). Check it doesn't make the denominator zero: \\(3 - 2 = 1\\) ✓."
+},
+{
+  id: 29, topic: "poly", calc: false, type: "mc",
+  q: "Solve the inequality \\(x^2 - x - 12 < 0\\).",
+  choices: ["\\(x < -3\\) or \\(x > 4\\)", "\\(-3 < x < 4\\)", "\\(-4 < x < 3\\)", "\\(x < 4\\)"],
+  answer: 1,
+  expl: "Factor: \\((x - 4)(x + 3) < 0\\). The product is negative between the roots, so \\(-3 < x < 4\\). A parabola opening up is below zero between its zeros."
+},
+{
+  id: 30, topic: "poly", calc: false, type: "mc",
+  q: "Which of these is a factor of \\(x^3 + 2x^2 - 5x - 6\\)?",
+  choices: ["\\(x - 1\\)", "\\(x + 2\\)", "\\(x + 1\\)", "\\(x - 3\\)"],
+  answer: 2,
+  expl: "Factor Theorem: test each candidate's root. \\(f(-1) = -1 + 2 + 5 - 6 = 0\\), so \\(x + 1\\) is a factor. (Fully factored: \\((x+1)(x-2)(x+3)\\).)"
+},
+{
+  id: 31, topic: "poly", calc: false, type: "input",
+  q: "Counting multiplicity, how many complex zeros does a degree-5 polynomial have?",
+  answer: ["5"],
+  expl: "Fundamental Theorem of Algebra: a degree-\\(n\\) polynomial has exactly \\(n\\) complex zeros, counting multiplicity (real zeros count too — real numbers are complex numbers with imaginary part 0)."
+},
+{
+  id: 32, topic: "poly", calc: false, type: "mc",
+  q: "By the Rational Zeros Theorem, which list contains ALL possible rational zeros of \\(f(x) = 2x^3 + 3x - 5\\)?",
+  choices: [
+    "\\(\\pm 1, \\pm 5\\)",
+    "\\(\\pm 1, \\pm 5, \\pm \\frac{1}{2}, \\pm \\frac{5}{2}\\)",
+    "\\(\\pm 1, \\pm 2, \\pm 5\\)",
+    "\\(\\pm \\frac{1}{5}, \\pm \\frac{2}{5}\\)"
+  ],
+  answer: 1,
+  expl: "Possible rational zeros are \\(\\pm\\frac{p}{q}\\) where \\(p\\) divides the constant (5: so 1, 5) and \\(q\\) divides the leading coefficient (2: so 1, 2). That gives \\(\\pm 1, \\pm 5, \\pm\\frac{1}{2}, \\pm\\frac{5}{2}\\)."
+},
+
+// ================= EXPONENTIALS & LOGARITHMS =================
+{
+  id: 33, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(2^x = 32\\)",
+  answer: ["5"],
+  expl: "Write 32 as a power of 2: \\(32 = 2^5\\), so \\(x = 5\\)."
+},
+{
+  id: 34, topic: "explog", calc: false, type: "input",
+  q: "Evaluate \\(\\log_3 81\\).",
+  answer: ["4"],
+  expl: "\\(\\log_3 81\\) asks: 3 to what power gives 81? \\(3^4 = 81\\), so the answer is 4."
+},
+{
+  id: 35, topic: "explog", calc: false, type: "mc",
+  q: "Expand: \\(\\log\\!\\left(\\dfrac{x^2 y}{z}\\right)\\)",
+  choices: [
+    "\\(2\\log x + \\log y - \\log z\\)",
+    "\\(2\\log x + \\log y + \\log z\\)",
+    "\\(\\frac{2\\log x \\cdot \\log y}{\\log z}\\)",
+    "\\(2(\\log x + \\log y - \\log z)\\)"
+  ],
+  answer: 0,
+  expl: "Products become sums, quotients become differences, exponents come down front: \\(\\log\\frac{x^2y}{z} = \\log x^2 + \\log y - \\log z = 2\\log x + \\log y - \\log z\\)."
+},
+{
+  id: 36, topic: "explog", calc: false, type: "mc",
+  q: "Solve \\(e^{2x} = 7\\). The exact solution is \\(x =\\)…",
+  choices: ["\\(\\ln \\frac{7}{2}\\)", "\\(\\dfrac{\\ln 7}{2}\\)", "\\(2\\ln 7\\)", "\\(\\ln 7 - 2\\)"],
+  answer: 1,
+  expl: "Take \\(\\ln\\) of both sides: \\(2x = \\ln 7\\), so \\(x = \\frac{\\ln 7}{2} \\approx 0.973\\). Trap: \\(\\frac{\\ln 7}{2} \\ne \\ln\\frac{7}{2}\\)."
+},
+{
+  id: 37, topic: "explog", calc: false, type: "input",
+  q: "Evaluate \\(\\ln 1\\).",
+  answer: ["0"],
+  expl: "\\(\\ln 1\\) asks: \\(e\\) to what power gives 1? Any nonzero base to the 0 power is 1, so \\(\\ln 1 = 0\\). (Likewise \\(\\log_b 1 = 0\\) for every base.)"
+},
+{
+  id: 38, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(\\log_2(x - 1) = 3\\)",
+  answer: ["9"],
+  expl: "Rewrite in exponential form: \\(x - 1 = 2^3 = 8\\), so \\(x = 9\\). Check the domain: \\(9 - 1 = 8 > 0\\) ✓."
+},
+{
+  id: 39, topic: "explog", calc: true, type: "mc",
+  q: "You invest \\(\\$1000\\) at 6% annual interest, compounded monthly. How much is it worth after 5 years?",
+  choices: ["\\(\\$1338.23\\)", "\\(\\$1348.85\\)", "\\(\\$1300.00\\)", "\\(\\$1419.07\\)"],
+  answer: 1,
+  expl: "Use \\(A = P\\left(1 + \\frac{r}{n}\\right)^{nt} = 1000\\left(1 + \\frac{0.06}{12}\\right)^{12 \\cdot 5} = 1000(1.005)^{60} \\approx \\$1348.85\\). ($1338.23 is the trap — that's compounding annually.)"
+},
+{
+  id: 40, topic: "explog", calc: true, type: "mc",
+  q: "\\(\\$500\\) grows with continuous compounding at 4% per year. Its value after 10 years is closest to…",
+  choices: ["\\(\\$540.00\\)", "\\(\\$700.00\\)", "\\(\\$745.91\\)", "\\(\\$820.20\\)"],
+  answer: 2,
+  expl: "Continuous compounding uses \\(A = Pe^{rt} = 500e^{0.04 \\times 10} = 500e^{0.4} \\approx 500(1.4918) \\approx \\$745.91\\)."
+},
+{
+  id: 41, topic: "explog", calc: false, type: "mc",
+  q: "Condense into a single logarithm: \\(3\\ln x - \\ln y\\)",
+  choices: ["\\(\\ln(x^3 - y)\\)", "\\(\\ln\\dfrac{x^3}{y}\\)", "\\(\\ln(3x - y)\\)", "\\(\\dfrac{\\ln x^3}{\\ln y}\\)"],
+  answer: 1,
+  expl: "Move the 3 up as an exponent: \\(3\\ln x = \\ln x^3\\). Subtraction of logs = log of the quotient: \\(\\ln x^3 - \\ln y = \\ln\\frac{x^3}{y}\\)."
+},
+{
+  id: 42, topic: "explog", calc: false, type: "input",
+  q: "Evaluate \\(\\log 5 + \\log 2\\) (base 10).",
+  answer: ["1"],
+  expl: "Sum of logs = log of the product: \\(\\log 5 + \\log 2 = \\log 10 = 1\\)."
+},
+{
+  id: 43, topic: "explog", calc: false, type: "input",
+  q: "A substance has a half-life of 8 days. If you start with 100 g, how many grams remain after 24 days?",
+  answer: ["12.5", "25/2"],
+  expl: "24 days is \\(24 \\div 8 = 3\\) half-lives: \\(100 \\to 50 \\to 25 \\to 12.5\\) g. Formula version: \\(100\\left(\\frac{1}{2}\\right)^{24/8} = 100 \\cdot \\frac{1}{8} = 12.5\\)."
+},
+{
+  id: 44, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(5^{x+1} = 25^x\\)",
+  answer: ["1"],
+  expl: "Match the bases: \\(25^x = (5^2)^x = 5^{2x}\\). Then \\(x + 1 = 2x\\), so \\(x = 1\\)."
+},
+{
+  id: 45, topic: "explog", calc: false, type: "mc",
+  q: "What is the domain of \\(f(x) = \\ln(x + 3)\\)?",
+  choices: ["\\(x > 3\\)", "\\(x > -3\\)", "\\(x \\ge -3\\)", "all real numbers"],
+  answer: 1,
+  expl: "You can only take the log of a positive number: \\(x + 3 > 0\\) gives \\(x > -3\\). Strict inequality — \\(\\ln 0\\) is undefined."
+},
+{
+  id: 46, topic: "explog", calc: true, type: "mc",
+  q: "Use the change-of-base formula to evaluate \\(\\log_7 20\\), rounded to three decimals.",
+  choices: ["\\(0.650\\)", "\\(1.539\\)", "\\(2.857\\)", "\\(1.301\\)"],
+  answer: 1,
+  expl: "\\(\\log_7 20 = \\dfrac{\\ln 20}{\\ln 7} = \\dfrac{2.9957}{1.9459} \\approx 1.539\\). Sanity check: \\(7^1 = 7\\) and \\(7^2 = 49\\), so the answer must be between 1 and 2."
+},
+{
+  id: 47, topic: "explog", calc: false, type: "mc",
+  q: "The inverse function of \\(f(x) = e^x\\) is…",
+  choices: ["\\(f^{-1}(x) = e^{-x}\\)", "\\(f^{-1}(x) = \\ln x\\)", "\\(f^{-1}(x) = \\frac{1}{e^x}\\)", "\\(f^{-1}(x) = x^e\\)"],
+  answer: 1,
+  expl: "Exponentials and logs with the same base undo each other: \\(\\ln(e^x) = x\\) and \\(e^{\\ln x} = x\\). So the inverse of \\(e^x\\) is \\(\\ln x\\). Their graphs are mirror images across \\(y = x\\)."
+},
+{
+  id: 48, topic: "explog", calc: false, type: "input",
+  q: "A population doubles every 12 years. After 36 years, the population is multiplied by what number?",
+  answer: ["8"],
+  expl: "36 years contains \\(36 \\div 12 = 3\\) doubling periods, so the population is multiplied by \\(2^3 = 8\\)."
+},
+{
+  id: 49, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(\\ln x + \\ln(x - 3) = \\ln 10\\)",
+  answer: ["5"],
+  expl: "Combine: \\(\\ln[x(x-3)] = \\ln 10\\), so \\(x^2 - 3x - 10 = 0\\), which factors to \\((x-5)(x+2) = 0\\). \\(x = -2\\) is rejected (you can't take \\(\\ln\\) of a negative), leaving \\(x = 5\\)."
+},
+{
+  id: 50, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(4^x = 8\\)",
+  answer: ["3/2", "1.5"],
+  expl: "Use base 2: \\(4^x = (2^2)^x = 2^{2x}\\) and \\(8 = 2^3\\). So \\(2x = 3\\) and \\(x = \\frac{3}{2}\\)."
+},
+
+// ================= TRIG: UNIT CIRCLE & GRAPHS =================
+{
+  id: 51, topic: "trig", calc: false, type: "mc",
+  q: "What is the exact value of \\(\\sin\\dfrac{\\pi}{6}\\)?",
+  choices: ["\\(\\dfrac{1}{2}\\)", "\\(\\dfrac{\\sqrt{2}}{2}\\)", "\\(\\dfrac{\\sqrt{3}}{2}\\)", "\\(1\\)"],
+  answer: 0,
+  expl: "\\(\\frac{\\pi}{6} = 30°\\). From the unit circle (or the 30-60-90 triangle), \\(\\sin 30° = \\frac{1}{2}\\). Memory hook: \\(\\sin\\) of \\(30°, 45°, 60°\\) is \\(\\frac{\\sqrt{1}}{2}, \\frac{\\sqrt{2}}{2}, \\frac{\\sqrt{3}}{2}\\)."
+},
+{
+  id: 52, topic: "trig", calc: false, type: "mc",
+  q: "What is the exact value of \\(\\cos\\dfrac{3\\pi}{4}\\)?",
+  choices: ["\\(\\dfrac{\\sqrt{2}}{2}\\)", "\\(-\\dfrac{\\sqrt{2}}{2}\\)", "\\(-\\dfrac{1}{2}\\)", "\\(-\\dfrac{\\sqrt{3}}{2}\\)"],
+  answer: 1,
+  expl: "\\(\\frac{3\\pi}{4} = 135°\\) is in Quadrant II, where cosine is negative. The reference angle is \\(45°\\), so \\(\\cos\\frac{3\\pi}{4} = -\\frac{\\sqrt{2}}{2}\\)."
+},
+{
+  id: 53, topic: "trig", calc: false, type: "mc",
+  q: "Convert \\(150°\\) to radians.",
+  choices: ["\\(\\dfrac{5\\pi}{6}\\)", "\\(\\dfrac{2\\pi}{3}\\)", "\\(\\dfrac{5\\pi}{3}\\)", "\\(\\dfrac{3\\pi}{4}\\)"],
+  answer: 0,
+  expl: "Multiply by \\(\\frac{\\pi}{180}\\): \\(150 \\times \\frac{\\pi}{180} = \\frac{150\\pi}{180} = \\frac{5\\pi}{6}\\)."
+},
+{
+  id: 54, topic: "trig", calc: false, type: "input",
+  q: "Evaluate \\(\\tan\\dfrac{\\pi}{4}\\).",
+  answer: ["1"],
+  expl: "\\(\\tan\\frac{\\pi}{4} = \\frac{\\sin 45°}{\\cos 45°} = \\frac{\\sqrt{2}/2}{\\sqrt{2}/2} = 1\\)."
+},
+{
+  id: 55, topic: "trig", calc: false, type: "input",
+  q: "What is the reference angle of \\(240°\\)? (Answer in degrees.)",
+  answer: ["60"],
+  expl: "\\(240°\\) is in Quadrant III. The reference angle there is the distance past \\(180°\\): \\(240° - 180° = 60°\\)."
+},
+{
+  id: 56, topic: "trig", calc: false, type: "mc",
+  q: "What is the period of \\(y = \\sin(2x)\\)?",
+  choices: ["\\(4\\pi\\)", "\\(2\\pi\\)", "\\(\\pi\\)", "\\(\\dfrac{\\pi}{2}\\)"],
+  answer: 2,
+  expl: "Period of \\(\\sin(Bx)\\) is \\(\\frac{2\\pi}{B} = \\frac{2\\pi}{2} = \\pi\\). The 2 inside makes it cycle twice as fast, so the period is half as long."
+},
+{
+  id: 57, topic: "trig", calc: false, type: "input",
+  q: "What is the amplitude of \\(y = -3\\cos x + 1\\)?",
+  answer: ["3"],
+  expl: "Amplitude is \\(|A| = |-3| = 3\\). The negative just flips the graph, and the \\(+1\\) shifts the midline up — neither changes the amplitude."
+},
+{
+  id: 58, topic: "trig", calc: false, type: "mc",
+  q: "If \\(\\sin\\theta = \\dfrac{3}{5}\\) and \\(\\theta\\) is in Quadrant II, what is \\(\\cos\\theta\\)?",
+  choices: ["\\(\\dfrac{4}{5}\\)", "\\(-\\dfrac{4}{5}\\)", "\\(\\dfrac{3}{4}\\)", "\\(-\\dfrac{3}{4}\\)"],
+  answer: 1,
+  expl: "Pythagorean identity: \\(\\cos^2\\theta = 1 - \\sin^2\\theta = 1 - \\frac{9}{25} = \\frac{16}{25}\\), so \\(\\cos\\theta = \\pm\\frac{4}{5}\\). In Quadrant II cosine is negative: \\(\\cos\\theta = -\\frac{4}{5}\\)."
+},
+{
+  id: 59, topic: "trig", calc: false, type: "mc",
+  q: "What is the period of \\(y = \\tan x\\)?",
+  choices: ["\\(\\dfrac{\\pi}{2}\\)", "\\(\\pi\\)", "\\(2\\pi\\)", "\\(4\\pi\\)"],
+  answer: 1,
+  expl: "Tangent repeats every \\(\\pi\\), not \\(2\\pi\\) (sine and cosine repeat every \\(2\\pi\\)). That's because \\(\\tan\\theta\\) is the slope of the terminal side, and slope repeats after a half-turn."
+},
+{
+  id: 60, topic: "trig", calc: false, type: "input",
+  q: "Evaluate \\(\\csc\\dfrac{\\pi}{2}\\).",
+  answer: ["1"],
+  expl: "\\(\\csc\\theta = \\frac{1}{\\sin\\theta}\\), and \\(\\sin\\frac{\\pi}{2} = 1\\), so \\(\\csc\\frac{\\pi}{2} = 1\\)."
+},
+{
+  id: 61, topic: "trig", calc: false, type: "mc",
+  q: "Describe the phase shift of \\(y = \\sin\\!\\left(x - \\dfrac{\\pi}{3}\\right)\\).",
+  choices: ["left \\(\\frac{\\pi}{3}\\)", "right \\(\\frac{\\pi}{3}\\)", "up \\(\\frac{\\pi}{3}\\)", "no shift"],
+  answer: 1,
+  expl: "Just like \\(f(x - h)\\), subtracting inside shifts the graph \\(\\textbf{right}\\) by \\(\\frac{\\pi}{3}\\)."
+},
+{
+  id: 62, topic: "trig", calc: false, type: "input",
+  q: "The midline of \\(y = 2\\sin x + 5\\) is \\(y = \\,?\\)",
+  answer: ["5"],
+  expl: "The midline is the vertical shift: \\(y = 5\\). The graph oscillates 2 above and 2 below it (between 3 and 7)."
+},
+{
+  id: 63, topic: "trig", calc: false, type: "mc",
+  q: "What is the exact value of \\(\\cos\\!\\left(-\\dfrac{\\pi}{3}\\right)\\)?",
+  choices: ["\\(-\\dfrac{1}{2}\\)", "\\(\\dfrac{1}{2}\\)", "\\(-\\dfrac{\\sqrt{3}}{2}\\)", "\\(\\dfrac{\\sqrt{3}}{2}\\)"],
+  answer: 1,
+  expl: "Cosine is an even function: \\(\\cos(-\\theta) = \\cos\\theta\\). So \\(\\cos(-\\frac{\\pi}{3}) = \\cos\\frac{\\pi}{3} = \\frac{1}{2}\\). (Sine is odd: \\(\\sin(-\\theta) = -\\sin\\theta\\).)"
+},
+{
+  id: 64, topic: "trig", calc: false, type: "mc",
+  q: "Which angle in \\([0, 2\\pi)\\) is coterminal with \\(\\dfrac{7\\pi}{3}\\)?",
+  choices: ["\\(\\dfrac{\\pi}{3}\\)", "\\(\\dfrac{2\\pi}{3}\\)", "\\(\\dfrac{4\\pi}{3}\\)", "\\(\\dfrac{5\\pi}{3}\\)"],
+  answer: 0,
+  expl: "Subtract a full revolution: \\(\\frac{7\\pi}{3} - 2\\pi = \\frac{7\\pi}{3} - \\frac{6\\pi}{3} = \\frac{\\pi}{3}\\)."
+},
+{
+  id: 65, topic: "trig", calc: false, type: "mc",
+  q: "Evaluate \\(\\arctan(1)\\) (the principal value).",
+  choices: ["\\(\\dfrac{\\pi}{6}\\)", "\\(\\dfrac{\\pi}{4}\\)", "\\(\\dfrac{\\pi}{3}\\)", "\\(\\dfrac{\\pi}{2}\\)"],
+  answer: 1,
+  expl: "\\(\\arctan(1)\\) asks: what angle (between \\(-\\frac{\\pi}{2}\\) and \\(\\frac{\\pi}{2}\\)) has tangent 1? That's \\(\\frac{\\pi}{4}\\), where sine and cosine are equal."
+},
+{
+  id: 66, topic: "trig", calc: false, type: "mc",
+  q: "For what value(s) of \\(\\theta\\) in \\([0, 2\\pi)\\) does \\(\\sin\\theta = -1\\)?",
+  choices: ["\\(\\dfrac{\\pi}{2}\\)", "\\(\\pi\\)", "\\(\\dfrac{3\\pi}{2}\\)", "\\(\\dfrac{\\pi}{2}\\) and \\(\\dfrac{3\\pi}{2}\\)"],
+  answer: 2,
+  expl: "Sine is the \\(y\\)-coordinate on the unit circle. It equals \\(-1\\) only at the very bottom of the circle: \\(\\theta = \\frac{3\\pi}{2}\\)."
+},
+{
+  id: 67, topic: "trig", calc: false, type: "mc",
+  q: "Where does \\(y = \\tan x\\) have vertical asymptotes?",
+  choices: [
+    "\\(x = k\\pi\\) for integers \\(k\\)",
+    "\\(x = \\dfrac{\\pi}{2} + k\\pi\\) for integers \\(k\\)",
+    "\\(x = 2k\\pi\\) for integers \\(k\\)",
+    "it has none"
+  ],
+  answer: 1,
+  expl: "\\(\\tan x = \\frac{\\sin x}{\\cos x}\\) blows up where \\(\\cos x = 0\\): at \\(x = \\frac{\\pi}{2}, \\frac{3\\pi}{2}, \\ldots\\) — that is, \\(x = \\frac{\\pi}{2} + k\\pi\\)."
+},
+
+// ================= TRIG: IDENTITIES & EQUATIONS =================
+{
+  id: 68, topic: "trigid", calc: false, type: "mc",
+  q: "Simplify: \\(\\dfrac{\\sin^2\\theta}{1 - \\cos\\theta}\\)",
+  choices: ["\\(1 - \\cos\\theta\\)", "\\(1 + \\cos\\theta\\)", "\\(\\sin\\theta\\)", "\\(\\cos\\theta\\)"],
+  answer: 1,
+  expl: "Use \\(\\sin^2\\theta = 1 - \\cos^2\\theta = (1-\\cos\\theta)(1+\\cos\\theta)\\). Cancel the \\((1 - \\cos\\theta)\\): you're left with \\(1 + \\cos\\theta\\)."
+},
+{
+  id: 69, topic: "trigid", calc: false, type: "mc",
+  q: "Which expression equals \\(1 + \\tan^2\\theta\\)?",
+  choices: ["\\(\\sin^2\\theta\\)", "\\(\\csc^2\\theta\\)", "\\(\\sec^2\\theta\\)", "\\(\\cot^2\\theta\\)"],
+  answer: 2,
+  expl: "Pythagorean identity family: \\(\\sin^2 + \\cos^2 = 1\\); divide everything by \\(\\cos^2\\) to get \\(\\tan^2 + 1 = \\sec^2\\); divide by \\(\\sin^2\\) to get \\(1 + \\cot^2 = \\csc^2\\)."
+},
+{
+  id: 70, topic: "trigid", calc: false, type: "mc",
+  q: "If \\(\\sin\\theta = \\dfrac{3}{5}\\) and \\(\\cos\\theta = \\dfrac{4}{5}\\), find \\(\\sin 2\\theta\\).",
+  choices: ["\\(\\dfrac{6}{5}\\)", "\\(\\dfrac{12}{25}\\)", "\\(\\dfrac{24}{25}\\)", "\\(\\dfrac{7}{25}\\)"],
+  answer: 2,
+  expl: "Double-angle: \\(\\sin 2\\theta = 2\\sin\\theta\\cos\\theta = 2 \\cdot \\frac{3}{5} \\cdot \\frac{4}{5} = \\frac{24}{25}\\). Don't forget the 2 out front."
+},
+{
+  id: 71, topic: "trigid", calc: false, type: "mc",
+  q: "If \\(\\cos\\theta = \\dfrac{1}{3}\\), find \\(\\cos 2\\theta\\).",
+  choices: ["\\(\\dfrac{2}{3}\\)", "\\(-\\dfrac{7}{9}\\)", "\\(\\dfrac{7}{9}\\)", "\\(-\\dfrac{1}{9}\\)"],
+  answer: 1,
+  expl: "Use \\(\\cos 2\\theta = 2\\cos^2\\theta - 1 = 2\\left(\\frac{1}{9}\\right) - 1 = \\frac{2}{9} - \\frac{9}{9} = -\\frac{7}{9}\\)."
+},
+{
+  id: 72, topic: "trigid", calc: false, type: "mc",
+  q: "Solve \\(2\\sin\\theta - 1 = 0\\) on \\([0, 2\\pi)\\).",
+  choices: [
+    "\\(\\dfrac{\\pi}{6}\\) only",
+    "\\(\\dfrac{\\pi}{6}, \\dfrac{5\\pi}{6}\\)",
+    "\\(\\dfrac{\\pi}{3}, \\dfrac{2\\pi}{3}\\)",
+    "\\(\\dfrac{7\\pi}{6}, \\dfrac{11\\pi}{6}\\)"
+  ],
+  answer: 1,
+  expl: "\\(\\sin\\theta = \\frac{1}{2}\\). Sine is positive in Quadrants I and II, with reference angle \\(\\frac{\\pi}{6}\\): \\(\\theta = \\frac{\\pi}{6}\\) and \\(\\pi - \\frac{\\pi}{6} = \\frac{5\\pi}{6}\\). Always find ALL solutions in the interval."
+},
+{
+  id: 73, topic: "trigid", calc: false, type: "input",
+  q: "How many solutions does \\(2\\cos^2\\theta - 1 = 0\\) have on \\([0, 2\\pi)\\)?",
+  answer: ["4"],
+  expl: "\\(\\cos^2\\theta = \\frac{1}{2}\\) means \\(\\cos\\theta = \\pm\\frac{\\sqrt{2}}{2}\\). That happens at \\(\\frac{\\pi}{4}, \\frac{3\\pi}{4}, \\frac{5\\pi}{4}, \\frac{7\\pi}{4}\\) — 4 solutions, one in each quadrant."
+},
+{
+  id: 74, topic: "trigid", calc: false, type: "mc",
+  q: "Use a sum formula: \\(\\sin 75° =\\)…",
+  choices: [
+    "\\(\\dfrac{\\sqrt{6} + \\sqrt{2}}{4}\\)",
+    "\\(\\dfrac{\\sqrt{6} - \\sqrt{2}}{4}\\)",
+    "\\(\\dfrac{\\sqrt{3} + 1}{2}\\)",
+    "\\(\\dfrac{\\sqrt{2} + 1}{2}\\)"
+  ],
+  answer: 0,
+  expl: "\\(\\sin 75° = \\sin(45° + 30°) = \\sin 45°\\cos 30° + \\cos 45°\\sin 30° = \\frac{\\sqrt2}{2}\\cdot\\frac{\\sqrt3}{2} + \\frac{\\sqrt2}{2}\\cdot\\frac{1}{2} = \\frac{\\sqrt6 + \\sqrt2}{4}\\)."
+},
+{
+  id: 75, topic: "trigid", calc: false, type: "mc",
+  q: "Simplify: \\(\\tan\\theta \\cdot \\cos\\theta\\)",
+  choices: ["\\(\\sin\\theta\\)", "\\(\\cos\\theta\\)", "\\(\\sec\\theta\\)", "\\(1\\)"],
+  answer: 0,
+  expl: "\\(\\tan\\theta\\cos\\theta = \\frac{\\sin\\theta}{\\cos\\theta} \\cdot \\cos\\theta = \\sin\\theta\\). Rewriting everything in terms of sine and cosine is almost always the move."
+},
+{
+  id: 76, topic: "trigid", calc: false, type: "mc",
+  q: "Solve \\(\\tan\\theta = \\sqrt{3}\\) on \\([0, 2\\pi)\\).",
+  choices: [
+    "\\(\\dfrac{\\pi}{3}\\) only",
+    "\\(\\dfrac{\\pi}{3}, \\dfrac{2\\pi}{3}\\)",
+    "\\(\\dfrac{\\pi}{3}, \\dfrac{4\\pi}{3}\\)",
+    "\\(\\dfrac{\\pi}{6}, \\dfrac{7\\pi}{6}\\)"
+  ],
+  answer: 2,
+  expl: "Tangent is positive in Quadrants I and III, and has period \\(\\pi\\). Reference angle \\(\\frac{\\pi}{3}\\) gives \\(\\theta = \\frac{\\pi}{3}\\) and \\(\\frac{\\pi}{3} + \\pi = \\frac{4\\pi}{3}\\)."
+},
+{
+  id: 77, topic: "trigid", calc: false, type: "mc",
+  q: "Which expression is equal to \\(\\cos 2\\theta\\)?",
+  choices: ["\\(1 - 2\\sin^2\\theta\\)", "\\(2\\sin\\theta\\cos\\theta\\)", "\\(1 + 2\\sin^2\\theta\\)", "\\(2\\sin^2\\theta - 1\\)"],
+  answer: 0,
+  expl: "\\(\\cos 2\\theta\\) has three forms: \\(\\cos^2\\theta - \\sin^2\\theta = 1 - 2\\sin^2\\theta = 2\\cos^2\\theta - 1\\). (Choice B is \\(\\sin 2\\theta\\); choice D has the signs flipped.)"
+},
+{
+  id: 78, topic: "trigid", calc: false, type: "mc",
+  q: "How many solutions does \\(2\\sin^2\\theta - \\sin\\theta - 1 = 0\\) have on \\([0, 2\\pi)\\)?",
+  choices: ["1", "2", "3", "4"],
+  answer: 2,
+  expl: "Factor like a quadratic in \\(\\sin\\theta\\): \\((2\\sin\\theta + 1)(\\sin\\theta - 1) = 0\\). So \\(\\sin\\theta = -\\frac{1}{2}\\) (at \\(\\frac{7\\pi}{6}, \\frac{11\\pi}{6}\\)) or \\(\\sin\\theta = 1\\) (at \\(\\frac{\\pi}{2}\\)) — 3 solutions total."
+},
+{
+  id: 79, topic: "trigid", calc: false, type: "mc",
+  q: "Simplify: \\(\\sec\\theta - \\sec\\theta\\sin^2\\theta\\)",
+  choices: ["\\(\\sin\\theta\\)", "\\(\\cos\\theta\\)", "\\(\\tan\\theta\\)", "\\(\\sec\\theta\\)"],
+  answer: 1,
+  expl: "Factor: \\(\\sec\\theta(1 - \\sin^2\\theta) = \\sec\\theta\\cos^2\\theta = \\frac{1}{\\cos\\theta}\\cdot\\cos^2\\theta = \\cos\\theta\\)."
+},
+{
+  id: 80, topic: "trigid", calc: false, type: "input",
+  q: "If \\(\\tan\\theta = 2\\) and \\(\\theta\\) is in Quadrant III, find \\(\\sin\\theta\\cos\\theta\\).",
+  answer: ["2/5", "0.4"],
+  expl: "In QIII both sine and cosine are negative: \\(\\sin\\theta = -\\frac{2}{\\sqrt5}\\), \\(\\cos\\theta = -\\frac{1}{\\sqrt5}\\). The product: \\(\\left(-\\frac{2}{\\sqrt5}\\right)\\left(-\\frac{1}{\\sqrt5}\\right) = \\frac{2}{5}\\). (Negative times negative is positive.)"
+},
+{
+  id: 81, topic: "trigid", calc: false, type: "mc",
+  q: "The expression \\(\\sin x\\cos y + \\cos x\\sin y\\) equals…",
+  choices: ["\\(\\sin(x + y)\\)", "\\(\\sin(x - y)\\)", "\\(\\cos(x + y)\\)", "\\(\\cos(x - y)\\)"],
+  answer: 0,
+  expl: "That's the sine sum formula: \\(\\sin(x+y) = \\sin x\\cos y + \\cos x\\sin y\\). For sine, the sign in the middle matches; for cosine it flips: \\(\\cos(x+y) = \\cos x\\cos y - \\sin x\\sin y\\)."
+},
+{
+  id: 82, topic: "trigid", calc: false, type: "mc",
+  q: "Solve \\(2\\cos\\theta + \\sqrt{3} = 0\\) on \\([0, 2\\pi)\\).",
+  choices: [
+    "\\(\\dfrac{\\pi}{6}, \\dfrac{11\\pi}{6}\\)",
+    "\\(\\dfrac{5\\pi}{6}, \\dfrac{7\\pi}{6}\\)",
+    "\\(\\dfrac{2\\pi}{3}, \\dfrac{4\\pi}{3}\\)",
+    "\\(\\dfrac{5\\pi}{6}\\) only"
+  ],
+  answer: 1,
+  expl: "\\(\\cos\\theta = -\\frac{\\sqrt3}{2}\\). Cosine is negative in Quadrants II and III, reference angle \\(\\frac{\\pi}{6}\\): \\(\\theta = \\pi - \\frac{\\pi}{6} = \\frac{5\\pi}{6}\\) and \\(\\pi + \\frac{\\pi}{6} = \\frac{7\\pi}{6}\\)."
+},
+
+// ================= TRIANGLES & APPLICATIONS =================
+{
+  id: 83, topic: "triangles", calc: true, type: "mc",
+  q: "Two sides of a triangle are 5 and 7, and the included angle is \\(60°\\). Find the third side (round to 2 decimals).",
+  choices: ["\\(6.24\\)", "\\(8.60\\)", "\\(5.57\\)", "\\(7.81\\)"],
+  answer: 0,
+  expl: "Law of Cosines: \\(c^2 = 5^2 + 7^2 - 2(5)(7)\\cos 60° = 25 + 49 - 70(0.5) = 39\\), so \\(c = \\sqrt{39} \\approx 6.24\\)."
+},
+{
+  id: 84, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(A = 30°\\), \\(B = 45°\\), and \\(a = 10\\). Find \\(b\\) (round to 2 decimals).",
+  choices: ["\\(7.07\\)", "\\(12.25\\)", "\\(14.14\\)", "\\(20.00\\)"],
+  answer: 2,
+  expl: "Law of Sines: \\(\\frac{b}{\\sin B} = \\frac{a}{\\sin A}\\), so \\(b = \\frac{10\\sin 45°}{\\sin 30°} = \\frac{10(0.7071)}{0.5} \\approx 14.14\\)."
+},
+{
+  id: 85, topic: "triangles", calc: false, type: "input",
+  q: "Find the area of a triangle with sides \\(a = 8\\), \\(b = 5\\), and included angle \\(C = 30°\\).",
+  answer: ["10"],
+  expl: "Area \\(= \\frac{1}{2}ab\\sin C = \\frac{1}{2}(8)(5)\\sin 30° = 20 \\cdot \\frac{1}{2} = 10\\)."
+},
+{
+  id: 86, topic: "triangles", calc: false, type: "mc",
+  q: "A triangle has sides 3, 5, and 7. What is the measure of its largest angle?",
+  choices: ["\\(60°\\)", "\\(90°\\)", "\\(120°\\)", "\\(150°\\)"],
+  answer: 2,
+  expl: "The largest angle is opposite the longest side (7). Law of Cosines: \\(\\cos C = \\frac{3^2 + 5^2 - 7^2}{2(3)(5)} = \\frac{9 + 25 - 49}{30} = \\frac{-15}{30} = -\\frac{1}{2}\\), so \\(C = 120°\\)."
+},
+{
+  id: 87, topic: "triangles", calc: false, type: "mc",
+  q: "Given \\(A = 30°\\), \\(a = 4\\), \\(b = 10\\) (SSA), how many triangles are possible?",
+  choices: ["0", "1", "2", "infinitely many"],
+  answer: 0,
+  expl: "Compare \\(a\\) to the height \\(h = b\\sin A = 10\\sin 30° = 5\\). Since \\(a = 4 < h = 5\\), side \\(a\\) is too short to reach the base — no triangle exists. (\\(a = h\\): one right triangle; \\(h < a < b\\): two triangles.)"
+},
+{
+  id: 88, topic: "triangles", calc: true, type: "mc",
+  q: "From 100 ft away from a building, the angle of elevation to the top is \\(25°\\). How tall is the building (nearest foot)?",
+  choices: ["\\(42\\) ft", "\\(47\\) ft", "\\(91\\) ft", "\\(214\\) ft"],
+  answer: 1,
+  expl: "\\(\\tan 25° = \\frac{\\text{height}}{100}\\), so height \\(= 100\\tan 25° \\approx 100(0.4663) \\approx 47\\) ft. Make sure your calculator is in degree mode!"
+},
+{
+  id: 89, topic: "triangles", calc: false, type: "input",
+  q: "In triangle \\(ABC\\), \\(A = 40°\\) and \\(C = 65°\\). Find \\(B\\) (in degrees).",
+  answer: ["75"],
+  expl: "Angles of a triangle sum to \\(180°\\): \\(B = 180° - 40° - 65° = 75°\\)."
+},
+{
+  id: 90, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(a = 12\\), \\(b = 15\\), and \\(C = 80°\\). Find the area (round to 1 decimal).",
+  choices: ["\\(88.6\\)", "\\(90.0\\)", "\\(177.3\\)", "\\(44.3\\)"],
+  answer: 0,
+  expl: "Area \\(= \\frac{1}{2}ab\\sin C = \\frac{1}{2}(12)(15)\\sin 80° = 90(0.9848) \\approx 88.6\\)."
+},
+
+// ================= SEQUENCES & SERIES =================
+{
+  id: 91, topic: "seqser", calc: false, type: "input",
+  q: "An arithmetic sequence has \\(a_1 = 3\\) and common difference \\(d = 4\\). Find \\(a_{10}\\).",
+  answer: ["39"],
+  expl: "\\(a_n = a_1 + (n-1)d\\), so \\(a_{10} = 3 + 9(4) = 39\\). It's \\((n-1)\\) steps, not \\(n\\) — that's the classic off-by-one trap."
+},
+{
+  id: 92, topic: "seqser", calc: false, type: "input",
+  q: "A geometric sequence has \\(a_1 = 2\\) and common ratio \\(r = 3\\). Find \\(a_5\\).",
+  answer: ["162"],
+  expl: "\\(a_n = a_1 r^{n-1}\\), so \\(a_5 = 2 \\cdot 3^4 = 2 \\cdot 81 = 162\\)."
+},
+{
+  id: 93, topic: "seqser", calc: true, type: "mc",
+  q: "Find the sum of the first 20 terms of the arithmetic sequence \\(5, 8, 11, \\ldots\\)",
+  choices: ["\\(620\\)", "\\(670\\)", "\\(700\\)", "\\(1240\\)"],
+  answer: 1,
+  expl: "First find \\(a_{20} = 5 + 19(3) = 62\\). Then \\(S_{20} = \\frac{n(a_1 + a_n)}{2} = \\frac{20(5 + 62)}{2} = 10(67) = 670\\)."
+},
+{
+  id: 94, topic: "seqser", calc: false, type: "input",
+  q: "Find the sum of the infinite geometric series \\(8 + 4 + 2 + 1 + \\cdots\\)",
+  answer: ["16"],
+  expl: "Here \\(r = \\frac{1}{2}\\) with \\(|r| < 1\\), so the series converges to \\(S = \\frac{a_1}{1 - r} = \\frac{8}{1 - \\frac{1}{2}} = \\frac{8}{1/2} = 16\\)."
+},
+{
+  id: 95, topic: "seqser", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\sum_{k=1}^{5} (2k + 1)\\)",
+  answer: ["35"],
+  expl: "Plug in \\(k = 1\\) through \\(5\\): \\(3 + 5 + 7 + 9 + 11 = 35\\). Or split it: \\(2(1+2+3+4+5) + 5 = 2(15) + 5 = 35\\)."
+},
+{
+  id: 96, topic: "seqser", calc: false, type: "input",
+  q: "A sequence is defined by \\(a_1 = 2\\) and \\(a_n = 3a_{n-1} - 1\\). Find \\(a_3\\).",
+  answer: ["14"],
+  expl: "Build term by term: \\(a_2 = 3(2) - 1 = 5\\), then \\(a_3 = 3(5) - 1 = 14\\)."
+},
+{
+  id: 97, topic: "seqser", calc: false, type: "mc",
+  q: "Which formula gives the \\(n\\)th term of \\(7, 12, 17, 22, \\ldots\\)?",
+  choices: ["\\(a_n = 7n\\)", "\\(a_n = 5n + 2\\)", "\\(a_n = 5n + 7\\)", "\\(a_n = 7 \\cdot 5^{n-1}\\)"],
+  answer: 1,
+  expl: "Common difference is 5, so \\(a_n = 7 + (n-1)5 = 5n + 2\\). Check: \\(n = 1\\) gives 7 ✓, \\(n = 2\\) gives 12 ✓."
+},
+{
+  id: 98, topic: "seqser", calc: true, type: "mc",
+  q: "Find the sum of the first 6 terms of the geometric sequence with \\(a_1 = 3\\) and \\(r = 2\\).",
+  choices: ["\\(96\\)", "\\(189\\)", "\\(186\\)", "\\(192\\)"],
+  answer: 1,
+  expl: "\\(S_6 = a_1\\dfrac{r^6 - 1}{r - 1} = 3 \\cdot \\dfrac{64 - 1}{1} = 3(63) = 189\\). Or just add: \\(3 + 6 + 12 + 24 + 48 + 96 = 189\\)."
+},
+{
+  id: 99, topic: "seqser", calc: false, type: "mc",
+  q: "An infinite geometric series converges when…",
+  choices: ["\\(r > 0\\)", "\\(|r| < 1\\)", "\\(|r| > 1\\)", "\\(r \\ne 1\\)"],
+  answer: 1,
+  expl: "The terms must shrink toward zero, which happens exactly when \\(|r| < 1\\). Then the sum is \\(\\frac{a_1}{1-r}\\). If \\(|r| \\ge 1\\), the series diverges."
+},
+{
+  id: 100, topic: "seqser", calc: false, type: "mc",
+  q: "What is the coefficient of \\(x^3\\) in the expansion of \\((x + 2)^5\\)?",
+  choices: ["\\(10\\)", "\\(20\\)", "\\(40\\)", "\\(80\\)"],
+  answer: 2,
+  expl: "Binomial theorem: the \\(x^3\\) term is \\(\\binom{5}{2}x^3 \\cdot 2^2 = 10 \\cdot x^3 \\cdot 4 = 40x^3\\). The exponent on 2 plus the exponent on \\(x\\) must total 5."
+},
+
+// ================= CONICS =================
+{
+  id: 101, topic: "conics", calc: false, type: "mc",
+  q: "Identify the center and radius of \\((x - 2)^2 + (y + 3)^2 = 25\\).",
+  choices: [
+    "center \\((2, -3)\\), radius 5",
+    "center \\((-2, 3)\\), radius 5",
+    "center \\((2, -3)\\), radius 25",
+    "center \\((-2, 3)\\), radius 25"
+  ],
+  answer: 0,
+  expl: "Standard circle form \\((x-h)^2 + (y-k)^2 = r^2\\): signs flip for the center, so \\((h,k) = (2,-3)\\), and \\(r = \\sqrt{25} = 5\\) (not 25!)."
+},
+{
+  id: 102, topic: "conics", calc: false, type: "mc",
+  q: "Find the focus of the parabola \\(y = \\dfrac{1}{8}x^2\\).",
+  choices: ["\\((0, 2)\\)", "\\((0, 8)\\)", "\\((2, 0)\\)", "\\((0, \\frac{1}{8})\\)"],
+  answer: 0,
+  expl: "Rewrite: \\(x^2 = 8y\\), and match to \\(x^2 = 4py\\): \\(4p = 8\\) so \\(p = 2\\). The parabola opens up, so the focus is \\(p\\) above the vertex: \\((0, 2)\\)."
+},
+{
+  id: 103, topic: "conics", calc: false, type: "input",
+  q: "What is the length of the major axis of the ellipse \\(\\dfrac{x^2}{25} + \\dfrac{y^2}{9} = 1\\)?",
+  answer: ["10"],
+  expl: "\\(a^2 = 25\\) (the bigger denominator), so \\(a = 5\\). The major axis has length \\(2a = 10\\). Trap: \\(a\\) alone is the semi-major axis."
+},
+{
+  id: 104, topic: "conics", calc: false, type: "mc",
+  q: "Find the foci of the ellipse \\(\\dfrac{x^2}{25} + \\dfrac{y^2}{9} = 1\\).",
+  choices: ["\\((\\pm 4, 0)\\)", "\\((0, \\pm 4)\\)", "\\((\\pm 5, 0)\\)", "\\((\\pm \\sqrt{34}, 0)\\)"],
+  answer: 0,
+  expl: "For an ellipse, \\(c^2 = a^2 - b^2 = 25 - 9 = 16\\), so \\(c = 4\\). The major axis is horizontal (bigger denominator under \\(x^2\\)), so the foci are \\((\\pm 4, 0)\\)."
+},
+{
+  id: 105, topic: "conics", calc: false, type: "mc",
+  q: "What are the asymptotes of the hyperbola \\(\\dfrac{x^2}{9} - \\dfrac{y^2}{16} = 1\\)?",
+  choices: [
+    "\\(y = \\pm\\dfrac{3}{4}x\\)",
+    "\\(y = \\pm\\dfrac{4}{3}x\\)",
+    "\\(y = \\pm\\dfrac{16}{9}x\\)",
+    "\\(y = \\pm\\dfrac{9}{16}x\\)"
+  ],
+  answer: 1,
+  expl: "For \\(\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1\\), asymptotes are \\(y = \\pm\\frac{b}{a}x\\). Here \\(a = 3\\), \\(b = 4\\): \\(y = \\pm\\frac{4}{3}x\\)."
+},
+{
+  id: 106, topic: "conics", calc: false, type: "mc",
+  q: "What kind of conic is \\(4x^2 + 4y^2 - 8x + 16y = 0\\)?",
+  choices: ["parabola", "circle", "ellipse (not a circle)", "hyperbola"],
+  answer: 1,
+  expl: "Both squared terms appear with the SAME coefficient (4 and 4) and the same sign → circle. Different positive coefficients → ellipse; opposite signs → hyperbola; only one squared term → parabola."
+},
+{
+  id: 107, topic: "conics", calc: false, type: "input",
+  q: "Complete the square to find the radius of the circle \\(x^2 + y^2 - 6x + 4y - 12 = 0\\).",
+  answer: ["5"],
+  expl: "Group and complete: \\((x^2 - 6x + 9) + (y^2 + 4y + 4) = 12 + 9 + 4\\), giving \\((x-3)^2 + (y+2)^2 = 25\\). So \\(r = \\sqrt{25} = 5\\)."
+},
+{
+  id: 108, topic: "conics", calc: false, type: "mc",
+  q: "Find the vertices of the hyperbola \\(\\dfrac{y^2}{4} - \\dfrac{x^2}{9} = 1\\).",
+  choices: ["\\((\\pm 2, 0)\\)", "\\((0, \\pm 2)\\)", "\\((0, \\pm 3)\\)", "\\((\\pm 3, 0)\\)"],
+  answer: 1,
+  expl: "The positive term is \\(\\frac{y^2}{4}\\), so the hyperbola opens up/down and the vertices are on the \\(y\\)-axis: \\((0, \\pm a) = (0, \\pm 2)\\)."
+},
+
+// ================= VECTORS, POLAR & PARAMETRIC =================
+{
+  id: 109, topic: "vectors", calc: false, type: "input",
+  q: "Find the magnitude of the vector \\(\\mathbf{u} = \\langle 3, -4 \\rangle\\).",
+  answer: ["5"],
+  expl: "\\(\\|\\mathbf{u}\\| = \\sqrt{3^2 + (-4)^2} = \\sqrt{9 + 16} = \\sqrt{25} = 5\\). It's just the Pythagorean theorem."
+},
+{
+  id: 110, topic: "vectors", calc: false, type: "mc",
+  q: "If \\(\\mathbf{u} = \\langle 1, 2 \\rangle\\) and \\(\\mathbf{v} = \\langle 3, -1 \\rangle\\), find \\(\\mathbf{u} + 2\\mathbf{v}\\).",
+  choices: ["\\(\\langle 7, 0 \\rangle\\)", "\\(\\langle 4, 1 \\rangle\\)", "\\(\\langle 5, 3 \\rangle\\)", "\\(\\langle 7, 4 \\rangle\\)"],
+  answer: 0,
+  expl: "\\(2\\mathbf{v} = \\langle 6, -2 \\rangle\\), then add componentwise: \\(\\langle 1 + 6,\\; 2 - 2 \\rangle = \\langle 7, 0 \\rangle\\)."
+},
+{
+  id: 111, topic: "vectors", calc: false, type: "input",
+  q: "Compute the dot product \\(\\langle 2, 5 \\rangle \\cdot \\langle 3, -1 \\rangle\\).",
+  answer: ["1"],
+  expl: "Multiply matching components and add: \\(2(3) + 5(-1) = 6 - 5 = 1\\). The dot product is a single number, not a vector."
+},
+{
+  id: 112, topic: "vectors", calc: false, type: "mc",
+  q: "Which vector is orthogonal (perpendicular) to \\(\\langle 4, 2 \\rangle\\)?",
+  choices: ["\\(\\langle 2, 4 \\rangle\\)", "\\(\\langle -1, 2 \\rangle\\)", "\\(\\langle 4, -2 \\rangle\\)", "\\(\\langle 2, 1 \\rangle\\)"],
+  answer: 1,
+  expl: "Orthogonal means the dot product is zero. \\(\\langle 4,2 \\rangle \\cdot \\langle -1,2 \\rangle = -4 + 4 = 0\\) ✓. Quick trick: swap components and negate one."
+},
+{
+  id: 113, topic: "vectors", calc: false, type: "mc",
+  q: "Convert the polar point \\(\\left(4, \\dfrac{\\pi}{3}\\right)\\) to rectangular coordinates.",
+  choices: [
+    "\\((2, 2\\sqrt{3})\\)",
+    "\\((2\\sqrt{3}, 2)\\)",
+    "\\((4, \\sqrt{3})\\)",
+    "\\((2, 2)\\)"
+  ],
+  answer: 0,
+  expl: "\\(x = r\\cos\\theta = 4\\cos\\frac{\\pi}{3} = 4 \\cdot \\frac{1}{2} = 2\\); \\(y = r\\sin\\theta = 4\\sin\\frac{\\pi}{3} = 4 \\cdot \\frac{\\sqrt3}{2} = 2\\sqrt3\\)."
+},
+{
+  id: 114, topic: "vectors", calc: false, type: "mc",
+  q: "Convert the rectangular point \\((-3, 3)\\) to polar form with \\(r > 0\\) and \\(0 \\le \\theta < 2\\pi\\).",
+  choices: [
+    "\\(\\left(3\\sqrt{2}, \\dfrac{\\pi}{4}\\right)\\)",
+    "\\(\\left(3\\sqrt{2}, \\dfrac{3\\pi}{4}\\right)\\)",
+    "\\(\\left(\\sqrt{6}, \\dfrac{3\\pi}{4}\\right)\\)",
+    "\\(\\left(3\\sqrt{2}, \\dfrac{5\\pi}{4}\\right)\\)"
+  ],
+  answer: 1,
+  expl: "\\(r = \\sqrt{(-3)^2 + 3^2} = \\sqrt{18} = 3\\sqrt2\\). The point is in Quadrant II, and \\(\\tan\\theta = \\frac{3}{-3} = -1\\) gives \\(\\theta = \\frac{3\\pi}{4}\\). Always check the quadrant — don't just trust \\(\\arctan\\)."
+},
+{
+  id: 115, topic: "vectors", calc: false, type: "mc",
+  q: "Eliminate the parameter: \\(x = t + 1\\), \\(y = 2t - 3\\).",
+  choices: ["\\(y = 2x - 5\\)", "\\(y = 2x - 3\\)", "\\(y = 2x + 1\\)", "\\(y = \\frac{x}{2} - 3\\)"],
+  answer: 0,
+  expl: "Solve the first equation for \\(t = x - 1\\) and substitute: \\(y = 2(x - 1) - 3 = 2x - 5\\)."
+},
+{
+  id: 116, topic: "vectors", calc: true, type: "mc",
+  q: "A vector has magnitude 10 and direction angle \\(60°\\). What is its component form (rounded)?",
+  choices: [
+    "\\(\\langle 5, 8.66 \\rangle\\)",
+    "\\(\\langle 8.66, 5 \\rangle\\)",
+    "\\(\\langle 10, 60 \\rangle\\)",
+    "\\(\\langle 6, 8 \\rangle\\)"
+  ],
+  answer: 0,
+  expl: "Components are \\(\\langle \\|\\mathbf{v}\\|\\cos\\theta, \\|\\mathbf{v}\\|\\sin\\theta \\rangle = \\langle 10\\cos 60°, 10\\sin 60° \\rangle = \\langle 5, 8.66 \\rangle\\)."
+},
+
+// ================= LIMITS =================
+{
+  id: 117, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to 3} \\frac{x^2 - 9}{x - 3}\\)",
+  answer: ["6"],
+  expl: "Direct substitution gives \\(\\frac{0}{0}\\), so factor: \\(\\frac{(x-3)(x+3)}{x-3} = x + 3\\) for \\(x \\ne 3\\). The limit is \\(3 + 3 = 6\\)."
+},
+{
+  id: 118, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to \\infty} \\frac{3x^2 + 1}{x^2 - 5}\\)",
+  answer: ["3"],
+  expl: "Equal degrees top and bottom → the limit is the ratio of leading coefficients: \\(\\frac{3}{1} = 3\\). (Same rule as horizontal asymptotes.)"
+},
+{
+  id: 119, topic: "limits", calc: false, type: "input",
+  q: "Evaluate the famous limit: \\(\\displaystyle\\lim_{x \\to 0} \\frac{\\sin x}{x}\\)",
+  answer: ["1"],
+  expl: "This is THE limit to memorize: \\(\\lim_{x\\to 0}\\frac{\\sin x}{x} = 1\\) (with \\(x\\) in radians). For tiny angles, \\(\\sin x \\approx x\\)."
+},
+{
+  id: 120, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to 2} (x^2 + 1)\\)",
+  answer: ["5"],
+  expl: "Polynomials are continuous everywhere, so just substitute: \\(2^2 + 1 = 5\\). No tricks when direct substitution gives a real number."
+},
+{
+  id: 121, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to \\infty} \\frac{2x + 1}{x^2 + 3}\\)",
+  answer: ["0"],
+  expl: "The denominator's degree (2) beats the numerator's (1), so the fraction shrinks to 0 as \\(x\\) grows."
+},
+{
+  id: 122, topic: "limits", calc: false, type: "mc",
+  q: "What is \\(\\displaystyle\\lim_{x \\to 0^+} \\frac{1}{x}\\)?",
+  choices: ["\\(0\\)", "\\(1\\)", "\\(+\\infty\\)", "\\(-\\infty\\)"],
+  answer: 2,
+  expl: "As \\(x\\) approaches 0 from the right (small positive numbers), \\(\\frac{1}{x}\\) blows up: \\(\\frac{1}{0.01} = 100\\), \\(\\frac{1}{0.0001} = 10000\\), … so the limit is \\(+\\infty\\). From the left it would be \\(-\\infty\\)."
+},
+{
+  id: 123, topic: "limits", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to 1} \\frac{x^2 - 1}{x^2 + x - 2}\\)",
+  choices: ["\\(0\\)", "\\(\\dfrac{2}{3}\\)", "\\(1\\)", "does not exist"],
+  answer: 1,
+  expl: "It's \\(\\frac{0}{0}\\), so factor: \\(\\frac{(x-1)(x+1)}{(x+2)(x-1)} = \\frac{x+1}{x+2}\\) for \\(x \\ne 1\\). Substitute \\(x = 1\\): \\(\\frac{2}{3}\\)."
+},
+{
+  id: 124, topic: "limits", calc: false, type: "mc",
+  q: "The function \\(f(x) = \\dfrac{x^2 - 4}{x - 2}\\) has what kind of discontinuity at \\(x = 2\\)?",
+  choices: ["a vertical asymptote", "a removable discontinuity (hole)", "a jump discontinuity", "it is continuous there"],
+  answer: 1,
+  expl: "The factor \\(x - 2\\) cancels: \\(f(x) = x + 2\\) for \\(x \\ne 2\\). The limit exists (it's 4) but \\(f(2)\\) is undefined — that's a hole, a removable discontinuity. Asymptotes happen when the factor does NOT cancel."
+},
+
+// ================= EXTRAS: mixed reinforcement =================
+{
+  id: 125, topic: "trig", calc: false, type: "mc",
+  q: "What is the exact value of \\(\\sin\\dfrac{7\\pi}{6}\\)?",
+  choices: ["\\(\\dfrac{1}{2}\\)", "\\(-\\dfrac{1}{2}\\)", "\\(-\\dfrac{\\sqrt{3}}{2}\\)", "\\(\\dfrac{\\sqrt{3}}{2}\\)"],
+  answer: 1,
+  expl: "\\(\\frac{7\\pi}{6}\\) is in Quadrant III (just past \\(\\pi\\)), where sine is negative. Reference angle \\(\\frac{\\pi}{6}\\), so \\(\\sin\\frac{7\\pi}{6} = -\\frac{1}{2}\\)."
+},
+{
+  id: 126, topic: "trig", calc: false, type: "mc",
+  q: "Evaluate \\(\\arccos\\!\\left(-\\dfrac{1}{2}\\right)\\) (the principal value).",
+  choices: ["\\(\\dfrac{\\pi}{3}\\)", "\\(\\dfrac{2\\pi}{3}\\)", "\\(\\dfrac{4\\pi}{3}\\)", "\\(-\\dfrac{\\pi}{3}\\)"],
+  answer: 1,
+  expl: "\\(\\arccos\\) returns angles in \\([0, \\pi]\\). The angle in that range with cosine \\(-\\frac{1}{2}\\) is \\(\\frac{2\\pi}{3}\\) (Quadrant II, reference angle \\(\\frac{\\pi}{3}\\))."
+},
+{
+  id: 127, topic: "trig", calc: true, type: "mc",
+  q: "A Ferris wheel's height is modeled by \\(h(t) = 25\\sin\\!\\left(\\dfrac{\\pi}{15}t\\right) + 30\\) (meters, \\(t\\) in seconds). What are its maximum height and period?",
+  choices: [
+    "max 55 m, period 30 s",
+    "max 25 m, period 15 s",
+    "max 55 m, period 15 s",
+    "max 30 m, period 30 s"
+  ],
+  answer: 0,
+  expl: "Max = midline + amplitude = \\(30 + 25 = 55\\) m. Period = \\(\\frac{2\\pi}{B} = \\frac{2\\pi}{\\pi/15} = 30\\) s."
+},
+{
+  id: 128, topic: "explog", calc: true, type: "mc",
+  q: "A car worth \\(\\$24{,}000\\) depreciates 15% per year. Its value after 4 years is closest to…",
+  choices: ["\\(\\$9{,}600\\)", "\\(\\$12{,}528\\)", "\\(\\$14{,}400\\)", "\\(\\$17{,}340\\)"],
+  answer: 1,
+  expl: "Losing 15% per year means keeping 85%: \\(V = 24000(0.85)^4 = 24000(0.52200625) \\approx \\$12{,}528\\). Trap: don't subtract \\(15\\% \\times 4 = 60\\%\\) — decay is multiplicative."
+},
+{
+  id: 129, topic: "explog", calc: true, type: "mc",
+  q: "How long (to the nearest year) does it take an investment to double at 5% compounded continuously?",
+  choices: ["10 years", "14 years", "16 years", "20 years"],
+  answer: 1,
+  expl: "Solve \\(2 = e^{0.05t}\\): \\(t = \\frac{\\ln 2}{0.05} = \\frac{0.6931}{0.05} \\approx 13.9 \\approx 14\\) years. (The 'Rule of 70': \\(70 \\div 5 = 14\\).)"
+},
+{
+  id: 130, topic: "functions", calc: false, type: "mc",
+  q: "If \\(f(x) = \\sqrt{x}\\) and \\(g(x) = x - 2\\), what is the domain of \\((f \\circ g)(x) = \\sqrt{x - 2}\\,\\)?",
+  choices: ["\\(x \\ge 0\\)", "\\(x \\ge 2\\)", "\\(x > 2\\)", "all real numbers"],
+  answer: 1,
+  expl: "Need the inside of the root non-negative: \\(x - 2 \\ge 0\\), so \\(x \\ge 2\\). The domain of a composition comes from the \\(\\textbf{final}\\) expression AND any inner restrictions."
+},
+{
+  id: 131, topic: "poly", calc: true, type: "mc",
+  q: "A rocket's height is \\(h(t) = -16t^2 + 96t + 5\\) feet after \\(t\\) seconds. What is its maximum height?",
+  choices: ["\\(96\\) ft", "\\(149\\) ft", "\\(144\\) ft", "\\(101\\) ft"],
+  answer: 1,
+  expl: "Vertex at \\(t = -\\frac{b}{2a} = -\\frac{96}{-32} = 3\\) s. Then \\(h(3) = -16(9) + 96(3) + 5 = -144 + 288 + 5 = 149\\) ft."
+},
+{
+  id: 132, topic: "seqser", calc: true, type: "mc",
+  q: "A ball is dropped from 27 ft and rebounds to \\(\\frac{2}{3}\\) of its previous height on each bounce. How high is the third rebound?",
+  choices: ["\\(18\\) ft", "\\(12\\) ft", "\\(8\\) ft", "\\(6\\) ft"],
+  answer: 2,
+  expl: "Each rebound multiplies by \\(\\frac{2}{3}\\): first \\(27 \\cdot \\frac{2}{3} = 18\\), second \\(12\\), third \\(8\\) ft. Geometric with \\(r = \\frac{2}{3}\\)."
+},
+
+// =====================================================================
+// Questions modeled on the Math 4H final review packets (Rev 6 & Rev 7)
+// =====================================================================
+
+// ================= DERIVATIVES: RULES =================
+{
+  id: 133, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(f(x) = e^x(5 - 6x^2)\\), find \\(f'(x)\\).",
+  choices: [
+    "\\(e^x(-12x)\\)",
+    "\\(e^x(-6x^2 - 12x + 5)\\)",
+    "\\(e^x(5 - 6x^2) - 12x\\)",
+    "\\(e^x(6x^2 + 12x + 5)\\)"
+  ],
+  answer: 1,
+  expl: "Product rule: \\(f'(x) = e^x(5 - 6x^2) + e^x(-12x)\\). Factor out \\(e^x\\): \\(e^x(5 - 6x^2 - 12x) = e^x(-6x^2 - 12x + 5)\\). This is straight off your review packet!"
+},
+{
+  id: 134, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(f(x) = e^x(3 - 2x)\\), find \\(f'(x)\\).",
+  choices: ["\\(-2e^x\\)", "\\(e^x(3 - 2x) - 2\\)", "\\(e^x(1 - 2x)\\)", "\\(e^x(5 - 2x)\\)"],
+  answer: 2,
+  expl: "Product rule: \\(f' = e^x(3 - 2x) + e^x(-2) = e^x(3 - 2x - 2) = e^x(1 - 2x)\\). With \\(e^x\\) products, always factor \\(e^x\\) out at the end."
+},
+{
+  id: 135, topic: "deriv", calc: false, type: "mc",
+  q: "What is the instantaneous rate of change at \\(x = 2\\) of \\(f(x) = \\dfrac{e^{3x}}{4 - x}\\)?",
+  choices: ["\\(\\dfrac{7e^6}{4}\\)", "\\(\\dfrac{3e^6}{2}\\)", "\\(\\dfrac{5e^6}{4}\\)", "\\(7e^6\\)"],
+  answer: 0,
+  expl: "Quotient rule: \\(f'(x) = \\dfrac{(4-x)\\cdot 3e^{3x} - e^{3x}(-1)}{(4-x)^2} = \\dfrac{e^{3x}\\left(3(4-x) + 1\\right)}{(4-x)^2}\\). At \\(x = 2\\): \\(\\dfrac{e^6(6 + 1)}{2^2} = \\dfrac{7e^6}{4}\\). Watch the sign: the derivative of \\(4 - x\\) is \\(-1\\), and subtracting it gives \\(+e^{3x}\\)."
+},
+{
+  id: 136, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\sin\\!\\left(\\dfrac{2x^3}{5}\\right)\\).",
+  choices: [
+    "\\(\\cos\\!\\left(\\frac{2x^3}{5}\\right)\\)",
+    "\\(\\frac{6x^2}{5}\\cos\\!\\left(\\frac{2x^3}{5}\\right)\\)",
+    "\\(-\\frac{6x^2}{5}\\cos\\!\\left(\\frac{2x^3}{5}\\right)\\)",
+    "\\(\\frac{6x^2}{5}\\sin\\!\\left(\\frac{2x^3}{5}\\right)\\)"
+  ],
+  answer: 1,
+  expl: "Chain rule: derivative of the outside (\\(\\sin \\to \\cos\\)) times derivative of the inside: \\(\\frac{d}{dx}\\frac{2x^3}{5} = \\frac{6x^2}{5}\\). So the answer is \\(\\frac{6x^2}{5}\\cos\\left(\\frac{2x^3}{5}\\right)\\)."
+},
+{
+  id: 137, topic: "deriv", calc: false, type: "mc",
+  q: "Given \\(f(x) = \\sqrt{2x^2 - 7x + 2}\\), find \\(f'(0)\\).",
+  choices: ["\\(-\\dfrac{7}{2\\sqrt{2}}\\)", "\\(-\\dfrac{7}{\\sqrt{2}}\\)", "\\(\\dfrac{1}{2\\sqrt{2}}\\)", "\\(-7\\)"],
+  answer: 0,
+  expl: "Write as a power and chain-rule it: \\(f'(x) = \\frac{1}{2}(2x^2 - 7x + 2)^{-1/2}(4x - 7) = \\frac{4x - 7}{2\\sqrt{2x^2 - 7x + 2}}\\). At \\(x = 0\\): \\(\\frac{-7}{2\\sqrt{2}}\\)."
+},
+{
+  id: 138, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(y = \\tan x - \\cos x\\), find \\(\\dfrac{dy}{dx}\\).",
+  choices: [
+    "\\(\\sec^2 x - \\sin x\\)",
+    "\\(\\sec^2 x + \\sin x\\)",
+    "\\(\\cot x + \\sin x\\)",
+    "\\(\\sec x\\tan x + \\sin x\\)"
+  ],
+  answer: 1,
+  expl: "\\(\\frac{d}{dx}\\tan x = \\sec^2 x\\) and \\(\\frac{d}{dx}\\cos x = -\\sin x\\). So \\(y' = \\sec^2 x - (-\\sin x) = \\sec^2 x + \\sin x\\). The double negative is the whole trap."
+},
+{
+  id: 139, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = 6\\sqrt{x} + x^2 - x + 2\\), find \\(f'(1)\\).",
+  answer: ["4"],
+  expl: "Rewrite \\(6\\sqrt{x} = 6x^{1/2}\\), so \\(f'(x) = 3x^{-1/2} + 2x - 1 = \\frac{3}{\\sqrt{x}} + 2x - 1\\). At \\(x = 1\\): \\(3 + 2 - 1 = 4\\)."
+},
+{
+  id: 140, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,e^{5x}\\).",
+  choices: ["\\(e^{5x}\\)", "\\(5e^{5x}\\)", "\\(5xe^{5x-1}\\)", "\\(\\frac{1}{5}e^{5x}\\)"],
+  answer: 1,
+  expl: "\\(e^{kx}\\) differentiates to \\(ke^{kx}\\) (chain rule: the inside \\(5x\\) has derivative 5). Don't use the power rule on \\(e\\) — the variable is in the exponent."
+},
+{
+  id: 141, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = x^3 - 4x^2\\), find \\(f'(2)\\).",
+  answer: ["-4"],
+  expl: "Power rule: \\(f'(x) = 3x^2 - 8x\\). At \\(x = 2\\): \\(3(4) - 8(2) = 12 - 16 = -4\\)."
+},
+{
+  id: 142, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,(3x^2 + 1)^4\\).",
+  choices: [
+    "\\(4(3x^2 + 1)^3\\)",
+    "\\(24x(3x^2 + 1)^3\\)",
+    "\\(6x(3x^2 + 1)^4\\)",
+    "\\((6x)^4\\)"
+  ],
+  answer: 1,
+  expl: "Chain rule: bring the 4 down, drop the power to 3, then multiply by the inside's derivative \\(6x\\): \\(4(3x^2+1)^3 \\cdot 6x = 24x(3x^2+1)^3\\). Forgetting the inner derivative gives choice A — classic."
+},
+{
+  id: 143, topic: "deriv", calc: false, type: "input",
+  q: "Let \\(p(x) = f(x)\\sin x\\). Given \\(f(0) = 5\\) and \\(f'(0) = 8\\), find \\(p'(0)\\).",
+  answer: ["5"],
+  expl: "Product rule: \\(p'(x) = f'(x)\\sin x + f(x)\\cos x\\). At \\(x = 0\\): \\(8\\sin 0 + 5\\cos 0 = 0 + 5 = 5\\). (Straight from your packet's table problem.)"
+},
+{
+  id: 144, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,\\ln x\\).",
+  choices: ["\\(\\dfrac{1}{x}\\)", "\\(\\ln x\\)", "\\(e^x\\)", "\\(\\dfrac{1}{\\ln x}\\)"],
+  answer: 0,
+  expl: "It's on the formula sheet but know it cold: \\(\\frac{d}{dx}\\ln x = \\frac{1}{x}\\)."
+},
+
+// ================= DERIVATIVES: TANGENT LINES & MOTION =================
+{
+  id: 145, topic: "derivapp", calc: true, type: "mc",
+  q: "Write the equation of the line tangent to \\(f(x) = 6\\sqrt{x} + x^2 - x + 2\\) at \\(x = 1\\).",
+  choices: [
+    "\\(y - 8 = 4(x - 1)\\)",
+    "\\(y - 8 = 5(x - 1)\\)",
+    "\\(y - 4 = 8(x - 1)\\)",
+    "\\(y = 4x\\)"
+  ],
+  answer: 0,
+  expl: "Two ingredients: the point and the slope. Point: \\(f(1) = 6 + 1 - 1 + 2 = 8\\). Slope: \\(f'(x) = \\frac{3}{\\sqrt{x}} + 2x - 1\\), so \\(f'(1) = 4\\). Tangent: \\(y - 8 = 4(x - 1)\\). (On the calculator section you can evaluate \\(\\frac{d}{dx}\\) at \\(x=1\\) directly.)"
+},
+{
+  id: 146, topic: "derivapp", calc: false, type: "mc",
+  q: "Write the equation of the line tangent to \\(f(x) = x^2 + 3x\\) at \\(x = 1\\).",
+  choices: ["\\(y = 5x - 1\\)", "\\(y = 5x + 4\\)", "\\(y = 2x + 2\\)", "\\(y = 3x + 1\\)"],
+  answer: 0,
+  expl: "Point: \\(f(1) = 4\\). Slope: \\(f'(x) = 2x + 3\\), so \\(f'(1) = 5\\). Then \\(y - 4 = 5(x - 1)\\), which simplifies to \\(y = 5x - 1\\)."
+},
+{
+  id: 147, topic: "derivapp", calc: false, type: "mc",
+  q: "Given \\(f(x) = \\dfrac{x^3}{3} - \\dfrac{3x^2}{2} - 10x - 1\\), on what interval is \\(f\\) decreasing?",
+  choices: ["\\((-5, 2)\\)", "\\((-2, 5)\\)", "\\((-\\infty, -2)\\)", "\\((5, \\infty)\\)"],
+  answer: 1,
+  expl: "\\(f\\) decreases where \\(f' < 0\\). \\(f'(x) = x^2 - 3x - 10 = (x - 5)(x + 2)\\), which is negative between its zeros: \\(-2 < x < 5\\). Make the sign chart — it's the whole problem."
+},
+{
+  id: 148, topic: "derivapp", calc: false, type: "mc",
+  q: "Given \\(f'(x) = (x + 3)^2(x - 1)\\) (the derivative of \\(f\\)), at which \\(x\\)-value(s) does \\(f\\) have a relative extremum?",
+  choices: ["\\(x = -3\\) and \\(x = 1\\)", "\\(x = 1\\) only", "\\(x = -3\\) only", "none"],
+  answer: 1,
+  expl: "Extrema need \\(f'\\) to \\(\\textbf{change sign}\\). The squared factor \\((x+3)^2\\) never changes sign, so nothing happens at \\(x = -3\\). At \\(x = 1\\), \\(f'\\) goes from negative to positive → relative minimum. This exact trap is on your packet."
+},
+{
+  id: 149, topic: "derivapp", calc: false, type: "mc",
+  q: "Particle A moves along the \\(x\\)-axis with position \\(f(t) = 4t^2 - 16t + 6\\) for \\(0 \\le t \\le 8\\). When is the particle moving to the left?",
+  choices: ["\\((2, 8]\\)", "\\([0, 2)\\)", "\\([0, 4)\\)", "never"],
+  answer: 1,
+  expl: "Moving left means velocity is negative. \\(v(t) = f'(t) = 8t - 16 < 0\\) when \\(t < 2\\). So the particle moves left on \\([0, 2)\\)."
+},
+{
+  id: 150, topic: "derivapp", calc: false, type: "input",
+  q: "Particle B has position \\(g(t) = \\dfrac{t^3}{3} + 2t^2 - 12t + 1\\). Find its velocity at \\(t = 3\\).",
+  answer: ["9"],
+  expl: "Velocity is the derivative of position: \\(v(t) = g'(t) = t^2 + 4t - 12\\). At \\(t = 3\\): \\(9 + 12 - 12 = 9\\)."
+},
+{
+  id: 151, topic: "derivapp", calc: false, type: "input",
+  q: "Particle B has position \\(g(t) = \\dfrac{t^3}{3} + 2t^2 - 12t + 1\\). Find its acceleration at \\(t = 3\\).",
+  answer: ["10"],
+  expl: "Acceleration is the second derivative: \\(g'(t) = t^2 + 4t - 12\\), so \\(g''(t) = 2t + 4\\). At \\(t = 3\\): \\(2(3) + 4 = 10\\)."
+},
+{
+  id: 152, topic: "derivapp", calc: false, type: "mc",
+  q: "At \\(t = 3\\), a particle has velocity \\(9\\) and acceleration \\(10\\). Is its speed increasing, decreasing, or neither?",
+  choices: [
+    "increasing, because velocity and acceleration have the same sign",
+    "decreasing, because acceleration is larger than velocity",
+    "neither, because velocity is not zero",
+    "cannot be determined"
+  ],
+  answer: 0,
+  expl: "The speed rule: speed increases when velocity and acceleration have the SAME sign, decreases when they have opposite signs. Here both are positive → speed increasing. Always justify with the signs — that's the explanation your teacher wants."
+},
+{
+  id: 153, topic: "derivapp", calc: false, type: "input",
+  q: "A particle's position is \\(s(t) = t^2 - 6t + 8\\). At what time \\(t\\) is the particle at rest?",
+  answer: ["3"],
+  expl: "At rest means velocity \\(= 0\\): \\(v(t) = s'(t) = 2t - 6 = 0\\) gives \\(t = 3\\)."
+},
+{
+  id: 154, topic: "derivapp", calc: false, type: "mc",
+  q: "If \\(f'(x) = x^2 - 4\\), on which interval(s) is \\(f\\) increasing?",
+  choices: [
+    "\\((-2, 2)\\)",
+    "\\((-\\infty, -2) \\cup (2, \\infty)\\)",
+    "\\((0, \\infty)\\)",
+    "\\((2, \\infty)\\) only"
+  ],
+  answer: 1,
+  expl: "\\(f\\) increases where \\(f' > 0\\): \\(x^2 - 4 = (x-2)(x+2) > 0\\) outside the roots, so \\(x < -2\\) or \\(x > 2\\). An upward parabola is positive outside its zeros."
+},
+
+// ================= LIMITS & CONTINUITY (packet additions) =================
+{
+  id: 155, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to -5} \\frac{x^2 - 25}{4x + 20}\\)",
+  answer: ["-5/2", "-2.5"],
+  expl: "It's \\(\\frac{0}{0}\\), so factor: \\(\\dfrac{(x+5)(x-5)}{4(x+5)} = \\dfrac{x-5}{4}\\). Substitute \\(x = -5\\): \\(\\dfrac{-10}{4} = -\\dfrac{5}{2}\\)."
+},
+{
+  id: 156, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{n \\to -\\infty} \\frac{-5n^5 + 3n}{4n^5 + 8n}\\)",
+  answer: ["-5/4", "-1.25"],
+  expl: "Equal degrees (both 5) → the limit at \\(\\pm\\infty\\) is the ratio of leading coefficients: \\(-\\dfrac{5}{4}\\). The lower-power terms don't matter."
+},
+{
+  id: 157, topic: "limits", calc: false, type: "input",
+  q: "Let \\(f(x) = \\dfrac{2x^2 - 2x - 12}{x^2 - 9}\\) for \\(x \\ne \\pm 3\\), and \\(f(3) = k\\). Find the value of \\(k\\) that makes \\(f\\) continuous at \\(x = 3\\).",
+  answer: ["5/3"],
+  expl: "Continuity needs \\(k = \\lim_{x\\to 3} f(x)\\). Factor: \\(\\dfrac{2(x-3)(x+2)}{(x-3)(x+3)} = \\dfrac{2(x+2)}{x+3}\\). At \\(x = 3\\): \\(\\dfrac{2(5)}{6} = \\dfrac{5}{3}\\)."
+},
+{
+  id: 158, topic: "limits", calc: false, type: "mc",
+  q: "A particle's velocity \\(v(t)\\) is continuous, with \\(v(2) = 5\\) and \\(v(3) = -9\\). Which theorem guarantees the particle is at rest (\\(v = 0\\)) at some time between \\(t = 2\\) and \\(t = 3\\)?",
+  choices: [
+    "the Intermediate Value Theorem",
+    "the Fundamental Theorem of Algebra",
+    "the Remainder Theorem",
+    "the Pythagorean Theorem"
+  ],
+  answer: 0,
+  expl: "Since \\(v\\) is continuous and goes from \\(+5\\) to \\(-9\\), it must pass through every value in between — including 0. That's the Intermediate Value Theorem (IVT). On the free-response, cite continuity AND the sign change."
+},
+{
+  id: 159, topic: "limits", calc: false, type: "mc",
+  q: "At \\(x = 0\\): \\(\\displaystyle\\lim_{x \\to 0^-} f(x) = 4\\) and \\(\\displaystyle\\lim_{x \\to 0^+} f(x) = -1\\). What is \\(\\displaystyle\\lim_{x \\to 0} f(x)\\)?",
+  choices: ["\\(4\\)", "\\(-1\\)", "\\(\\frac{3}{2}\\)", "it does not exist"],
+  answer: 3,
+  expl: "A two-sided limit exists only when the left and right limits agree. \\(4 \\ne -1\\), so the limit does not exist (DNE). Reading these off a graph is exactly the packet's graph question."
+},
+
+// ================= INTEGRALS & RIEMANN SUMS =================
+{
+  id: 160, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_2^3 \\frac{1}{x^2}\\,dx\\)",
+  answer: ["1/6"],
+  expl: "Rewrite as a power: \\(\\int_2^3 x^{-2}dx = \\left[-x^{-1}\\right]_2^3 = -\\frac{1}{3} - \\left(-\\frac{1}{2}\\right) = \\frac{1}{2} - \\frac{1}{3} = \\frac{1}{6}\\)."
+},
+{
+  id: 161, topic: "integ", calc: false, type: "input",
+  q: "The function \\(f\\) is continuous, with table values: \\(f(3) = 11\\), \\(f(6) = 29\\), \\(f(8) = 41\\), \\(f(9) = 19\\). Using the subintervals \\([3,6]\\), \\([6,8]\\), and \\([8,9]\\), what is the left Riemann sum approximation of \\(\\displaystyle\\int_3^9 f(x)\\,dx\\)?",
+  answer: ["132"],
+  expl: "Left Riemann sum: each rectangle's height is the LEFT endpoint's value, width is the subinterval length: \\(3(11) + 2(29) + 1(41) = 33 + 58 + 41 = 132\\). (This is the exact problem from your packet.)"
+},
+{
+  id: 162, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_0^2 (2x + 1)\\,dx\\)",
+  answer: ["6"],
+  expl: "Antiderivative: \\(x^2 + x\\). Evaluate: \\((4 + 2) - (0 + 0) = 6\\)."
+},
+{
+  id: 163, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_1^4 2x\\,dx\\)",
+  answer: ["15"],
+  expl: "Antiderivative of \\(2x\\) is \\(x^2\\): \\(\\left[x^2\\right]_1^4 = 16 - 1 = 15\\)."
+},
+{
+  id: 164, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_0^1 3x^2\\,dx\\)",
+  answer: ["1"],
+  expl: "Antiderivative of \\(3x^2\\) is \\(x^3\\): \\(\\left[x^3\\right]_0^1 = 1 - 0 = 1\\)."
+},
+{
+  id: 165, topic: "integ", calc: false, type: "mc",
+  q: "If \\(f\\) is increasing on \\([a, b]\\), a LEFT Riemann sum for \\(\\displaystyle\\int_a^b f(x)\\,dx\\) is…",
+  choices: ["an underestimate", "an overestimate", "exact", "impossible to compare"],
+  answer: 0,
+  expl: "For an increasing function, the left endpoint is the lowest point of each subinterval, so every rectangle sits under the curve → underestimate. (Right endpoints would overestimate; the reverse holds for decreasing functions.)"
+},
+
+// ================= TRIG (packet additions) =================
+{
+  id: 166, topic: "trig", calc: false, type: "input",
+  q: "What is the exact value of \\(\\sec\\dfrac{5\\pi}{3} - \\cot\\dfrac{7\\pi}{4}\\)?",
+  answer: ["3"],
+  expl: "\\(\\sec\\frac{5\\pi}{3} = \\frac{1}{\\cos(5\\pi/3)} = \\frac{1}{1/2} = 2\\) (QIV, cosine positive). \\(\\cot\\frac{7\\pi}{4} = \\frac{\\cos}{\\sin} = \\frac{\\sqrt2/2}{-\\sqrt2/2} = -1\\). So \\(2 - (-1) = 3\\)."
+},
+{
+  id: 167, topic: "trigid", calc: false, type: "mc",
+  q: "Simplify: \\(\\dfrac{\\csc^2 x}{\\cot^2 x - 1}\\)",
+  choices: [
+    "\\(\\dfrac{1}{\\cos^2 x - \\sin^2 x}\\) (i.e. \\(\\sec 2x\\))",
+    "\\(\\csc 2x\\)",
+    "\\(1\\)",
+    "\\(\\tan^2 x\\)"
+  ],
+  answer: 0,
+  expl: "Multiply top and bottom by \\(\\sin^2 x\\): numerator becomes 1, denominator becomes \\(\\cos^2 x - \\sin^2 x\\). So the expression is \\(\\frac{1}{\\cos^2 x - \\sin^2 x} = \\frac{1}{\\cos 2x} = \\sec 2x\\)."
+},
+{
+  id: 168, topic: "trigid", calc: false, type: "mc",
+  q: "Solve on \\([0, 2\\pi]\\): \\(\\sqrt{3}\\cot\\theta + 2\\cos\\theta\\cot\\theta = 0\\)",
+  choices: [
+    "\\(\\left\\{\\frac{\\pi}{2}, \\frac{3\\pi}{2}, \\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\right\\}\\)",
+    "\\(\\left\\{\\frac{\\pi}{2}, \\frac{3\\pi}{2}\\right\\}\\) only",
+    "\\(\\left\\{\\frac{\\pi}{6}, \\frac{11\\pi}{6}\\right\\}\\)",
+    "\\(\\left\\{\\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\right\\}\\) only"
+  ],
+  answer: 0,
+  expl: "Factor out \\(\\cot\\theta\\): \\(\\cot\\theta(\\sqrt{3} + 2\\cos\\theta) = 0\\). \\(\\cot\\theta = 0\\) where \\(\\cos\\theta = 0\\): \\(\\frac{\\pi}{2}, \\frac{3\\pi}{2}\\). And \\(\\cos\\theta = -\\frac{\\sqrt3}{2}\\): \\(\\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\). Never divide by \\(\\cot\\theta\\) — you'd lose half the answers."
+},
+{
+  id: 169, topic: "trigid", calc: true, type: "mc",
+  q: "Solve on \\([0, 2\\pi)\\), rounding to the nearest thousandth: \\(e^x\\tan^2 x - e^x\\tan x - 12e^x = 0\\)",
+  choices: [
+    "\\(\\{1.326,\\ 1.893,\\ 4.467,\\ 5.034\\}\\)",
+    "\\(\\{1.326,\\ 4.467\\}\\) only",
+    "\\(\\{0,\\ 1.326,\\ 1.893\\}\\)",
+    "no solution, because \\(e^x \\ne 0\\)"
+  ],
+  answer: 0,
+  expl: "Factor out \\(e^x\\) (never zero, so discard it): \\(\\tan^2 x - \\tan x - 12 = (\\tan x - 4)(\\tan x + 3) = 0\\). \\(\\tan x = 4\\): \\(x = 1.326\\) and \\(1.326 + \\pi = 4.467\\). \\(\\tan x = -3\\): reference \\(1.249\\), so \\(\\pi - 1.249 = 1.893\\) and \\(2\\pi - 1.249 = 5.034\\). Tangent solutions repeat every \\(\\pi\\)."
+},
+
+// ================= EXP/LOG (packet additions) =================
+{
+  id: 170, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(\\dfrac{1}{2}e^{\\ln 5x} = 40\\)",
+  answer: ["16"],
+  expl: "Multiply by 2: \\(e^{\\ln 5x} = 80\\). Since \\(e\\) and \\(\\ln\\) undo each other, \\(5x = 80\\), so \\(x = 16\\)."
+},
+{
+  id: 171, topic: "explog", calc: true, type: "mc",
+  q: "Solve, to the nearest thousandth: \\(-2 + \\ln(3 - x) = 7\\)",
+  choices: [
+    "\\(x \\approx -8100.084\\)",
+    "\\(x \\approx 8103.084\\)",
+    "\\(x \\approx -145.413\\)",
+    "\\(x \\approx 2.999\\)"
+  ],
+  answer: 0,
+  expl: "Isolate the log: \\(\\ln(3 - x) = 9\\). Exponentiate: \\(3 - x = e^9\\), so \\(x = 3 - e^9 \\approx 3 - 8103.084 = -8100.084\\). Yes, the answer is supposed to be huge and negative — don't second-guess it."
+},
+{
+  id: 172, topic: "explog", calc: false, type: "mc",
+  q: "For \\(f(x) = e^{x+3} + 5\\), which statement is true?",
+  choices: [
+    "horizontal asymptote \\(y = 5\\); range \\((5, \\infty)\\); shifted left 3, up 5",
+    "horizontal asymptote \\(y = 3\\); range \\((3, \\infty)\\); shifted right 3, up 5",
+    "horizontal asymptote \\(y = 5\\); range \\([5, \\infty)\\); shifted right 3, up 5",
+    "no asymptote; range all reals"
+  ],
+  answer: 0,
+  expl: "Parent \\(y = e^x\\) has asymptote \\(y = 0\\). The \\(+5\\) outside lifts the asymptote to \\(y = 5\\) and the \\(x + 3\\) inside shifts LEFT 3. The graph never touches the asymptote, so the range is \\((5, \\infty)\\) — open parenthesis. As \\(x \\to -\\infty\\), \\(y \\to 5\\)."
+},
+
+// ================= POLY/RATIONALS (packet additions) =================
+{
+  id: 173, topic: "poly", calc: false, type: "mc",
+  q: "Determine the domain, in interval notation, of \\(f(x) = \\dfrac{2x + 1}{x^2 + 7x - 30}\\).",
+  choices: [
+    "\\((-\\infty, -10) \\cup (-10, 3) \\cup (3, \\infty)\\)",
+    "\\((-\\infty, -3) \\cup (-3, 10) \\cup (10, \\infty)\\)",
+    "\\((-\\infty, -\\frac{1}{2}) \\cup (-\\frac{1}{2}, \\infty)\\)",
+    "all real numbers"
+  ],
+  answer: 0,
+  expl: "Fractions are undefined when the denominator is 0: \\(x^2 + 7x - 30 = (x + 10)(x - 3) = 0\\) at \\(x = -10, 3\\). Cut those two points out of the number line."
+},
+{
+  id: 174, topic: "poly", calc: false, type: "mc",
+  q: "For \\(g(x) = \\dfrac{3x^2 - 6x - 105}{x^2 - 25}\\), which statement is true?",
+  choices: [
+    "vertical asymptote \\(x = 5\\); hole at \\(\\left(-5, \\frac{18}{5}\\right)\\); horizontal asymptote \\(y = 3\\)",
+    "vertical asymptotes \\(x = 5\\) and \\(x = -5\\); horizontal asymptote \\(y = 3\\)",
+    "vertical asymptote \\(x = -5\\); hole at \\(\\left(5, \\frac{18}{5}\\right)\\); horizontal asymptote \\(y = 3\\)",
+    "no vertical asymptotes; horizontal asymptote \\(y = 0\\)"
+  ],
+  answer: 0,
+  expl: "Factor: \\(\\dfrac{3(x-7)(x+5)}{(x-5)(x+5)}\\). The \\((x+5)\\) cancels → hole at \\(x = -5\\) with height \\(\\frac{3(-12)}{-10} = \\frac{18}{5}\\). The \\((x-5)\\) doesn't cancel → vertical asymptote \\(x = 5\\). Equal degrees → \\(y = \\frac{3}{1} = 3\\). On the test, justify with limits."
+},
+{
+  id: 175, topic: "poly", calc: false, type: "mc",
+  q: "Find the domain of \\(y = \\sqrt{7 - 4x}\\), in interval notation.",
+  choices: [
+    "\\(\\left(-\\infty, \\frac{7}{4}\\right]\\)",
+    "\\(\\left[\\frac{7}{4}, \\infty\\right)\\)",
+    "\\(\\left(-\\infty, \\frac{7}{4}\\right)\\)",
+    "\\(\\left[-\\frac{7}{4}, \\infty\\right)\\)"
+  ],
+  answer: 0,
+  expl: "Need \\(7 - 4x \\ge 0\\), so \\(x \\le \\frac{7}{4}\\). Careful: dividing by \\(-4\\) flips the inequality. Square bracket because equality is allowed."
+},
+
+// ================= FUNCTIONS (packet additions) =================
+{
+  id: 176, topic: "functions", calc: false, type: "input",
+  q: "Given \\(f(x) = \\begin{cases} e^x, & x > 0 \\\\ 2^{3x}, & x \\le 0 \\end{cases}\\) and \\(g(x) = \\begin{cases} \\ln\\frac{x}{4}, & x \\ge 4 \\\\ x + 1, & x < 4 \\end{cases}\\), find \\(f(g(4))\\).",
+  answer: ["1"],
+  expl: "Inside out, choosing the right branch each time. \\(g(4)\\): since \\(4 \\ge 4\\), use \\(\\ln\\frac{4}{4} = \\ln 1 = 0\\). Then \\(f(0)\\): since \\(0 \\le 0\\), use \\(2^{3(0)} = 2^0 = 1\\)."
+},
+{
+  id: 177, topic: "functions", calc: false, type: "mc",
+  q: "Find the inverse of \\(g(x) = x^2 - 49\\).",
+  choices: [
+    "\\(g^{-1}(x) = \\pm\\sqrt{x + 49}\\)",
+    "\\(g^{-1}(x) = \\pm\\sqrt{x - 49}\\)",
+    "\\(g^{-1}(x) = \\sqrt{x} + 7\\)",
+    "\\(g^{-1}(x) = \\frac{1}{x^2 - 49}\\)"
+  ],
+  answer: 0,
+  expl: "Swap and solve: \\(x = y^2 - 49 \\Rightarrow y^2 = x + 49 \\Rightarrow y = \\pm\\sqrt{x + 49}\\). The \\(+49\\) (not \\(-49\\)) is the trap — move the constant to the other side first."
+},
+
+// ================= CONICS (packet additions) =================
+{
+  id: 178, topic: "conics", calc: false, type: "mc",
+  q: "Express \\(4x^2 + 16y^2 - 32x - 192y + 576 = 0\\) in standard form.",
+  choices: [
+    "\\(\\dfrac{(x-4)^2}{16} + \\dfrac{(y-6)^2}{4} = 1\\)",
+    "\\(\\dfrac{(x-4)^2}{4} + \\dfrac{(y-6)^2}{16} = 1\\)",
+    "\\(\\dfrac{(x+4)^2}{16} + \\dfrac{(y+6)^2}{4} = 1\\)",
+    "\\(\\dfrac{(x-4)^2}{64} + \\dfrac{(y-6)^2}{16} = 1\\)"
+  ],
+  answer: 0,
+  expl: "Complete the square: \\(4(x^2 - 8x + 16) + 16(y^2 - 12y + 36) = -576 + 64 + 576 = 64\\). So \\(4(x-4)^2 + 16(y-6)^2 = 64\\); divide by 64: \\(\\frac{(x-4)^2}{16} + \\frac{(y-6)^2}{4} = 1\\). Remember to multiply what you added by the leading 4 and 16."
+},
+{
+  id: 179, topic: "conics", calc: false, type: "mc",
+  q: "Find the foci of the ellipse \\(\\dfrac{(x-4)^2}{16} + \\dfrac{(y-6)^2}{4} = 1\\).",
+  choices: [
+    "\\((4 \\pm 2\\sqrt{3},\\ 6)\\)",
+    "\\((4,\\ 6 \\pm 2\\sqrt{3})\\)",
+    "\\((4 \\pm \\sqrt{20},\\ 6)\\)",
+    "\\((\\pm 2\\sqrt{3},\\ 0)\\)"
+  ],
+  answer: 0,
+  expl: "\\(c^2 = a^2 - b^2 = 16 - 4 = 12\\), so \\(c = \\sqrt{12} = 2\\sqrt{3}\\). The major axis is horizontal (16 under the \\(x\\) term), so move \\(c\\) left/right from the center \\((4, 6)\\): \\((4 \\pm 2\\sqrt3, 6)\\)."
+},
+{
+  id: 180, topic: "conics", calc: false, type: "mc",
+  q: "A hyperbola has center \\((2, 2)\\), opens left/right, with \\(a = 4\\) and \\(b = 3\\). Its equation is…",
+  choices: [
+    "\\(\\dfrac{(x-2)^2}{16} - \\dfrac{(y-2)^2}{9} = 1\\)",
+    "\\(\\dfrac{(y-2)^2}{9} - \\dfrac{(x-2)^2}{16} = 1\\)",
+    "\\(\\dfrac{(x-2)^2}{4} - \\dfrac{(y-2)^2}{3} = 1\\)",
+    "\\(\\dfrac{(x-2)^2}{16} + \\dfrac{(y-2)^2}{9} = 1\\)"
+  ],
+  answer: 0,
+  expl: "Opens left/right → the \\(x\\) term is positive and comes first, with \\(a^2 = 16\\) under it: \\(\\frac{(x-2)^2}{16} - \\frac{(y-2)^2}{9} = 1\\). Your packet's margin note: \"\\(a^2\\) always 1st in hyperbola.\""
+},
+
+// ================= VECTORS / POLAR / PARAMETRIC (packet additions) =================
+{
+  id: 181, topic: "vectors", calc: false, type: "mc",
+  q: "When converting the polar point \\(\\left(-4, \\dfrac{5\\pi}{4}\\right)\\) to rectangular coordinates, what is the value of \\(x\\) in simplest form?",
+  choices: ["\\(2\\sqrt{2}\\)", "\\(-2\\sqrt{2}\\)", "\\(2\\)", "\\(-4\\)"],
+  answer: 0,
+  expl: "\\(x = r\\cos\\theta = -4\\cos\\frac{5\\pi}{4} = -4\\left(-\\frac{\\sqrt2}{2}\\right) = 2\\sqrt{2}\\). The negative \\(r\\) times the negative cosine gives a positive — track both signs."
+},
+{
+  id: 182, topic: "vectors", calc: false, type: "mc",
+  q: "The graph of the polar equation \\(r = 6\\sin\\theta\\) is…",
+  choices: [
+    "a circle of diameter 6 sitting on top of the pole (centered at \\((0, 3)\\))",
+    "a circle of radius 6 centered at the origin",
+    "a rose with 6 petals",
+    "a spiral"
+  ],
+  answer: 0,
+  expl: "\\(r = a\\sin\\theta\\) is always a circle of diameter \\(a\\) through the pole, centered up the \\(y\\)-axis. Check key values: \\(r(0) = 0\\), \\(r(\\frac{\\pi}{2}) = 6\\), \\(r(\\pi) = 0\\). (\\(r = a\\cos\\theta\\) gives the sideways version.)"
+},
+{
+  id: 183, topic: "vectors", calc: false, type: "mc",
+  q: "Given \\(r = 8 - \\cos\\theta\\), what is the average rate of change of \\(r\\) with respect to \\(\\theta\\) on \\(\\left[\\frac{\\pi}{2}, \\pi\\right]\\)?",
+  choices: ["\\(\\dfrac{2}{\\pi}\\)", "\\(\\dfrac{1}{\\pi}\\)", "\\(\\dfrac{\\pi}{2}\\)", "\\(-\\dfrac{2}{\\pi}\\)"],
+  answer: 0,
+  expl: "Average rate of change \\(= \\dfrac{r(\\pi) - r(\\pi/2)}{\\pi - \\pi/2} = \\dfrac{9 - 8}{\\pi/2} = \\dfrac{2}{\\pi}\\). Since it's positive, the curve is moving AWAY from the origin on this interval — that's part (b) of the packet problem."
+},
+{
+  id: 184, topic: "vectors", calc: false, type: "mc",
+  q: "Calculate \\(\\lVert \\mathbf{v} \\rVert\\) for \\(\\mathbf{v} = \\langle 7, -2 \\rangle\\).",
+  choices: ["\\(\\sqrt{53}\\)", "\\(\\sqrt{45}\\)", "\\(5\\)", "\\(53\\)"],
+  answer: 0,
+  expl: "\\(\\lVert\\mathbf{v}\\rVert = \\sqrt{7^2 + (-2)^2} = \\sqrt{49 + 4} = \\sqrt{53}\\). It doesn't simplify — leave it as a radical on the no-calc section."
+},
+{
+  id: 185, topic: "vectors", calc: false, type: "mc",
+  q: "Given \\(\\mathbf{u} = \\langle -7, 2 \\rangle\\) and \\(\\mathbf{v} = \\langle 3, -1 \\rangle\\), find \\(2\\mathbf{u} - 3\\mathbf{v}\\).",
+  choices: [
+    "\\(\\langle -23, 7 \\rangle\\)",
+    "\\(\\langle -5, 1 \\rangle\\)",
+    "\\(\\langle -23, 1 \\rangle\\)",
+    "\\(\\langle -11, 7 \\rangle\\)"
+  ],
+  answer: 0,
+  expl: "\\(2\\mathbf{u} = \\langle -14, 4 \\rangle\\) and \\(-3\\mathbf{v} = \\langle -9, 3 \\rangle\\). Add: \\(\\langle -23, 7 \\rangle\\). The second component is the trap: \\(4 - 3(-1) = 4 + 3 = 7\\)."
+},
+{
+  id: 186, topic: "vectors", calc: false, type: "mc",
+  q: "Eliminate the parameter: \\(x(t) = 2t^2 - 1\\), \\(y(t) = t + 8\\).",
+  choices: [
+    "\\(x = 2(y - 8)^2 - 1\\)",
+    "\\(y = 2(x - 8)^2 - 1\\)",
+    "\\(x = 2y^2 - 17\\)",
+    "\\(y = \\sqrt{2x} + 8\\)"
+  ],
+  answer: 0,
+  expl: "Solve the simpler equation for \\(t\\): \\(t = y - 8\\). Substitute into \\(x\\): \\(x = 2(y - 8)^2 - 1\\). A sideways parabola — exactly the curve you sketch in the packet's parametric problem."
+},
+{
+  id: 187, topic: "vectors", calc: false, type: "input",
+  q: "A curve is defined by \\(x(t) = 2t^2 - 1\\), \\(y(t) = t + 8\\). The curve crosses the \\(x\\)-axis where \\(y = 0\\). What is the \\(x\\)-coordinate of that point?",
+  answer: ["127"],
+  expl: "Set \\(y(t) = 0\\): \\(t = -8\\). Then \\(x(-8) = 2(-8)^2 - 1 = 2(64) - 1 = 127\\). Zeros of a parametric curve: solve \\(y = 0\\) for \\(t\\), then plug that \\(t\\) into \\(x\\)."
+},
+{
+  id: 188, topic: "vectors", calc: true, type: "mc",
+  q: "A particle moves along the polar curve \\(r = \\cos\\theta\\) with \\(\\theta = t\\). Find its position vector \\(\\langle x, y \\rangle\\) at \\(t = 3\\), to the nearest tenth.",
+  choices: [
+    "\\(\\langle 1.0, -0.1 \\rangle\\)",
+    "\\(\\langle -1.0, 0.1 \\rangle\\)",
+    "\\(\\langle 0.1, -1.0 \\rangle\\)",
+    "\\(\\langle -0.9,\\ 0.9 \\rangle\\)"
+  ],
+  answer: 0,
+  expl: "Position: \\(x = r\\cos\\theta = \\cos(3)\\cos(3) \\approx 0.98\\), \\(y = r\\sin\\theta = \\cos(3)\\sin(3) \\approx -0.14\\). Rounded: \\(\\langle 1.0, -0.1 \\rangle\\). Radian mode — always."
+},
+];
+
+</script>
+<script>
+// ===== Pre-Calc Final Prep — App =====
+
+// ---------- Persistence ----------
+const STORE_KEY = "precalc-prep-v1";
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* corrupted store, start fresh */ }
+  return { perQuestion: {}, missed: [], tests: [], bestStreak: 0 };
+}
+function saveStore() { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+let store = loadStore();
+
+function recordResult(qid, correct) {
+  const s = store.perQuestion[qid] || { right: 0, wrong: 0 };
+  if (correct) s.right++; else s.wrong++;
+  store.perQuestion[qid] = s;
+  const i = store.missed.indexOf(qid);
+  if (correct) { if (i !== -1) store.missed.splice(i, 1); }
+  else { if (i === -1) store.missed.push(qid); }
+  saveStore();
+}
+
+// ---------- Math rendering ----------
+function renderMath(el) {
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(el, {
+        delimiters: [
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true },
+        ],
+        throwOnError: false,
+      });
+    } catch (e) { /* leave plain text */ }
+  }
+}
+function setMath(el, html) { el.innerHTML = html; renderMath(el); }
+
+// ---------- Answer checking (type-in) ----------
+function parseNumeric(s) {
+  const frac = s.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/);
+  if (frac) {
+    const d = parseFloat(frac[2]);
+    if (d === 0) return null;
+    return parseFloat(frac[1]) / d;
+  }
+  if (/^-?(\d+\.?\d*|\.\d+)$/.test(s)) return parseFloat(s);
+  return null;
+}
+function checkInputAnswer(user, accepted) {
+  const norm = (x) => String(x).trim().toLowerCase().replace(/\s+/g, "").replace(/^\+/, "").replace(/^\$/, "").replace(/,/g, "");
+  const u = norm(user);
+  if (!u) return false;
+  if (accepted.some((a) => norm(a) === u)) return true;
+  const un = parseNumeric(u);
+  if (un === null) return false;
+  return accepted.some((a) => {
+    const an = parseNumeric(norm(a));
+    return an !== null && Math.abs(an - un) < 0.011;
+  });
+}
+
+// ---------- Utils ----------
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+const $ = (id) => document.getElementById(id);
+const LETTERS = ["A", "B", "C", "D"];
+const QBYID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
+
+// ---------- Navigation ----------
+const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "reference"];
+function show(name) {
+  SCREENS.forEach((s) => $("screen-" + s).classList.toggle("hidden", s !== name));
+  window.scrollTo(0, 0);
+  if (name === "home") renderHome();
+}
+document.querySelectorAll("[data-nav]").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (session && !session.finished && !confirmLeave()) return;
+    show(b.dataset.nav);
+  })
+);
+function confirmLeave() {
+  const ok = confirm("Leave this session? Your progress on this quiz/test will be lost.");
+  if (ok) { stopTimer(); session = null; }
+  return ok;
+}
+
+// ---------- Home ----------
+function renderHome() {
+  $("streak-badge").textContent = "🔥 " + (store.bestStreak || 0);
+  const n = store.missed.length;
+  $("missed-count-sub").textContent = n
+    ? `Redo the ${n} question${n === 1 ? "" : "s"} you've missed`
+    : "No missed questions yet — nice!";
+
+  // Topic progress
+  const tp = $("topic-progress");
+  tp.innerHTML = "";
+  Object.entries(TOPICS).forEach(([key, label]) => {
+    const qs = QUESTIONS.filter((q) => q.topic === key);
+    let right = 0, attempted = 0;
+    qs.forEach((q) => {
+      const s = store.perQuestion[q.id];
+      if (s && s.right + s.wrong > 0) {
+        attempted++;
+        if (s.right > s.wrong || (s.right > 0 && s.wrong === 0)) right++;
+      }
+    });
+    const seenPct = Math.round((attempted / qs.length) * 100);
+    const acc = attempted ? Math.round((right / attempted) * 100) : 0;
+    const row = document.createElement("div");
+    row.className = "topic-row";
+    row.innerHTML = `
+      <span class="topic-name">${label}</span>
+      <span class="topic-stat">${attempted}/${qs.length} tried${attempted ? ` · ${acc}% solid` : ""}</span>
+      <div class="bar"><div class="bar-fill ${attempted && acc >= 80 ? "good" : acc < 50 && attempted ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
+    tp.appendChild(row);
+  });
+
+  // Test history
+  const th = $("test-history");
+  if (!store.tests.length) {
+    th.innerHTML = `<span class="muted">No tests taken yet — go take one!</span>`;
+  } else {
+    th.innerHTML = "";
+    store.tests.slice(-6).reverse().forEach((t) => {
+      const row = document.createElement("div");
+      row.className = "history-row";
+      row.innerHTML = `<span>${t.label}</span><span class="muted">${t.date}</span><span class="history-score">${t.score}/${t.total} (${Math.round((100 * t.score) / t.total)}%)</span>`;
+      th.appendChild(row);
+    });
+  }
+}
+
+$("btn-reset").addEventListener("click", () => {
+  if (confirm("Really wipe ALL progress (stats, streaks, test history)?")) {
+    store = { perQuestion: {}, missed: [], tests: [], bestStreak: 0 };
+    saveStore();
+    renderHome();
+  }
+});
+
+$("btn-review-missed").addEventListener("click", () => {
+  if (!store.missed.length) { alert("Nothing to fix — you haven't missed any questions yet. Go practice!"); return; }
+  const qs = shuffle(store.missed.map((id) => QBYID[id]).filter(Boolean));
+  startSession({ mode: "practice", label: "Fixing mistakes", questions: qs });
+});
+
+// ---------- Practice setup ----------
+const selectedTopics = new Set(Object.keys(TOPICS).filter((k) => !NON_FINAL_TOPICS.includes(k)));
+function renderTopicChips() {
+  const wrap = $("topic-chips");
+  wrap.innerHTML = "";
+  Object.entries(TOPICS).forEach(([key, label]) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (selectedTopics.has(key) ? " selected" : "");
+    b.textContent = NON_FINAL_TOPICS.includes(key) ? label + " (not on your final)" : label;
+    b.addEventListener("click", () => {
+      if (selectedTopics.has(key)) selectedTopics.delete(key); else selectedTopics.add(key);
+      b.classList.toggle("selected");
+    });
+    wrap.appendChild(b);
+  });
+}
+renderTopicChips();
+$("chips-all").addEventListener("click", () => { Object.keys(TOPICS).forEach((k) => selectedTopics.add(k)); renderTopicChips(); });
+$("chips-none").addEventListener("click", () => { selectedTopics.clear(); renderTopicChips(); });
+
+function singleSelect(containerId, attr) {
+  $(containerId).querySelectorAll(".chip").forEach((b) =>
+    b.addEventListener("click", () => {
+      $(containerId).querySelectorAll(".chip").forEach((x) => x.classList.remove("selected"));
+      b.classList.add("selected");
+    })
+  );
+}
+singleSelect("calc-chips");
+singleSelect("count-chips");
+
+$("btn-start-practice").addEventListener("click", () => {
+  if (!selectedTopics.size) { alert("Pick at least one topic!"); return; }
+  const calcMode = $("calc-chips").querySelector(".selected").dataset.calc;
+  const countSel = $("count-chips").querySelector(".selected").dataset.count;
+  let pool = QUESTIONS.filter((q) => selectedTopics.has(q.topic));
+  if (calcMode === "no") pool = pool.filter((q) => !q.calc);
+  if (calcMode === "yes") pool = pool.filter((q) => q.calc);
+  if (!pool.length) { alert("No questions match those filters — try widening them."); return; }
+  let qs = shuffle(pool);
+  if (countSel !== "all") qs = qs.slice(0, parseInt(countSel, 10));
+  startSession({ mode: "practice", label: "Practice", questions: qs });
+});
+
+// ---------- Test setup ----------
+const TEST_CONFIG = {
+  no: { label: "No-Calculator Section", count: 20, minutes: 35 },
+  yes: { label: "Calculator Section", count: 15, minutes: 35 },
+};
+document.querySelectorAll("[data-test]").forEach((b) =>
+  b.addEventListener("click", () => startTest(b.dataset.test))
+);
+function startTest(kind) {
+  const cfg = TEST_CONFIG[kind];
+  // Tests mirror the real Math 4H final: only topics from the review packets.
+  const finalPool = QUESTIONS.filter((q) => !NON_FINAL_TOPICS.includes(q.topic));
+  // Calculator section: prefer calc questions, top up with no-calc ones
+  // (the real calculator section also includes problems doable by hand).
+  let pool, extra;
+  if (kind === "yes") {
+    pool = shuffle(finalPool.filter((q) => q.calc));
+    extra = shuffle(finalPool.filter((q) => !q.calc));
+  } else {
+    pool = shuffle(finalPool.filter((q) => !q.calc));
+    extra = [];
+  }
+  const qs = pool.concat(extra).slice(0, cfg.count);
+  startSession({
+    mode: "test", kind, label: cfg.label, questions: qs,
+    secondsLeft: cfg.minutes * 60,
+  });
+}
+
+// ---------- Session engine ----------
+let session = null;
+let timerHandle = null;
+
+function startSession(opts) {
+  session = {
+    mode: opts.mode,               // "practice" | "test"
+    kind: opts.kind || null,
+    label: opts.label,
+    questions: opts.questions,
+    idx: 0,
+    // practice state
+    streak: 0,
+    answeredCount: 0,
+    correctCount: 0,
+    checked: false,
+    // test state
+    responses: new Array(opts.questions.length).fill(null), // mc: index, input: string
+    flags: new Array(opts.questions.length).fill(false),
+    secondsLeft: opts.secondsLeft || 0,
+    finished: false,
+  };
+  $("quiz-mode-label").textContent = session.label;
+  const isTest = session.mode === "test";
+  $("quiz-timer").classList.toggle("hidden", !isTest);
+  $("quiz-streak").classList.toggle("hidden", isTest);
+  $("btn-flag").classList.toggle("hidden", !isTest);
+  $("btn-back").classList.toggle("hidden", !isTest);
+  $("btn-to-review").classList.toggle("hidden", !isTest);
+  $("palette").classList.toggle("hidden", !isTest);
+  if (isTest) startTimer();
+  show("quiz");
+  renderQuestion();
+}
+
+function startTimer() {
+  stopTimer();
+  updateTimerLabel();
+  timerHandle = setInterval(() => {
+    session.secondsLeft--;
+    updateTimerLabel();
+    if (session.secondsLeft <= 0) {
+      stopTimer();
+      alert("⏰ Time's up! Submitting your test.");
+      finishTest();
+    }
+  }, 1000);
+}
+function stopTimer() { if (timerHandle) { clearInterval(timerHandle); timerHandle = null; } }
+function updateTimerLabel() {
+  const t = Math.max(0, session.secondsLeft);
+  const m = Math.floor(t / 60), s = t % 60;
+  const el = $("quiz-timer");
+  el.textContent = `${m}:${String(s).padStart(2, "0")}`;
+  el.classList.toggle("low", t <= 300);
+}
+
+function currentQ() { return session.questions[session.idx]; }
+
+function renderQuestion() {
+  const q = currentQ();
+  const isTest = session.mode === "test";
+  $("quiz-progress").textContent = `Question ${session.idx + 1} of ${session.questions.length}`;
+  $("q-topic").textContent = TOPICS[q.topic];
+  $("q-calc").textContent = q.calc ? "🧮 Calculator OK" : "🚫 No calculator";
+  setMath($("q-text"), q.q);
+
+  const choicesEl = $("choices");
+  const inputArea = $("input-area");
+  const fb = $("feedback");
+  fb.classList.add("hidden");
+  session.checked = false;
+
+  if (q.type === "mc") {
+    inputArea.classList.add("hidden");
+    choicesEl.innerHTML = "";
+    q.choices.forEach((c, i) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.innerHTML = `<span class="letter">${LETTERS[i]}</span><span class="choice-body">${c}</span>`;
+      renderMath(b);
+      if (isTest && session.responses[session.idx] === i) b.classList.add("selected");
+      b.addEventListener("click", () => onChoose(i));
+      choicesEl.appendChild(b);
+    });
+  } else {
+    choicesEl.innerHTML = "";
+    inputArea.classList.remove("hidden");
+    const inp = $("input-answer");
+    inp.value = isTest && session.responses[session.idx] != null ? session.responses[session.idx] : "";
+    inp.className = "";
+    inp.disabled = false;
+    $("input-hint").textContent = q.hint || "Type your answer — fractions like 3/4 or decimals are fine:";
+    setTimeout(() => inp.focus(), 0);
+  }
+
+  if (isTest) {
+    $("btn-check").classList.add("hidden");
+    $("btn-next").classList.remove("hidden");
+    $("btn-next").textContent = session.idx === session.questions.length - 1 ? "To review screen →" : "Next →";
+    $("btn-back").disabled = session.idx === 0;
+    $("btn-flag").classList.toggle("flagged", session.flags[session.idx]);
+    $("btn-flag").textContent = session.flags[session.idx] ? "🚩 Flagged" : "🚩 Flag for review";
+    renderPalette();
+  } else {
+    $("btn-check").classList.remove("hidden");
+    $("btn-check").disabled = false;
+    $("btn-next").classList.add("hidden");
+    $("quiz-streak").textContent = "🔥 " + session.streak;
+  }
+}
+
+let practiceSelection = null;
+
+function onChoose(i) {
+  const q = currentQ();
+  if (session.mode === "test") {
+    session.responses[session.idx] = i;
+    renderQuestion();
+  } else {
+    if (session.checked) return;
+    practiceSelection = i;
+    $("choices").querySelectorAll(".choice").forEach((b, j) => b.classList.toggle("selected", j === i));
+  }
+}
+
+// Check answer (practice)
+$("btn-check").addEventListener("click", checkPractice);
+function checkPractice() {
+  if (session.checked) return;
+  const q = currentQ();
+  let correct;
+  if (q.type === "mc") {
+    if (practiceSelection == null) { alert("Pick an answer first!"); return; }
+    correct = practiceSelection === q.answer;
+    $("choices").querySelectorAll(".choice").forEach((b, j) => {
+      b.disabled = true;
+      if (j === q.answer) b.classList.add("correct");
+      else if (j === practiceSelection && !correct) b.classList.add("wrong");
+    });
+  } else {
+    const val = $("input-answer").value;
+    if (!val.trim()) { alert("Type an answer first!"); return; }
+    correct = checkInputAnswer(val, q.answer);
+    const inp = $("input-answer");
+    inp.disabled = true;
+    inp.classList.add(correct ? "correct" : "wrong");
+  }
+
+  session.checked = true;
+  session.answeredCount++;
+  if (correct) { session.correctCount++; session.streak++; } else { session.streak = 0; }
+  if (session.streak > (store.bestStreak || 0)) { store.bestStreak = session.streak; saveStore(); }
+  recordResult(q.id, correct);
+  $("quiz-streak").textContent = "🔥 " + session.streak;
+
+  const fb = $("feedback");
+  const praise = ["Nailed it! 🎯", "Correct! 💪", "Yes! Keep it rolling 🔥", "That's it! ✅", "Boom. 🚀"];
+  const encourage = ["Not quite — but now you'll never miss it again.", "Close! Read the explanation, it's a classic trap.", "This one's tricky. Here's the idea:"];
+  let html = `<div class="verdict">${correct ? praise[Math.floor(Math.random() * praise.length)] : encourage[Math.floor(Math.random() * encourage.length)]}</div>`;
+  if (!correct && q.type === "mc") html += `<div><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
+  if (!correct && q.type === "input") html += `<div><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
+  html += `<div style="margin-top:8px">${q.expl}</div>`;
+  fb.className = "feedback " + (correct ? "good" : "bad");
+  setMath(fb, html);
+  fb.classList.remove("hidden");
+
+  $("btn-check").classList.add("hidden");
+  const next = $("btn-next");
+  next.classList.remove("hidden");
+  next.textContent = session.idx === session.questions.length - 1 ? "See my results →" : "Next →";
+  practiceSelection = null;
+  next.focus();
+}
+
+$("btn-next").addEventListener("click", () => {
+  if (session.mode === "test") {
+    if ($("input-area").classList.contains("hidden") === false) saveInputResponse();
+    if (session.idx === session.questions.length - 1) { showTestReview(); return; }
+    session.idx++;
+    renderQuestion();
+  } else {
+    if (session.idx === session.questions.length - 1) { finishPractice(); return; }
+    session.idx++;
+    renderQuestion();
+  }
+});
+
+$("btn-back").addEventListener("click", () => {
+  if (session.mode !== "test" || session.idx === 0) return;
+  saveInputResponse();
+  session.idx--;
+  renderQuestion();
+});
+
+$("btn-flag").addEventListener("click", () => {
+  session.flags[session.idx] = !session.flags[session.idx];
+  renderQuestion();
+});
+
+$("btn-quit").addEventListener("click", () => {
+  if (confirmLeave()) show("home");
+});
+
+$("btn-to-review").addEventListener("click", () => { saveInputResponse(); showTestReview(); });
+
+function saveInputResponse() {
+  if (session.mode !== "test") return;
+  const q = currentQ();
+  if (q.type === "input") {
+    const v = $("input-answer").value.trim();
+    session.responses[session.idx] = v || null;
+  }
+}
+
+// Enter key handling
+$("input-answer").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  if (session.mode === "practice" && !session.checked) checkPractice();
+  else $("btn-next").click();
+});
+
+// ---------- Test palette & review ----------
+function renderPalette() {
+  const p = $("palette");
+  p.innerHTML = "";
+  session.questions.forEach((q, i) => {
+    const b = document.createElement("button");
+    b.className = "palette-btn";
+    if (session.responses[i] != null && session.responses[i] !== "") b.classList.add("answered");
+    if (session.flags[i]) b.classList.add("flagged");
+    if (i === session.idx) b.classList.add("current");
+    b.textContent = i + 1;
+    b.addEventListener("click", () => { saveInputResponse(); session.idx = i; renderQuestion(); });
+    p.appendChild(b);
+  });
+}
+
+function showTestReview() {
+  const grid = $("review-grid");
+  grid.innerHTML = "";
+  session.questions.forEach((q, i) => {
+    const cell = document.createElement("button");
+    cell.className = "review-cell";
+    const answered = session.responses[i] != null && session.responses[i] !== "";
+    if (answered) cell.classList.add("answered");
+    if (session.flags[i]) cell.classList.add("flagged");
+    cell.innerHTML = `Q${i + 1} ${session.flags[i] ? "🚩" : ""}<span class="status">${answered ? "answered" : "⚠️ unanswered"}</span>`;
+    cell.addEventListener("click", () => { session.idx = i; show("quiz"); renderQuestion(); });
+    grid.appendChild(cell);
+  });
+  show("test-review");
+}
+$("btn-review-back").addEventListener("click", () => { show("quiz"); renderQuestion(); });
+$("btn-submit-test").addEventListener("click", () => {
+  const blank = session.responses.filter((r) => r == null || r === "").length;
+  if (blank && !confirm(`You have ${blank} unanswered question${blank === 1 ? "" : "s"}. Submit anyway?`)) return;
+  finishTest();
+});
+
+// ---------- Finishing ----------
+function gradeResponse(q, resp) {
+  if (resp == null || resp === "") return false;
+  return q.type === "mc" ? resp === q.answer : checkInputAnswer(resp, q.answer);
+}
+
+function finishTest() {
+  stopTimer();
+  saveInputResponse();
+  session.finished = true;
+  const results = session.questions.map((q, i) => {
+    const correct = gradeResponse(q, session.responses[i]);
+    recordResult(q.id, correct);
+    return { q, resp: session.responses[i], correct };
+  });
+  const score = results.filter((r) => r.correct).length;
+  store.tests.push({
+    label: session.label, score, total: results.length,
+    date: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+  });
+  saveStore();
+  renderResults(results, score, true);
+}
+
+function finishPractice() {
+  session.finished = true;
+  const score = session.correctCount, total = session.answeredCount;
+  renderResults(null, score, false, total);
+}
+
+function scoreMessage(pct) {
+  if (pct >= 90) return "Outstanding. You're walking into that final ready. 🏆";
+  if (pct >= 80) return "Strong! Polish the few you missed and you're golden. ✨";
+  if (pct >= 70) return "Solid base — drill your weak topics and retake. 📈";
+  if (pct >= 50) return "Good effort. Read every explanation below, then go again. 💪";
+  return "This is exactly why you're practicing early. Review, then rematch. 🔁";
+}
+
+function renderResults(results, score, isTest, totalOverride) {
+  const total = isTest ? results.length : totalOverride;
+  const pct = total ? Math.round((100 * score) / total) : 0;
+  $("results-summary").innerHTML = `
+    <div class="score-big">${score}/${total}</div>
+    <div class="muted">${pct}%</div>
+    <div class="score-msg">${scoreMessage(pct)}</div>`;
+
+  // Topic breakdown (tests only)
+  const bd = $("results-breakdown");
+  bd.innerHTML = "";
+  if (isTest) {
+    const byTopic = {};
+    results.forEach((r) => {
+      const t = r.q.topic;
+      byTopic[t] = byTopic[t] || { right: 0, total: 0 };
+      byTopic[t].total++;
+      if (r.correct) byTopic[t].right++;
+    });
+    const wrap = document.createElement("div");
+    wrap.className = "topic-progress";
+    Object.entries(byTopic).forEach(([t, s]) => {
+      const p = Math.round((100 * s.right) / s.total);
+      const row = document.createElement("div");
+      row.className = "topic-row";
+      row.innerHTML = `
+        <span class="topic-name">${TOPICS[t]}</span>
+        <span class="topic-stat">${s.right}/${s.total}</span>
+        <div class="bar"><div class="bar-fill ${p >= 80 ? "good" : p < 50 ? "bad" : ""}" style="width:${p}%"></div></div>`;
+      wrap.appendChild(row);
+    });
+    bd.appendChild(wrap);
+  }
+
+  // Detailed review (tests only — practice already showed feedback live)
+  const detail = $("results-detail");
+  detail.innerHTML = "";
+  if (isTest) {
+    results.forEach((r, i) => {
+      const div = document.createElement("div");
+      div.className = "result-item " + (r.correct ? "right" : "wrong");
+      let yourAns = "—";
+      if (r.resp != null && r.resp !== "") {
+        yourAns = r.q.type === "mc" ? `${LETTERS[r.resp]}. ${r.q.choices[r.resp]}` : String(r.resp);
+      }
+      const rightAns = r.q.type === "mc" ? `${LETTERS[r.q.answer]}. ${r.q.choices[r.q.answer]}` : r.q.answer[0];
+      div.innerHTML = `
+        <div class="ri-head">${r.correct ? "✅" : "❌"} Question ${i + 1} · ${TOPICS[r.q.topic]}</div>
+        <div class="ri-q">${r.q.q}</div>
+        <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
+        ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
+        <div class="ri-expl">${r.q.expl}</div>`;
+      renderMath(div);
+      detail.appendChild(div);
+    });
+    detail.previousElementSibling.classList.remove("hidden");
+  } else {
+    detail.previousElementSibling.classList.add("hidden");
+  }
+
+  const lastSession = { mode: session.mode, kind: session.kind };
+  $("btn-retake").onclick = () => {
+    if (lastSession.mode === "test") startTest(lastSession.kind);
+    else show("practice-setup");
+  };
+
+  session = null;
+  show("results");
+}
+
+// ---------- Countdown line ----------
+(function () {
+  // Final is ~4 days from first use; store the target date once.
+  if (!store.examDate) {
+    const d = new Date();
+    d.setDate(d.getDate() + 4);
+    store.examDate = d.toISOString().slice(0, 10);
+    saveStore();
+  }
+  const days = Math.ceil((new Date(store.examDate) - new Date()) / 86400000);
+  const el = $("countdown-line");
+  if (days > 1) el.textContent = `≈ ${days} days until the final. A little every day beats cramming.`;
+  else if (days === 1) el.textContent = "Final is TOMORROW. Review your missed questions and the cheat sheet. You've got this.";
+  else if (days === 0) el.textContent = "It's final day! Light review only — trust your prep. 🍀";
+  else el.textContent = "You've got this. A little every day beats cramming.";
+})();
+
+// ---------- Reference / cheat sheet ----------
+const REFERENCE_HTML = `
+<div class="ref-card">
+  <h2>Derivatives — rules</h2>
+  <ul>
+    <li><strong>Power:</strong> \\(\\frac{d}{dx}x^n = nx^{n-1}\\) (rewrite \\(\\sqrt{x} = x^{1/2}\\), \\(\\frac{1}{x^2} = x^{-2}\\) first)</li>
+    <li><strong>Product:</strong> \\((uv)' = u'v + uv'\\) &nbsp;·&nbsp; <strong>Quotient:</strong> \\(\\left(\\frac{u}{v}\\right)' = \\frac{u'v - uv'}{v^2}\\) (top order matters!)</li>
+    <li><strong>Chain:</strong> \\(\\frac{d}{dx}f(g(x)) = f'(g(x))\\cdot g'(x)\\) — outside derivative, keep the inside, times inside derivative</li>
+    <li>\\(\\frac{d}{dx}\\sin x = \\cos x\\); \\(\\frac{d}{dx}\\cos x = -\\sin x\\); \\(\\frac{d}{dx}\\tan x = \\sec^2 x\\); \\(\\frac{d}{dx}e^{kx} = ke^{kx}\\); \\(\\frac{d}{dx}\\ln x = \\frac{1}{x}\\)</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Derivatives — applications (tangent lines &amp; motion)</h2>
+  <ul>
+    <li><strong>Tangent line at \\(x = a\\):</strong> point \\((a, f(a))\\), slope \\(f'(a)\\), then \\(y - f(a) = f'(a)(x - a)\\)</li>
+    <li><strong>Increasing/decreasing:</strong> \\(f\\) increases where \\(f' > 0\\), decreases where \\(f' < 0\\). Make a sign chart of \\(f'\\).</li>
+    <li><strong>Relative extrema:</strong> only where \\(f'\\) CHANGES sign. A squared factor like \\((x+3)^2\\) means NO extremum there.</li>
+    <li><strong>Particle motion:</strong> velocity \\(v = s'\\), acceleration \\(a = v' = s''\\). Moving left: \\(v < 0\\). At rest: \\(v = 0\\).</li>
+    <li><strong>Speed:</strong> increasing when \\(v\\) and \\(a\\) have the SAME sign; decreasing when opposite signs. Always justify with both signs.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Integrals &amp; Riemann sums</h2>
+  <ul>
+    <li><strong>Reverse power rule:</strong> \\(\\int x^n dx = \\frac{x^{n+1}}{n+1} + C\\); definite: \\(\\int_a^b f = F(b) - F(a)\\)</li>
+    <li>Example: \\(\\int_2^3 x^{-2}dx = \\left[-\\frac{1}{x}\\right]_2^3 = -\\frac{1}{3} + \\frac{1}{2} = \\frac{1}{6}\\)</li>
+    <li><strong>Left Riemann sum:</strong> width of each subinterval × LEFT endpoint's height, then add. (Right sum uses right endpoints.)</li>
+    <li>Increasing function → left sum underestimates, right sum overestimates.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Limits &amp; continuity</h2>
+  <ul>
+    <li>Plug in first. \\(\\frac{0}{0}\\) → factor and cancel, then plug in.</li>
+    <li>At \\(\\pm\\infty\\): compare degrees — equal degrees → ratio of leading coefficients; bottom bigger → 0; top bigger → \\(\\pm\\infty\\).</li>
+    <li>Two-sided limit exists only if left limit = right limit (otherwise DNE).</li>
+    <li><strong>Continuity at \\(a\\):</strong> \\(f(a)\\) defined, \\(\\lim_{x\\to a} f\\) exists, and they're equal. To find \\(k\\): set \\(k = \\lim_{x\\to a} f(x)\\).</li>
+    <li><strong>IVT:</strong> if \\(f\\) is continuous on \\([a,b]\\) and \\(N\\) is between \\(f(a)\\) and \\(f(b)\\), then \\(f(c) = N\\) for some \\(c\\) in \\((a,b)\\). Sign change → a zero in between. Cite continuity + the sign change.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Unit circle — the values to know cold</h2>
+  <table>
+    <tr><th>\\(\\theta\\)</th><th>\\(0\\)</th><th>\\(\\frac{\\pi}{6}\\) (30°)</th><th>\\(\\frac{\\pi}{4}\\) (45°)</th><th>\\(\\frac{\\pi}{3}\\) (60°)</th><th>\\(\\frac{\\pi}{2}\\) (90°)</th></tr>
+    <tr><td>\\(\\sin\\theta\\)</td><td>\\(0\\)</td><td>\\(\\frac{1}{2}\\)</td><td>\\(\\frac{\\sqrt2}{2}\\)</td><td>\\(\\frac{\\sqrt3}{2}\\)</td><td>\\(1\\)</td></tr>
+    <tr><td>\\(\\cos\\theta\\)</td><td>\\(1\\)</td><td>\\(\\frac{\\sqrt3}{2}\\)</td><td>\\(\\frac{\\sqrt2}{2}\\)</td><td>\\(\\frac{1}{2}\\)</td><td>\\(0\\)</td></tr>
+    <tr><td>\\(\\tan\\theta\\)</td><td>\\(0\\)</td><td>\\(\\frac{\\sqrt3}{3}\\)</td><td>\\(1\\)</td><td>\\(\\sqrt3\\)</td><td>undef.</td></tr>
+  </table>
+  <ul>
+    <li>Memory hook: \\(\\sin\\) of 30/45/60 is \\(\\frac{\\sqrt1}{2}, \\frac{\\sqrt2}{2}, \\frac{\\sqrt3}{2}\\); cosine is the same list backwards.</li>
+    <li>Signs by quadrant — <strong>A</strong>ll, <strong>S</strong>ine, <strong>T</strong>angent, <strong>C</strong>osine (ASTC: "All Students Take Calculus").</li>
+    <li>Reference angles: QII → \\(\\pi - \\theta\\), QIII → \\(\\theta - \\pi\\), QIV → \\(2\\pi - \\theta\\).</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Trig identities</h2>
+  <ul>
+    <li><strong>Pythagorean:</strong> \\(\\sin^2\\theta + \\cos^2\\theta = 1\\), \\(1 + \\tan^2\\theta = \\sec^2\\theta\\), \\(1 + \\cot^2\\theta = \\csc^2\\theta\\)</li>
+    <li><strong>Double angle:</strong> \\(\\sin 2\\theta = 2\\sin\\theta\\cos\\theta\\); \\(\\cos 2\\theta = \\cos^2\\theta - \\sin^2\\theta = 1 - 2\\sin^2\\theta = 2\\cos^2\\theta - 1\\)</li>
+    <li><strong>Sum/difference:</strong> \\(\\sin(A \\pm B) = \\sin A\\cos B \\pm \\cos A\\sin B\\); \\(\\cos(A \\pm B) = \\cos A\\cos B \\mp \\sin A\\sin B\\) (cosine flips the sign!)</li>
+    <li><strong>Even/odd:</strong> \\(\\cos(-\\theta) = \\cos\\theta\\) (even); \\(\\sin(-\\theta) = -\\sin\\theta\\), \\(\\tan(-\\theta) = -\\tan\\theta\\) (odd)</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Trig graphs: \\(y = A\\sin(B(x - C)) + D\\)</h2>
+  <ul>
+    <li>Amplitude \\(= |A|\\) &nbsp;·&nbsp; Period \\(= \\frac{2\\pi}{B}\\) (tangent: \\(\\frac{\\pi}{B}\\)) &nbsp;·&nbsp; Phase shift \\(= C\\) (right if subtracting) &nbsp;·&nbsp; Midline \\(y = D\\)</li>
+    <li>Max \\(= D + |A|\\), Min \\(= D - |A|\\)</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Triangles (non-right)</h2>
+  <ul>
+    <li><strong>Law of Sines:</strong> \\(\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C}\\) — use with AAS/ASA/SSA. SSA is ambiguous: compare \\(a\\) with \\(h = b\\sin A\\) (0, 1, or 2 triangles).</li>
+    <li><strong>Law of Cosines:</strong> \\(c^2 = a^2 + b^2 - 2ab\\cos C\\) — use with SAS/SSS.</li>
+    <li><strong>Area:</strong> \\(\\frac{1}{2}ab\\sin C\\)</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Logs &amp; exponentials</h2>
+  <ul>
+    <li>\\(\\log_b x = y \\iff b^y = x\\). Domain of \\(\\log\\): input must be \\(> 0\\).</li>
+    <li>\\(\\log(MN) = \\log M + \\log N\\); \\(\\log\\frac{M}{N} = \\log M - \\log N\\); \\(\\log M^p = p\\log M\\)</li>
+    <li>Change of base: \\(\\log_b x = \\frac{\\ln x}{\\ln b}\\)</li>
+    <li>Compound interest: \\(A = P(1 + \\frac{r}{n})^{nt}\\); continuous: \\(A = Pe^{rt}\\)</li>
+    <li>Half-life / doubling: \\(y = a\\left(\\frac{1}{2}\\right)^{t/h}\\) or \\(y = a \\cdot 2^{t/d}\\)</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Polynomials &amp; rationals</h2>
+  <ul>
+    <li><strong>Remainder Thm:</strong> remainder of \\(f(x) \\div (x - c)\\) is \\(f(c)\\). <strong>Factor Thm:</strong> \\(f(c) = 0 \\iff (x - c)\\) is a factor.</li>
+    <li>Complex &amp; irrational roots come in conjugate pairs (real/rational coefficients).</li>
+    <li>Multiplicity: even → graph bounces; odd → graph crosses.</li>
+    <li>Horizontal asymptote: degrees equal → ratio of leading coefficients; top smaller → \\(y = 0\\); top exactly 1 bigger → slant (divide).</li>
+    <li>Denominator zero that cancels → hole; doesn't cancel → vertical asymptote.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Sequences &amp; series</h2>
+  <ul>
+    <li><strong>Arithmetic:</strong> \\(a_n = a_1 + (n-1)d\\); \\(S_n = \\frac{n(a_1 + a_n)}{2}\\)</li>
+    <li><strong>Geometric:</strong> \\(a_n = a_1 r^{n-1}\\); \\(S_n = a_1\\frac{1 - r^n}{1 - r}\\); infinite sum \\(\\frac{a_1}{1 - r}\\) only when \\(|r| < 1\\)</li>
+    <li><strong>Binomial:</strong> \\((a + b)^n = \\sum \\binom{n}{k} a^{n-k} b^k\\)</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Conics (center at origin)</h2>
+  <ul>
+    <li><strong>Circle:</strong> \\((x-h)^2 + (y-k)^2 = r^2\\)</li>
+    <li><strong>Ellipse:</strong> \\(\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1\\) with \\(a > b\\); foci: \\(c^2 = a^2 - b^2\\) on the major axis</li>
+    <li><strong>Hyperbola:</strong> \\(\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1\\); foci: \\(c^2 = a^2 + b^2\\); asymptotes \\(y = \\pm\\frac{b}{a}x\\) (x-form)</li>
+    <li><strong>Parabola:</strong> \\(x^2 = 4py\\) (opens up/down), focus distance \\(p\\) from vertex</li>
+    <li>Identify: one square → parabola; same coefficients → circle; different, same sign → ellipse; opposite signs → hyperbola.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Vectors, polar &amp; parametric</h2>
+  <ul>
+    <li>\\(\\|\\langle a,b \\rangle\\| = \\sqrt{a^2+b^2}\\); dot product \\(\\langle a,b\\rangle\\cdot\\langle c,d\\rangle = ac + bd\\); perpendicular \\(\\iff\\) dot \\(= 0\\)</li>
+    <li>Polar ↔ rectangular: \\(x = r\\cos\\theta\\), \\(y = r\\sin\\theta\\), \\(r^2 = x^2 + y^2\\), \\(\\tan\\theta = \\frac{y}{x}\\) (check the quadrant!)</li>
+    <li>\\(r = a\\sin\\theta\\): circle of diameter \\(a\\) on top of the pole; \\(r = a\\cos\\theta\\): same circle, sideways.</li>
+    <li><strong>Parametric → rectangular:</strong> solve the simpler equation for \\(t\\), substitute into the other.</li>
+    <li><strong>Zeros of a parametric curve:</strong> set \\(y(t) = 0\\), solve for \\(t\\), plug that \\(t\\) into \\(x(t)\\).</li>
+    <li><strong>Position on a polar curve:</strong> \\(\\langle r\\cos\\theta,\\ r\\sin\\theta \\rangle\\) — calculator in RADIAN mode.</li>
+  </ul>
+</div>
+`;
+setMath($("reference-body"), REFERENCE_HTML);
+
+// ---------- Init ----------
+renderHome();
+window.addEventListener("load", () => { renderMath(document.body); });
+
+</script>
+</body>
+</html>
