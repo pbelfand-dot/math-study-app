@@ -145,6 +145,12 @@
       <div id="input-area" class="input-area hidden">
         <label for="input-answer" id="input-hint" class="muted">Type your answer (fractions like 3/4 are fine):</label>
         <input id="input-answer" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
+        <div class="keypad">
+          <button type="button" class="key key-frac" data-ins="/"><sup>a</sup>&frasl;<sub>b</sub> Fraction</button>
+          <button type="button" class="key" data-ins="-">(−) Negative</button>
+          <button type="button" class="key" data-ins=".">. Decimal</button>
+          <button type="button" class="key key-clear" data-clear="1">⌫ Clear</button>
+        </div>
       </div>
 
       <div id="feedback" class="feedback hidden"></div>

@@ -320,6 +320,24 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 #input-answer.correct { border-color: var(--good); background: var(--good-soft); }
 #input-answer.wrong { border-color: var(--bad); background: var(--bad-soft); }
 
+.keypad { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.key {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  min-height: 44px;
+}
+.key:hover { border-color: var(--accent); color: var(--accent); }
+.key:active { background: var(--accent-soft); }
+.key-frac { color: var(--accent); border-color: var(--accent); }
+.key-frac sup, .key-frac sub { font-size: 0.7em; }
+.key-clear { color: var(--muted); }
+.key-clear:hover { color: var(--bad); border-color: var(--bad); }
+
 .feedback {
   margin-top: 18px;
   border-radius: var(--radius);
@@ -331,6 +349,35 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .feedback .verdict { font-weight: 800; margin-bottom: 6px; }
 .feedback.good .verdict { color: var(--good); }
 .feedback.bad .verdict { color: var(--bad); }
+
+/* Plain-English "super simple" box */
+.simple-box {
+  background: #fffbea;
+  border: 1.5px solid #ffe066;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  font-size: 1.06rem;
+  line-height: 1.5;
+  color: #5c4a00;
+}
+.simple-label {
+  display: block;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #b88600;
+  margin-bottom: 4px;
+}
+.expl-detail {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.result-item .simple-box { font-size: 1rem; }
 
 .quiz-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
@@ -569,6 +616,12 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
       <div id="input-area" class="input-area hidden">
         <label for="input-answer" id="input-hint" class="muted">Type your answer (fractions like 3/4 are fine):</label>
         <input id="input-answer" type="text" autocomplete="off" spellcheck="false" placeholder="Your answer">
+        <div class="keypad">
+          <button type="button" class="key key-frac" data-ins="/"><sup>a</sup>&frasl;<sub>b</sub> Fraction</button>
+          <button type="button" class="key" data-ins="-">(−) Negative</button>
+          <button type="button" class="key" data-ins=".">. Decimal</button>
+          <button type="button" class="key key-clear" data-clear="1">⌫ Clear</button>
+        </div>
       </div>
 
       <div id="feedback" class="feedback hidden"></div>
@@ -2159,6 +2212,198 @@ const QUESTIONS = [
 },
 ];
 
+// ===== Super-simple one-line explanations (plain English, no jargon) =====
+const SIMPLE = {
+  1: "Replace every x with −2, then just do arithmetic. (−2)² = 4, and −3·(−2) = +6.",
+  2: "Whatever's under a square root can't be negative. So x−4 must be 0 or bigger.",
+  3: "Do the inside function first: g(1) = 1. Then feed that into f: f(1) = 2.",
+  4: "An inverse undoes the function: switch x and y, then get y alone again.",
+  5: "Inside the parentheses = left/right and it LIES (x−3 means right 3). Outside = up/down and tells the truth (+2 = up 2).",
+  6: "All the powers of x are odd (x³ and x). Plug in −x and everything flips sign — that's an odd function.",
+  7: "The bottom of a fraction can't be 0. x²−9 hits 0 at 3 AND −3.",
+  8: "Work inside-out: g(2) = −3 first, then absolute value makes it 3.",
+  9: "The lowest point of this parabola is the vertex. x = −b/(2a) = 3, then plug 3 back in.",
+  10: "f⁻¹(5) just asks: what x makes 3x−7 equal 5? Solve: x = 4.",
+  11: "The −2 outside multiplies the heights: the 2 stretches it taller, the minus flips it upside down.",
+  12: "x² is never below 0, so x²+4 is never below 4. Smallest possible output: 4.",
+  13: "It's just slope between two points: rise over run from (1, 1) to (4, 16) = 15/3 = 5.",
+  14: "An inverse exists only if no two inputs share an output — no horizontal line hits the graph twice.",
+  15: "Two numbers that multiply to 6 and add to −5: that's −2 and −3, so x = 2 and 3.",
+  16: "Only −2x³ matters. Odd power = ends go opposite ways; the minus makes the right side fall.",
+  17: "Shortcut: dividing by (x−2)? Just plug 2 in. f(2) = 6 — that IS the remainder.",
+  18: "Zeros become factors: (x−1)(x+2)(x−3). Multiply out, or test x = 1 in each choice.",
+  19: "Complex zeros travel in mirror pairs: 2+i and 2−i always come together.",
+  20: "Set the bottom to 0: x = ±2. Nothing cancels with the top, so both are asymptotes.",
+  21: "Same degree top and bottom? Just divide the front numbers: 3 ÷ 1 = 3.",
+  22: "Cancel (x−3) and you're left with x+3. The hole is at x = 3, height 3+3 = 6.",
+  23: "Pull out the common x first: x(x−3)(x+3) = 0. Three answers — don't lose x = 0.",
+  24: "Start from vertex form (x−2)² − 3 and multiply it out.",
+  25: "Squared factor = bounce. Plain factor = cross. (x−1)² bounces, (x+3) crosses.",
+  26: "b²−4ac = 9−40 = negative → the parabola never touches the x-axis. Zero real answers.",
+  27: "Top degree is exactly 1 bigger than the bottom → divide, keep the x+1 part, ignore the leftover.",
+  28: "Multiply both sides by (x−2), solve the easy equation, check the bottom isn't 0.",
+  29: "Factor to (x−4)(x+3). A smiley parabola is below 0 between its zeros: −3 to 4.",
+  30: "Plug each option's root into the polynomial. x = −1 gives 0, so (x+1) is a factor.",
+  31: "Degree 5 = exactly 5 zeros, if you count repeats and complex ones. Every time.",
+  32: "Possible rational zeros = (factors of the last number, 5) over (factors of the first number, 2).",
+  33: "32 = 2·2·2·2·2 = 2⁵, so x = 5.",
+  34: "Ask: 3 to what power makes 81? 3·3·3·3 = 81 → 4.",
+  35: "Logs turn multiplying into adding, dividing into subtracting, and powers jump down front.",
+  36: "Take ln of both sides: 2x = ln 7. Divide by 2. Done.",
+  37: "Anything to the 0 power is 1, so ln 1 = 0. Always.",
+  38: "log₂(stuff) = 3 means stuff = 2³ = 8. So x − 1 = 8.",
+  39: "Monthly = 12 times a year: tiny rate 0.06/12, used 60 times. 1000(1.005)⁶⁰.",
+  40: "The word 'continuously' = use A = Pe^(rt). Here 500·e^0.4.",
+  41: "The 3 climbs up as a power (x³), and minus between logs means divide.",
+  42: "log 5 + log 2 = log(5·2) = log 10 = 1 in base ten.",
+  43: "24 days = 3 halvings: 100 → 50 → 25 → 12.5.",
+  44: "Make both sides powers of 5: 25^x = 5^(2x), so the exponents must match: x+1 = 2x.",
+  45: "You can only take the log of a POSITIVE number: x + 3 > 0.",
+  46: "Type ln20 ÷ ln7. Sanity check: it must land between 1 and 2, since 7¹ = 7 and 7² = 49.",
+  47: "ln undoes eˣ. They're a do/undo pair, mirrored over y = x.",
+  48: "36 years = 3 doublings: ×2, ×2, ×2 = ×8.",
+  49: "Squish into one log: x(x−3) = 10. Solve the quadratic, throw out the negative answer.",
+  50: "Everything in base 2: 4ˣ = 2^(2x) and 8 = 2³, so 2x = 3.",
+  51: "sin of 30/45/60 = √1/2, √2/2, √3/2. The 30° one is 1/2.",
+  52: "135° is top-left on the circle: cosine (the x-value) is negative there. Reference angle 45°.",
+  53: "Degrees → radians: multiply by π/180. 150/180 simplifies to 5/6.",
+  54: "At 45°, sine and cosine are twins, so tan = 1.",
+  55: "240° is 60 past 180. That gap (60°) is the reference angle.",
+  56: "Period = 2π divided by the number inside: 2π/2 = π.",
+  57: "Amplitude = the size of the front number, ignoring the sign: |−3| = 3.",
+  58: "It's a 3-4-5 triangle. Top-left quadrant → x-values (cosine) are negative: −4/5.",
+  59: "Tangent repeats twice as fast as sine: every π, not every 2π.",
+  60: "csc = 1 over sin. sin(π/2) = 1, so the answer is 1.",
+  61: "x − π/3 inside means slide RIGHT π/3. Inside always lies about direction.",
+  62: "The midline is the +5 tacked on the end. The wave rides 2 above and 2 below y = 5.",
+  63: "Cosine ignores minus signs: cos(−θ) = cos θ. So it's just cos(π/3) = 1/2.",
+  64: "Subtract one full lap (2π = 6π/3): 7π/3 − 6π/3 = π/3.",
+  65: "Which angle has tangent 1? The 45° one: π/4.",
+  66: "Sine = height on the circle. Height is −1 only at the very bottom: 3π/2.",
+  67: "tan = sin/cos explodes when cos = 0: at π/2, and again every π.",
+  68: "The top is 1−cos²θ = (1−cosθ)(1+cosθ). Cancel the matching piece with the bottom.",
+  69: "Take sin²+cos² = 1 and divide everything by cos²: you get tan²+1 = sec².",
+  70: "Double angle: sin 2θ = 2·sin·cos = 2 · (3/5) · (4/5) = 24/25.",
+  71: "Use cos 2θ = 2cos²θ − 1 = 2(1/9) − 1 = −7/9.",
+  72: "sin θ = 1/2 at the 30° spot (π/6) AND its mirror across the y-axis (5π/6). Two answers.",
+  73: "cos θ = ±√2/2 happens once in every quadrant. Four answers.",
+  74: "75 = 45 + 30. Use sin(A+B) = sinA·cosB + cosA·sinB with angles you know.",
+  75: "Write tan as sin/cos — the cos cancels, leaving just sin.",
+  76: "tan is positive in quadrants I and III, and its answers are always π apart: π/3 and π/3 + π.",
+  77: "cos 2θ wears 3 costumes: cos²−sin², 1−2sin², and 2cos²−1. Know all three.",
+  78: "Pretend sinθ is x: factor (2x+1)(x−1). sinθ = −1/2 hits 2 spots, sinθ = 1 hits 1. Total: 3.",
+  79: "Factor out secθ: secθ(1−sin²θ) = secθ·cos²θ = cosθ.",
+  80: "tan = 2 means legs 2 and 1, hypotenuse √5. In QIII both sin and cos are negative — their product is positive: 2/5.",
+  81: "That's the sin(x+y) formula, word for word.",
+  82: "cos θ = −√3/2 in quadrants II and III, reference angle 30°: 5π/6 and 7π/6.",
+  83: "Two sides + the angle BETWEEN them = Law of Cosines: c² = 25+49−70·cos60°.",
+  84: "Pair each side with its opposite angle: b/sin45° = 10/sin30°.",
+  85: "Area = ½ · side · side · sin(angle between them) = ½·8·5·(1/2) = 10.",
+  86: "The biggest angle faces the longest side (7). Law of Cosines gives cos = −1/2 → 120°.",
+  87: "The side (4) is shorter than the height it needs to reach (10·sin30° = 5). It can't connect. Zero triangles.",
+  88: "tan(25°) = height/100, so height = 100·tan25°. Calculator in DEGREE mode.",
+  89: "Triangle angles add to 180: 180 − 40 − 65 = 75.",
+  90: "Same area trick: ½ · 12 · 15 · sin80°.",
+  91: "Start at 3 and take 9 jumps of size 4: 3 + 36 = 39.",
+  92: "Start at 2 and multiply by 3 four times: 2·81 = 162.",
+  93: "Sum = (how many terms) × (first + last) ÷ 2. Find the last term (62) first.",
+  94: "Each term is half the one before. Total = first ÷ (1 − ratio) = 8 ÷ ½ = 16.",
+  95: "Just plug in k = 1 through 5 and add: 3+5+7+9+11.",
+  96: "Build step by step: a₂ = 3(2)−1 = 5, then a₃ = 3(5)−1 = 14.",
+  97: "Jumps of 5 → formula starts 5n. Check n = 1 gives 7, so it's 5n + 2.",
+  98: "Double and add: 3+6+12+24+48+96 = 189.",
+  99: "An infinite sum only settles down if the ratio shrinks things: |r| < 1.",
+  100: "Grab the x³ term: C(5,2) · x³ · 2². The exponents (3 and 2) must add to 5.",
+  101: "Flip the signs inside the parentheses for the center; square-root the 25 for the radius.",
+  102: "x² = 8y matches x² = 4py, so p = 2. The focus sits p above the vertex.",
+  103: "Bigger denominator = a² = 25, so a = 5. The major axis is the FULL length: 2a = 10.",
+  104: "Ellipse rule: c² = big minus small = 25−9 = 16. Foci sit along the long direction.",
+  105: "Asymptote slopes = ±b/a = ±4/3 (square roots of 16 and 9).",
+  106: "x² and y² with the SAME number in front = circle. Different numbers = ellipse.",
+  107: "Complete the square for x and y. The right side becomes 25, so r = 5.",
+  108: "y² is the positive one → opens up/down → vertices straight up and down: (0, ±2).",
+  109: "It's the 3-4-5 triangle: √(9+16) = 5.",
+  110: "Double v first: ⟨6, −2⟩. Then add matching slots.",
+  111: "Multiply matching slots and add: 2·3 + 5·(−1) = 6 − 5 = 1.",
+  112: "Perpendicular = dot product is 0. Check: 4(−1) + 2(2) = 0. ✓",
+  113: "x = r·cos, y = r·sin. cos(π/3) = 1/2 and sin(π/3) = √3/2.",
+  114: "Distance from origin: √(9+9) = 3√2. The point is top-left → angle 135° = 3π/4.",
+  115: "Get t alone from the x equation (t = x−1) and stick it into the y equation.",
+  116: "x-part = 10cos60° = 5; y-part = 10sin60° ≈ 8.66.",
+  117: "Plugging in gives 0/0 → factor: (x−3)(x+3)/(x−3) = x+3 → plug in 3 → 6.",
+  118: "Same degree top and bottom → answer is the ratio of the front numbers: 3.",
+  119: "Just memorize this one: sin(x)/x → 1 as x → 0.",
+  120: "No tricks — plug in 2: 4 + 1 = 5.",
+  121: "The bottom grows way faster (x² beats x), so the fraction shrinks to 0.",
+  122: "1 divided by tinier and tinier positive numbers explodes: +∞.",
+  123: "0/0 → factor both, cancel (x−1), plug in 1: 2/3.",
+  124: "The problem factor CANCELS — that means just a hole, not an asymptote.",
+  125: "Just past π = bottom half of the circle → sine is negative. Reference π/6 → −1/2.",
+  126: "arccos only answers between 0 and π. cos = −1/2 in that range at 120° = 2π/3.",
+  127: "Top height = middle + swing = 30 + 25 = 55. Period = 2π ÷ (π/15) = 30.",
+  128: "Losing 15% = keeping 85%: 24000 × 0.85⁴.",
+  129: "Solve 2 = e^(0.05t): t = ln2 ÷ 0.05 ≈ 14 years.",
+  130: "The inside of the root must be ≥ 0: x − 2 ≥ 0.",
+  131: "Peak at t = −b/(2a) = 3 seconds. Plug 3 back in for the height.",
+  132: "Multiply by 2/3 three times: 27 → 18 → 12 → 8.",
+  133: "Product rule: (1st)·(2nd's derivative) + (2nd)·(1st's derivative). Then factor out the eˣ.",
+  134: "Same recipe: eˣ·(−2) + (3−2x)·eˣ, then factor out eˣ.",
+  135: "Quotient rule, then plug in 2. The bottom (4−x) has derivative −1, and minus a minus = plus.",
+  136: "Chain rule: sin turns into cos, KEEP the inside, then multiply by the inside's derivative (6x²/5).",
+  137: "Square root = power ½. Half comes down front, inside stays, times the inside's derivative (4x−7). Then plug in 0.",
+  138: "tan′ = sec², and cos′ = −sin. Subtracting a negative gives + sin.",
+  139: "6√x = 6x^(1/2) → derivative 3/√x. At x = 1: 3 + 2 − 1 = 4.",
+  140: "e^(5x) keeps itself and spits out the 5 in front: 5e^(5x).",
+  141: "Power rule: 3x² − 8x. Plug in 2: 12 − 16 = −4.",
+  142: "Bring the 4 down, drop the power to 3, then multiply by the inside's derivative 6x. Skipping the 6x is THE classic mistake.",
+  143: "Product rule using the table: f′(0)·sin(0) + f(0)·cos(0) = 0 + 5·1 = 5.",
+  144: "Just memorize: the derivative of ln x is 1/x.",
+  145: "A tangent line needs 2 things: a point (plug 1 into f → 8) and a slope (plug 1 into f′ → 4).",
+  146: "Point: f(1) = 4. Slope: f′(1) = 5. Line: y = 5x − 1.",
+  147: "Decreasing = where f′ is negative. f′ = (x−5)(x+2) is negative BETWEEN −2 and 5.",
+  148: "A max/min only happens where f′ flips sign. The squared (x+3)² never flips — false alarm. Only x = 1 counts.",
+  149: "Moving left = negative velocity. 8t − 16 is negative until t = 2.",
+  150: "Velocity = derivative of position. Plug t = 3 into t² + 4t − 12.",
+  151: "Acceleration = derivative of velocity: 2t + 4 → at t = 3 that's 10.",
+  152: "Velocity and acceleration both positive = same sign = speeding up. That's the whole rule.",
+  153: "At rest = velocity is 0: 2t − 6 = 0 → t = 3.",
+  154: "Increasing = f′ positive. x² − 4 is positive OUTSIDE ±2.",
+  155: "0/0 → factor: top is (x+5)(x−5), bottom is 4(x+5). Cancel, plug in −5: −10/4.",
+  156: "Same degree (5) top and bottom → just the front numbers: −5/4.",
+  157: "k has to equal the limit. Factor, cancel the (x−3), plug in 3: 10/6 = 5/3.",
+  158: "It's continuous and goes from +5 to −9 — it MUST cross 0 on the way. That's the IVT.",
+  159: "The left side says 4, the right side says −1. They disagree → no limit.",
+  160: "1/x² = x⁻². Antiderivative is −1/x. Plug in 3, subtract plugging in 2.",
+  161: "Each rectangle: width × LEFT-side height. 3·11 + 2·29 + 1·41 = 132.",
+  162: "Antiderivative is x² + x. Plug in 2: 4 + 2 = 6.",
+  163: "2x antidifferentiates to x²: 16 − 1 = 15.",
+  164: "3x² antidifferentiates to x³: 1 − 0 = 1.",
+  165: "Going uphill, the left corner of each rectangle sits BELOW the curve → total is too small.",
+  166: "sec(5π/3) = 1/cos = 1/(1/2) = 2. cot(7π/4) = −1. So 2 − (−1) = 3.",
+  167: "Multiply top and bottom by sin²x. You get 1 over (cos²−sin²) = 1/cos(2x) = sec(2x).",
+  168: "Factor out cotθ — NEVER divide by it (you'd lose answers). Each factor gives 2 angles: 4 total.",
+  169: "eˣ can never be 0, so toss it. What's left factors like x²−x−12 → (tan−4)(tan+3). Each tan value gives 2 angles.",
+  170: "e and ln cancel each other: e^(ln 5x) is just 5x. So 5x = 80.",
+  171: "Get the ln alone: ln(3−x) = 9. Then 3−x = e⁹ (a huge number), so x = 3 − e⁹.",
+  172: "The +5 outside lifts the floor (asymptote) to y = 5. The x+3 inside slides it LEFT 3.",
+  173: "The bottom hits 0 at x = −10 and x = 3. Cut those two points out of the number line.",
+  174: "Factor everything. (x+5) cancels = hole at −5. (x−5) doesn't cancel = real asymptote at 5.",
+  175: "Need 7 − 4x ≥ 0 → x ≤ 7/4. Dividing by −4 FLIPS the inequality.",
+  176: "g(4): 4 fits the top branch → ln(4/4) = ln 1 = 0. Then f(0): 0 fits the bottom branch → 2⁰ = 1.",
+  177: "Swap x and y: x = y² − 49. Add 49, square root both sides, keep the ±.",
+  178: "Group the x's and y's, complete each square, and remember: what you add inside gets multiplied by the 4 and the 16.",
+  179: "Ellipse: c² = 16 − 4 = 12, so c = 2√3. The long direction is x, so step left/right from the center (4,6).",
+  180: "Opens sideways → the x-term goes first and positive, with a² = 16 under it.",
+  181: "x = r·cosθ = (−4)·(−√2/2). Negative times negative = positive: 2√2.",
+  182: "r = (number)·sinθ is ALWAYS a circle with that number as its diameter, sitting on the origin.",
+  183: "It's just a slope: (r at π minus r at π/2) ÷ (π − π/2) = 1 ÷ (π/2) = 2/π.",
+  184: "√(49 + 4) = √53. It doesn't simplify — leave the root.",
+  185: "2u = ⟨−14, 4⟩ and −3v = ⟨−9, 3⟩. Add the slots: ⟨−23, 7⟩.",
+  186: "Solve the easy one for t (t = y − 8), then plug into the other.",
+  187: "Crossing the x-axis means y = 0 → t = −8. Feed −8 into x: 2(64) − 1 = 127.",
+  188: "x = cos(3)·cos(3) and y = cos(3)·sin(3). Calculator in RADIANS.",
+};
+
 </script>
 <script>
 // ===== Pre-Calc Final Prep — App =====
@@ -2554,7 +2799,8 @@ function checkPractice() {
   let html = `<div class="verdict">${correct ? praise[Math.floor(Math.random() * praise.length)] : encourage[Math.floor(Math.random() * encourage.length)]}</div>`;
   if (!correct && q.type === "mc") html += `<div><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
   if (!correct && q.type === "input") html += `<div><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
-  html += `<div style="margin-top:8px">${q.expl}</div>`;
+  if (SIMPLE[q.id]) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[q.id]}</div>`;
+  html += `<div class="expl-detail">${q.expl}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
   fb.classList.remove("hidden");
@@ -2612,6 +2858,25 @@ $("input-answer").addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   if (session.mode === "practice" && !session.checked) checkPractice();
   else $("btn-next").click();
+});
+
+// Fraction / quick-input keypad: insert symbols at the cursor
+document.querySelectorAll(".keypad .key").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const inp = $("input-answer");
+    if (inp.disabled) return;
+    if (btn.dataset.clear) {
+      inp.value = "";
+    } else {
+      const ins = btn.dataset.ins;
+      const start = inp.selectionStart ?? inp.value.length;
+      const end = inp.selectionEnd ?? inp.value.length;
+      inp.value = inp.value.slice(0, start) + ins + inp.value.slice(end);
+      const pos = start + ins.length;
+      inp.setSelectionRange(pos, pos);
+    }
+    inp.focus();
+  });
 });
 
 // ---------- Test palette & review ----------
@@ -2741,6 +3006,7 @@ function renderResults(results, score, isTest, totalOverride) {
         <div class="ri-q">${r.q.q}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
+        ${SIMPLE[r.q.id] ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[r.q.id]}</div>` : ""}
         <div class="ri-expl">${r.q.expl}</div>`;
       renderMath(div);
       detail.appendChild(div);

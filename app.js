@@ -391,7 +391,8 @@ function checkPractice() {
   let html = `<div class="verdict">${correct ? praise[Math.floor(Math.random() * praise.length)] : encourage[Math.floor(Math.random() * encourage.length)]}</div>`;
   if (!correct && q.type === "mc") html += `<div><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
   if (!correct && q.type === "input") html += `<div><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
-  html += `<div style="margin-top:8px">${q.expl}</div>`;
+  if (SIMPLE[q.id]) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[q.id]}</div>`;
+  html += `<div class="expl-detail">${q.expl}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
   fb.classList.remove("hidden");
@@ -449,6 +450,25 @@ $("input-answer").addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   if (session.mode === "practice" && !session.checked) checkPractice();
   else $("btn-next").click();
+});
+
+// Fraction / quick-input keypad: insert symbols at the cursor
+document.querySelectorAll(".keypad .key").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const inp = $("input-answer");
+    if (inp.disabled) return;
+    if (btn.dataset.clear) {
+      inp.value = "";
+    } else {
+      const ins = btn.dataset.ins;
+      const start = inp.selectionStart ?? inp.value.length;
+      const end = inp.selectionEnd ?? inp.value.length;
+      inp.value = inp.value.slice(0, start) + ins + inp.value.slice(end);
+      const pos = start + ins.length;
+      inp.setSelectionRange(pos, pos);
+    }
+    inp.focus();
+  });
 });
 
 // ---------- Test palette & review ----------
@@ -578,6 +598,7 @@ function renderResults(results, score, isTest, totalOverride) {
         <div class="ri-q">${r.q.q}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
+        ${SIMPLE[r.q.id] ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[r.q.id]}</div>` : ""}
         <div class="ri-expl">${r.q.expl}</div>`;
       renderMath(div);
       detail.appendChild(div);
