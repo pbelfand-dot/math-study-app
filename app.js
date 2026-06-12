@@ -157,14 +157,14 @@ $("btn-review-missed").addEventListener("click", () => {
 });
 
 // ---------- Practice setup ----------
-const selectedTopics = new Set(Object.keys(TOPICS));
+const selectedTopics = new Set(Object.keys(TOPICS).filter((k) => !NON_FINAL_TOPICS.includes(k)));
 function renderTopicChips() {
   const wrap = $("topic-chips");
   wrap.innerHTML = "";
   Object.entries(TOPICS).forEach(([key, label]) => {
     const b = document.createElement("button");
     b.className = "chip" + (selectedTopics.has(key) ? " selected" : "");
-    b.textContent = label;
+    b.textContent = NON_FINAL_TOPICS.includes(key) ? label + " (not on your final)" : label;
     b.addEventListener("click", () => {
       if (selectedTopics.has(key)) selectedTopics.delete(key); else selectedTopics.add(key);
       b.classList.toggle("selected");
@@ -202,21 +202,24 @@ $("btn-start-practice").addEventListener("click", () => {
 
 // ---------- Test setup ----------
 const TEST_CONFIG = {
-  no: { label: "No-Calculator Section", count: 20, minutes: 30 },
-  yes: { label: "Calculator Section", count: 20, minutes: 40 },
+  no: { label: "No-Calculator Section", count: 20, minutes: 35 },
+  yes: { label: "Calculator Section", count: 15, minutes: 35 },
 };
 document.querySelectorAll("[data-test]").forEach((b) =>
   b.addEventListener("click", () => startTest(b.dataset.test))
 );
 function startTest(kind) {
   const cfg = TEST_CONFIG[kind];
-  // Calculator section: prefer calc questions, top up with no-calc ones.
+  // Tests mirror the real Math 4H final: only topics from the review packets.
+  const finalPool = QUESTIONS.filter((q) => !NON_FINAL_TOPICS.includes(q.topic));
+  // Calculator section: prefer calc questions, top up with no-calc ones
+  // (the real calculator section also includes problems doable by hand).
   let pool, extra;
   if (kind === "yes") {
-    pool = shuffle(QUESTIONS.filter((q) => q.calc));
-    extra = shuffle(QUESTIONS.filter((q) => !q.calc));
+    pool = shuffle(finalPool.filter((q) => q.calc));
+    extra = shuffle(finalPool.filter((q) => !q.calc));
   } else {
-    pool = shuffle(QUESTIONS.filter((q) => !q.calc));
+    pool = shuffle(finalPool.filter((q) => !q.calc));
     extra = [];
   }
   const qs = pool.concat(extra).slice(0, cfg.count);
@@ -614,6 +617,48 @@ function renderResults(results, score, isTest, totalOverride) {
 // ---------- Reference / cheat sheet ----------
 const REFERENCE_HTML = `
 <div class="ref-card">
+  <h2>Derivatives — rules</h2>
+  <ul>
+    <li><strong>Power:</strong> \\(\\frac{d}{dx}x^n = nx^{n-1}\\) (rewrite \\(\\sqrt{x} = x^{1/2}\\), \\(\\frac{1}{x^2} = x^{-2}\\) first)</li>
+    <li><strong>Product:</strong> \\((uv)' = u'v + uv'\\) &nbsp;·&nbsp; <strong>Quotient:</strong> \\(\\left(\\frac{u}{v}\\right)' = \\frac{u'v - uv'}{v^2}\\) (top order matters!)</li>
+    <li><strong>Chain:</strong> \\(\\frac{d}{dx}f(g(x)) = f'(g(x))\\cdot g'(x)\\) — outside derivative, keep the inside, times inside derivative</li>
+    <li>\\(\\frac{d}{dx}\\sin x = \\cos x\\); \\(\\frac{d}{dx}\\cos x = -\\sin x\\); \\(\\frac{d}{dx}\\tan x = \\sec^2 x\\); \\(\\frac{d}{dx}e^{kx} = ke^{kx}\\); \\(\\frac{d}{dx}\\ln x = \\frac{1}{x}\\)</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Derivatives — applications (tangent lines &amp; motion)</h2>
+  <ul>
+    <li><strong>Tangent line at \\(x = a\\):</strong> point \\((a, f(a))\\), slope \\(f'(a)\\), then \\(y - f(a) = f'(a)(x - a)\\)</li>
+    <li><strong>Increasing/decreasing:</strong> \\(f\\) increases where \\(f' > 0\\), decreases where \\(f' < 0\\). Make a sign chart of \\(f'\\).</li>
+    <li><strong>Relative extrema:</strong> only where \\(f'\\) CHANGES sign. A squared factor like \\((x+3)^2\\) means NO extremum there.</li>
+    <li><strong>Particle motion:</strong> velocity \\(v = s'\\), acceleration \\(a = v' = s''\\). Moving left: \\(v < 0\\). At rest: \\(v = 0\\).</li>
+    <li><strong>Speed:</strong> increasing when \\(v\\) and \\(a\\) have the SAME sign; decreasing when opposite signs. Always justify with both signs.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Integrals &amp; Riemann sums</h2>
+  <ul>
+    <li><strong>Reverse power rule:</strong> \\(\\int x^n dx = \\frac{x^{n+1}}{n+1} + C\\); definite: \\(\\int_a^b f = F(b) - F(a)\\)</li>
+    <li>Example: \\(\\int_2^3 x^{-2}dx = \\left[-\\frac{1}{x}\\right]_2^3 = -\\frac{1}{3} + \\frac{1}{2} = \\frac{1}{6}\\)</li>
+    <li><strong>Left Riemann sum:</strong> width of each subinterval × LEFT endpoint's height, then add. (Right sum uses right endpoints.)</li>
+    <li>Increasing function → left sum underestimates, right sum overestimates.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
+  <h2>Limits &amp; continuity</h2>
+  <ul>
+    <li>Plug in first. \\(\\frac{0}{0}\\) → factor and cancel, then plug in.</li>
+    <li>At \\(\\pm\\infty\\): compare degrees — equal degrees → ratio of leading coefficients; bottom bigger → 0; top bigger → \\(\\pm\\infty\\).</li>
+    <li>Two-sided limit exists only if left limit = right limit (otherwise DNE).</li>
+    <li><strong>Continuity at \\(a\\):</strong> \\(f(a)\\) defined, \\(\\lim_{x\\to a} f\\) exists, and they're equal. To find \\(k\\): set \\(k = \\lim_{x\\to a} f(x)\\).</li>
+    <li><strong>IVT:</strong> if \\(f\\) is continuous on \\([a,b]\\) and \\(N\\) is between \\(f(a)\\) and \\(f(b)\\), then \\(f(c) = N\\) for some \\(c\\) in \\((a,b)\\). Sign change → a zero in between. Cite continuity + the sign change.</li>
+  </ul>
+</div>
+
+<div class="ref-card">
   <h2>Unit circle — the values to know cold</h2>
   <table>
     <tr><th>\\(\\theta\\)</th><th>\\(0\\)</th><th>\\(\\frac{\\pi}{6}\\) (30°)</th><th>\\(\\frac{\\pi}{4}\\) (45°)</th><th>\\(\\frac{\\pi}{3}\\) (60°)</th><th>\\(\\frac{\\pi}{2}\\) (90°)</th></tr>
@@ -698,11 +743,14 @@ const REFERENCE_HTML = `
 </div>
 
 <div class="ref-card">
-  <h2>Vectors, polar &amp; limits</h2>
+  <h2>Vectors, polar &amp; parametric</h2>
   <ul>
     <li>\\(\\|\\langle a,b \\rangle\\| = \\sqrt{a^2+b^2}\\); dot product \\(\\langle a,b\\rangle\\cdot\\langle c,d\\rangle = ac + bd\\); perpendicular \\(\\iff\\) dot \\(= 0\\)</li>
-    <li>Polar: \\(x = r\\cos\\theta\\), \\(y = r\\sin\\theta\\), \\(r^2 = x^2 + y^2\\), \\(\\tan\\theta = \\frac{y}{x}\\) (check the quadrant!)</li>
-    <li>Limits: try plugging in first. \\(\\frac{0}{0}\\) → factor and cancel. At \\(\\infty\\): compare degrees. \\(\\lim_{x\\to 0}\\frac{\\sin x}{x} = 1\\).</li>
+    <li>Polar ↔ rectangular: \\(x = r\\cos\\theta\\), \\(y = r\\sin\\theta\\), \\(r^2 = x^2 + y^2\\), \\(\\tan\\theta = \\frac{y}{x}\\) (check the quadrant!)</li>
+    <li>\\(r = a\\sin\\theta\\): circle of diameter \\(a\\) on top of the pole; \\(r = a\\cos\\theta\\): same circle, sideways.</li>
+    <li><strong>Parametric → rectangular:</strong> solve the simpler equation for \\(t\\), substitute into the other.</li>
+    <li><strong>Zeros of a parametric curve:</strong> set \\(y(t) = 0\\), solve for \\(t\\), plug that \\(t\\) into \\(x(t)\\).</li>
+    <li><strong>Position on a polar curve:</strong> \\(\\langle r\\cos\\theta,\\ r\\sin\\theta \\rangle\\) — calculator in RADIAN mode.</li>
   </ul>
 </div>
 `;

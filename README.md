@@ -1,6 +1,8 @@
-# 📐 Pre-Calc Final Prep
+# 📐 Math 4H Final Prep
 
-A Blue Book–style study app for your pre-calculus final. No installs, no build step — it's a single static page.
+A Blue Book–style study app matched to the Math 4H (pre-calc honors + intro
+calculus) final, built from the teacher's review packets (transcribed in
+`review/`). No installs, no build step — it's a single static page.
 
 ## How to use it
 
@@ -15,14 +17,19 @@ you'll get a link you can open anywhere.
 
 ## What's inside
 
-- **132 questions** across 10 topics: functions & transformations, polynomials &
-  rationals, exponentials & logs, unit circle & trig graphs, trig identities &
-  equations, triangles (law of sines/cosines), sequences & series, conics,
-  vectors/polar/parametric, and limits.
+- **188 questions** across 13 topics, weighted toward what's actually on the
+  final: derivative rules (product/quotient/chain), tangent lines & particle
+  motion, limits & continuity (incl. IVT), integrals & Riemann sums, unit
+  circle & trig graphs, trig identities & equations, exponentials & logs,
+  polynomials & rationals, functions & transformations, conics, and
+  vectors/polar/parametric. (Sequences and law of sines/cosines stay available
+  in practice but are excluded from test mode since they're not on this final.)
+- **56 of those questions are modeled directly on the review packets** —
+  same setups, same traps, sometimes the exact problem.
 - **Practice Mode 🎯** — pick topics, get instant feedback with a full worked
   explanation after every question, and build a streak 🔥.
-- **Full Test Mode ⏱️** — timed No-Calculator (20 Q / 30 min) and Calculator
-  (20 Q / 40 min) sections with flagging, a question palette, a review screen
+- **Full Test Mode ⏱️** — timed No-Calculator (20 Q / 35 min) and Calculator
+  (15 Q / 35 min) sections with flagging, a question palette, a review screen
   before submitting, and a score report broken down by topic. Questions are
   drawn fresh each time, so retakes stay interesting.
 - **Fix My Mistakes 🩹** — every question you miss anywhere gets collected so

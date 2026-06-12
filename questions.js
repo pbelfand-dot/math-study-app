@@ -11,17 +11,24 @@
 //   expl      worked explanation
 
 const TOPICS = {
-  functions: "Functions & Transformations",
-  poly:      "Polynomials & Rationals",
-  explog:    "Exponentials & Logarithms",
+  deriv:     "Derivatives: Rules",
+  derivapp:  "Derivatives: Tangent Lines & Motion",
+  limits:    "Limits & Continuity",
+  integ:     "Integrals & Riemann Sums",
   trig:      "Trig: Unit Circle & Graphs",
   trigid:    "Trig: Identities & Equations",
-  triangles: "Triangles & Applications",
-  seqser:    "Sequences & Series",
+  explog:    "Exponentials & Logarithms",
+  poly:      "Polynomials & Rationals",
+  functions: "Functions & Transformations",
   conics:    "Conic Sections",
   vectors:   "Vectors, Polar & Parametric",
-  limits:    "Limits",
+  triangles: "Triangles & Applications",
+  seqser:    "Sequences & Series",
 };
+
+// Topics that did NOT appear on the Math 4H final review packets.
+// Still available in Practice mode, but excluded from Test mode draws.
+const NON_FINAL_TOPICS = ["triangles", "seqser"];
 
 const QUESTIONS = [
 
@@ -1012,5 +1019,523 @@ const QUESTIONS = [
   choices: ["\\(18\\) ft", "\\(12\\) ft", "\\(8\\) ft", "\\(6\\) ft"],
   answer: 2,
   expl: "Each rebound multiplies by \\(\\frac{2}{3}\\): first \\(27 \\cdot \\frac{2}{3} = 18\\), second \\(12\\), third \\(8\\) ft. Geometric with \\(r = \\frac{2}{3}\\)."
+},
+
+// =====================================================================
+// Questions modeled on the Math 4H final review packets (Rev 6 & Rev 7)
+// =====================================================================
+
+// ================= DERIVATIVES: RULES =================
+{
+  id: 133, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(f(x) = e^x(5 - 6x^2)\\), find \\(f'(x)\\).",
+  choices: [
+    "\\(e^x(-12x)\\)",
+    "\\(e^x(-6x^2 - 12x + 5)\\)",
+    "\\(e^x(5 - 6x^2) - 12x\\)",
+    "\\(e^x(6x^2 + 12x + 5)\\)"
+  ],
+  answer: 1,
+  expl: "Product rule: \\(f'(x) = e^x(5 - 6x^2) + e^x(-12x)\\). Factor out \\(e^x\\): \\(e^x(5 - 6x^2 - 12x) = e^x(-6x^2 - 12x + 5)\\). This is straight off your review packet!"
+},
+{
+  id: 134, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(f(x) = e^x(3 - 2x)\\), find \\(f'(x)\\).",
+  choices: ["\\(-2e^x\\)", "\\(e^x(3 - 2x) - 2\\)", "\\(e^x(1 - 2x)\\)", "\\(e^x(5 - 2x)\\)"],
+  answer: 2,
+  expl: "Product rule: \\(f' = e^x(3 - 2x) + e^x(-2) = e^x(3 - 2x - 2) = e^x(1 - 2x)\\). With \\(e^x\\) products, always factor \\(e^x\\) out at the end."
+},
+{
+  id: 135, topic: "deriv", calc: false, type: "mc",
+  q: "What is the instantaneous rate of change at \\(x = 2\\) of \\(f(x) = \\dfrac{e^{3x}}{4 - x}\\)?",
+  choices: ["\\(\\dfrac{7e^6}{4}\\)", "\\(\\dfrac{3e^6}{2}\\)", "\\(\\dfrac{5e^6}{4}\\)", "\\(7e^6\\)"],
+  answer: 0,
+  expl: "Quotient rule: \\(f'(x) = \\dfrac{(4-x)\\cdot 3e^{3x} - e^{3x}(-1)}{(4-x)^2} = \\dfrac{e^{3x}\\left(3(4-x) + 1\\right)}{(4-x)^2}\\). At \\(x = 2\\): \\(\\dfrac{e^6(6 + 1)}{2^2} = \\dfrac{7e^6}{4}\\). Watch the sign: the derivative of \\(4 - x\\) is \\(-1\\), and subtracting it gives \\(+e^{3x}\\)."
+},
+{
+  id: 136, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\sin\\!\\left(\\dfrac{2x^3}{5}\\right)\\).",
+  choices: [
+    "\\(\\cos\\!\\left(\\frac{2x^3}{5}\\right)\\)",
+    "\\(\\frac{6x^2}{5}\\cos\\!\\left(\\frac{2x^3}{5}\\right)\\)",
+    "\\(-\\frac{6x^2}{5}\\cos\\!\\left(\\frac{2x^3}{5}\\right)\\)",
+    "\\(\\frac{6x^2}{5}\\sin\\!\\left(\\frac{2x^3}{5}\\right)\\)"
+  ],
+  answer: 1,
+  expl: "Chain rule: derivative of the outside (\\(\\sin \\to \\cos\\)) times derivative of the inside: \\(\\frac{d}{dx}\\frac{2x^3}{5} = \\frac{6x^2}{5}\\). So the answer is \\(\\frac{6x^2}{5}\\cos\\left(\\frac{2x^3}{5}\\right)\\)."
+},
+{
+  id: 137, topic: "deriv", calc: false, type: "mc",
+  q: "Given \\(f(x) = \\sqrt{2x^2 - 7x + 2}\\), find \\(f'(0)\\).",
+  choices: ["\\(-\\dfrac{7}{2\\sqrt{2}}\\)", "\\(-\\dfrac{7}{\\sqrt{2}}\\)", "\\(\\dfrac{1}{2\\sqrt{2}}\\)", "\\(-7\\)"],
+  answer: 0,
+  expl: "Write as a power and chain-rule it: \\(f'(x) = \\frac{1}{2}(2x^2 - 7x + 2)^{-1/2}(4x - 7) = \\frac{4x - 7}{2\\sqrt{2x^2 - 7x + 2}}\\). At \\(x = 0\\): \\(\\frac{-7}{2\\sqrt{2}}\\)."
+},
+{
+  id: 138, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(y = \\tan x - \\cos x\\), find \\(\\dfrac{dy}{dx}\\).",
+  choices: [
+    "\\(\\sec^2 x - \\sin x\\)",
+    "\\(\\sec^2 x + \\sin x\\)",
+    "\\(\\cot x + \\sin x\\)",
+    "\\(\\sec x\\tan x + \\sin x\\)"
+  ],
+  answer: 1,
+  expl: "\\(\\frac{d}{dx}\\tan x = \\sec^2 x\\) and \\(\\frac{d}{dx}\\cos x = -\\sin x\\). So \\(y' = \\sec^2 x - (-\\sin x) = \\sec^2 x + \\sin x\\). The double negative is the whole trap."
+},
+{
+  id: 139, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = 6\\sqrt{x} + x^2 - x + 2\\), find \\(f'(1)\\).",
+  answer: ["4"],
+  expl: "Rewrite \\(6\\sqrt{x} = 6x^{1/2}\\), so \\(f'(x) = 3x^{-1/2} + 2x - 1 = \\frac{3}{\\sqrt{x}} + 2x - 1\\). At \\(x = 1\\): \\(3 + 2 - 1 = 4\\)."
+},
+{
+  id: 140, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,e^{5x}\\).",
+  choices: ["\\(e^{5x}\\)", "\\(5e^{5x}\\)", "\\(5xe^{5x-1}\\)", "\\(\\frac{1}{5}e^{5x}\\)"],
+  answer: 1,
+  expl: "\\(e^{kx}\\) differentiates to \\(ke^{kx}\\) (chain rule: the inside \\(5x\\) has derivative 5). Don't use the power rule on \\(e\\) — the variable is in the exponent."
+},
+{
+  id: 141, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = x^3 - 4x^2\\), find \\(f'(2)\\).",
+  answer: ["-4"],
+  expl: "Power rule: \\(f'(x) = 3x^2 - 8x\\). At \\(x = 2\\): \\(3(4) - 8(2) = 12 - 16 = -4\\)."
+},
+{
+  id: 142, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,(3x^2 + 1)^4\\).",
+  choices: [
+    "\\(4(3x^2 + 1)^3\\)",
+    "\\(24x(3x^2 + 1)^3\\)",
+    "\\(6x(3x^2 + 1)^4\\)",
+    "\\((6x)^4\\)"
+  ],
+  answer: 1,
+  expl: "Chain rule: bring the 4 down, drop the power to 3, then multiply by the inside's derivative \\(6x\\): \\(4(3x^2+1)^3 \\cdot 6x = 24x(3x^2+1)^3\\). Forgetting the inner derivative gives choice A — classic."
+},
+{
+  id: 143, topic: "deriv", calc: false, type: "input",
+  q: "Let \\(p(x) = f(x)\\sin x\\). Given \\(f(0) = 5\\) and \\(f'(0) = 8\\), find \\(p'(0)\\).",
+  answer: ["5"],
+  expl: "Product rule: \\(p'(x) = f'(x)\\sin x + f(x)\\cos x\\). At \\(x = 0\\): \\(8\\sin 0 + 5\\cos 0 = 0 + 5 = 5\\). (Straight from your packet's table problem.)"
+},
+{
+  id: 144, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,\\ln x\\).",
+  choices: ["\\(\\dfrac{1}{x}\\)", "\\(\\ln x\\)", "\\(e^x\\)", "\\(\\dfrac{1}{\\ln x}\\)"],
+  answer: 0,
+  expl: "It's on the formula sheet but know it cold: \\(\\frac{d}{dx}\\ln x = \\frac{1}{x}\\)."
+},
+
+// ================= DERIVATIVES: TANGENT LINES & MOTION =================
+{
+  id: 145, topic: "derivapp", calc: true, type: "mc",
+  q: "Write the equation of the line tangent to \\(f(x) = 6\\sqrt{x} + x^2 - x + 2\\) at \\(x = 1\\).",
+  choices: [
+    "\\(y - 8 = 4(x - 1)\\)",
+    "\\(y - 8 = 5(x - 1)\\)",
+    "\\(y - 4 = 8(x - 1)\\)",
+    "\\(y = 4x\\)"
+  ],
+  answer: 0,
+  expl: "Two ingredients: the point and the slope. Point: \\(f(1) = 6 + 1 - 1 + 2 = 8\\). Slope: \\(f'(x) = \\frac{3}{\\sqrt{x}} + 2x - 1\\), so \\(f'(1) = 4\\). Tangent: \\(y - 8 = 4(x - 1)\\). (On the calculator section you can evaluate \\(\\frac{d}{dx}\\) at \\(x=1\\) directly.)"
+},
+{
+  id: 146, topic: "derivapp", calc: false, type: "mc",
+  q: "Write the equation of the line tangent to \\(f(x) = x^2 + 3x\\) at \\(x = 1\\).",
+  choices: ["\\(y = 5x - 1\\)", "\\(y = 5x + 4\\)", "\\(y = 2x + 2\\)", "\\(y = 3x + 1\\)"],
+  answer: 0,
+  expl: "Point: \\(f(1) = 4\\). Slope: \\(f'(x) = 2x + 3\\), so \\(f'(1) = 5\\). Then \\(y - 4 = 5(x - 1)\\), which simplifies to \\(y = 5x - 1\\)."
+},
+{
+  id: 147, topic: "derivapp", calc: false, type: "mc",
+  q: "Given \\(f(x) = \\dfrac{x^3}{3} - \\dfrac{3x^2}{2} - 10x - 1\\), on what interval is \\(f\\) decreasing?",
+  choices: ["\\((-5, 2)\\)", "\\((-2, 5)\\)", "\\((-\\infty, -2)\\)", "\\((5, \\infty)\\)"],
+  answer: 1,
+  expl: "\\(f\\) decreases where \\(f' < 0\\). \\(f'(x) = x^2 - 3x - 10 = (x - 5)(x + 2)\\), which is negative between its zeros: \\(-2 < x < 5\\). Make the sign chart — it's the whole problem."
+},
+{
+  id: 148, topic: "derivapp", calc: false, type: "mc",
+  q: "Given \\(f'(x) = (x + 3)^2(x - 1)\\) (the derivative of \\(f\\)), at which \\(x\\)-value(s) does \\(f\\) have a relative extremum?",
+  choices: ["\\(x = -3\\) and \\(x = 1\\)", "\\(x = 1\\) only", "\\(x = -3\\) only", "none"],
+  answer: 1,
+  expl: "Extrema need \\(f'\\) to \\(\\textbf{change sign}\\). The squared factor \\((x+3)^2\\) never changes sign, so nothing happens at \\(x = -3\\). At \\(x = 1\\), \\(f'\\) goes from negative to positive → relative minimum. This exact trap is on your packet."
+},
+{
+  id: 149, topic: "derivapp", calc: false, type: "mc",
+  q: "Particle A moves along the \\(x\\)-axis with position \\(f(t) = 4t^2 - 16t + 6\\) for \\(0 \\le t \\le 8\\). When is the particle moving to the left?",
+  choices: ["\\((2, 8]\\)", "\\([0, 2)\\)", "\\([0, 4)\\)", "never"],
+  answer: 1,
+  expl: "Moving left means velocity is negative. \\(v(t) = f'(t) = 8t - 16 < 0\\) when \\(t < 2\\). So the particle moves left on \\([0, 2)\\)."
+},
+{
+  id: 150, topic: "derivapp", calc: false, type: "input",
+  q: "Particle B has position \\(g(t) = \\dfrac{t^3}{3} + 2t^2 - 12t + 1\\). Find its velocity at \\(t = 3\\).",
+  answer: ["9"],
+  expl: "Velocity is the derivative of position: \\(v(t) = g'(t) = t^2 + 4t - 12\\). At \\(t = 3\\): \\(9 + 12 - 12 = 9\\)."
+},
+{
+  id: 151, topic: "derivapp", calc: false, type: "input",
+  q: "Particle B has position \\(g(t) = \\dfrac{t^3}{3} + 2t^2 - 12t + 1\\). Find its acceleration at \\(t = 3\\).",
+  answer: ["10"],
+  expl: "Acceleration is the second derivative: \\(g'(t) = t^2 + 4t - 12\\), so \\(g''(t) = 2t + 4\\). At \\(t = 3\\): \\(2(3) + 4 = 10\\)."
+},
+{
+  id: 152, topic: "derivapp", calc: false, type: "mc",
+  q: "At \\(t = 3\\), a particle has velocity \\(9\\) and acceleration \\(10\\). Is its speed increasing, decreasing, or neither?",
+  choices: [
+    "increasing, because velocity and acceleration have the same sign",
+    "decreasing, because acceleration is larger than velocity",
+    "neither, because velocity is not zero",
+    "cannot be determined"
+  ],
+  answer: 0,
+  expl: "The speed rule: speed increases when velocity and acceleration have the SAME sign, decreases when they have opposite signs. Here both are positive → speed increasing. Always justify with the signs — that's the explanation your teacher wants."
+},
+{
+  id: 153, topic: "derivapp", calc: false, type: "input",
+  q: "A particle's position is \\(s(t) = t^2 - 6t + 8\\). At what time \\(t\\) is the particle at rest?",
+  answer: ["3"],
+  expl: "At rest means velocity \\(= 0\\): \\(v(t) = s'(t) = 2t - 6 = 0\\) gives \\(t = 3\\)."
+},
+{
+  id: 154, topic: "derivapp", calc: false, type: "mc",
+  q: "If \\(f'(x) = x^2 - 4\\), on which interval(s) is \\(f\\) increasing?",
+  choices: [
+    "\\((-2, 2)\\)",
+    "\\((-\\infty, -2) \\cup (2, \\infty)\\)",
+    "\\((0, \\infty)\\)",
+    "\\((2, \\infty)\\) only"
+  ],
+  answer: 1,
+  expl: "\\(f\\) increases where \\(f' > 0\\): \\(x^2 - 4 = (x-2)(x+2) > 0\\) outside the roots, so \\(x < -2\\) or \\(x > 2\\). An upward parabola is positive outside its zeros."
+},
+
+// ================= LIMITS & CONTINUITY (packet additions) =================
+{
+  id: 155, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to -5} \\frac{x^2 - 25}{4x + 20}\\)",
+  answer: ["-5/2", "-2.5"],
+  expl: "It's \\(\\frac{0}{0}\\), so factor: \\(\\dfrac{(x+5)(x-5)}{4(x+5)} = \\dfrac{x-5}{4}\\). Substitute \\(x = -5\\): \\(\\dfrac{-10}{4} = -\\dfrac{5}{2}\\)."
+},
+{
+  id: 156, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{n \\to -\\infty} \\frac{-5n^5 + 3n}{4n^5 + 8n}\\)",
+  answer: ["-5/4", "-1.25"],
+  expl: "Equal degrees (both 5) → the limit at \\(\\pm\\infty\\) is the ratio of leading coefficients: \\(-\\dfrac{5}{4}\\). The lower-power terms don't matter."
+},
+{
+  id: 157, topic: "limits", calc: false, type: "input",
+  q: "Let \\(f(x) = \\dfrac{2x^2 - 2x - 12}{x^2 - 9}\\) for \\(x \\ne \\pm 3\\), and \\(f(3) = k\\). Find the value of \\(k\\) that makes \\(f\\) continuous at \\(x = 3\\).",
+  answer: ["5/3"],
+  expl: "Continuity needs \\(k = \\lim_{x\\to 3} f(x)\\). Factor: \\(\\dfrac{2(x-3)(x+2)}{(x-3)(x+3)} = \\dfrac{2(x+2)}{x+3}\\). At \\(x = 3\\): \\(\\dfrac{2(5)}{6} = \\dfrac{5}{3}\\)."
+},
+{
+  id: 158, topic: "limits", calc: false, type: "mc",
+  q: "A particle's velocity \\(v(t)\\) is continuous, with \\(v(2) = 5\\) and \\(v(3) = -9\\). Which theorem guarantees the particle is at rest (\\(v = 0\\)) at some time between \\(t = 2\\) and \\(t = 3\\)?",
+  choices: [
+    "the Intermediate Value Theorem",
+    "the Fundamental Theorem of Algebra",
+    "the Remainder Theorem",
+    "the Pythagorean Theorem"
+  ],
+  answer: 0,
+  expl: "Since \\(v\\) is continuous and goes from \\(+5\\) to \\(-9\\), it must pass through every value in between — including 0. That's the Intermediate Value Theorem (IVT). On the free-response, cite continuity AND the sign change."
+},
+{
+  id: 159, topic: "limits", calc: false, type: "mc",
+  q: "At \\(x = 0\\): \\(\\displaystyle\\lim_{x \\to 0^-} f(x) = 4\\) and \\(\\displaystyle\\lim_{x \\to 0^+} f(x) = -1\\). What is \\(\\displaystyle\\lim_{x \\to 0} f(x)\\)?",
+  choices: ["\\(4\\)", "\\(-1\\)", "\\(\\frac{3}{2}\\)", "it does not exist"],
+  answer: 3,
+  expl: "A two-sided limit exists only when the left and right limits agree. \\(4 \\ne -1\\), so the limit does not exist (DNE). Reading these off a graph is exactly the packet's graph question."
+},
+
+// ================= INTEGRALS & RIEMANN SUMS =================
+{
+  id: 160, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_2^3 \\frac{1}{x^2}\\,dx\\)",
+  answer: ["1/6"],
+  expl: "Rewrite as a power: \\(\\int_2^3 x^{-2}dx = \\left[-x^{-1}\\right]_2^3 = -\\frac{1}{3} - \\left(-\\frac{1}{2}\\right) = \\frac{1}{2} - \\frac{1}{3} = \\frac{1}{6}\\)."
+},
+{
+  id: 161, topic: "integ", calc: false, type: "input",
+  q: "The function \\(f\\) is continuous, with table values: \\(f(3) = 11\\), \\(f(6) = 29\\), \\(f(8) = 41\\), \\(f(9) = 19\\). Using the subintervals \\([3,6]\\), \\([6,8]\\), and \\([8,9]\\), what is the left Riemann sum approximation of \\(\\displaystyle\\int_3^9 f(x)\\,dx\\)?",
+  answer: ["132"],
+  expl: "Left Riemann sum: each rectangle's height is the LEFT endpoint's value, width is the subinterval length: \\(3(11) + 2(29) + 1(41) = 33 + 58 + 41 = 132\\). (This is the exact problem from your packet.)"
+},
+{
+  id: 162, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_0^2 (2x + 1)\\,dx\\)",
+  answer: ["6"],
+  expl: "Antiderivative: \\(x^2 + x\\). Evaluate: \\((4 + 2) - (0 + 0) = 6\\)."
+},
+{
+  id: 163, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_1^4 2x\\,dx\\)",
+  answer: ["15"],
+  expl: "Antiderivative of \\(2x\\) is \\(x^2\\): \\(\\left[x^2\\right]_1^4 = 16 - 1 = 15\\)."
+},
+{
+  id: 164, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_0^1 3x^2\\,dx\\)",
+  answer: ["1"],
+  expl: "Antiderivative of \\(3x^2\\) is \\(x^3\\): \\(\\left[x^3\\right]_0^1 = 1 - 0 = 1\\)."
+},
+{
+  id: 165, topic: "integ", calc: false, type: "mc",
+  q: "If \\(f\\) is increasing on \\([a, b]\\), a LEFT Riemann sum for \\(\\displaystyle\\int_a^b f(x)\\,dx\\) is…",
+  choices: ["an underestimate", "an overestimate", "exact", "impossible to compare"],
+  answer: 0,
+  expl: "For an increasing function, the left endpoint is the lowest point of each subinterval, so every rectangle sits under the curve → underestimate. (Right endpoints would overestimate; the reverse holds for decreasing functions.)"
+},
+
+// ================= TRIG (packet additions) =================
+{
+  id: 166, topic: "trig", calc: false, type: "input",
+  q: "What is the exact value of \\(\\sec\\dfrac{5\\pi}{3} - \\cot\\dfrac{7\\pi}{4}\\)?",
+  answer: ["3"],
+  expl: "\\(\\sec\\frac{5\\pi}{3} = \\frac{1}{\\cos(5\\pi/3)} = \\frac{1}{1/2} = 2\\) (QIV, cosine positive). \\(\\cot\\frac{7\\pi}{4} = \\frac{\\cos}{\\sin} = \\frac{\\sqrt2/2}{-\\sqrt2/2} = -1\\). So \\(2 - (-1) = 3\\)."
+},
+{
+  id: 167, topic: "trigid", calc: false, type: "mc",
+  q: "Simplify: \\(\\dfrac{\\csc^2 x}{\\cot^2 x - 1}\\)",
+  choices: [
+    "\\(\\dfrac{1}{\\cos^2 x - \\sin^2 x}\\) (i.e. \\(\\sec 2x\\))",
+    "\\(\\csc 2x\\)",
+    "\\(1\\)",
+    "\\(\\tan^2 x\\)"
+  ],
+  answer: 0,
+  expl: "Multiply top and bottom by \\(\\sin^2 x\\): numerator becomes 1, denominator becomes \\(\\cos^2 x - \\sin^2 x\\). So the expression is \\(\\frac{1}{\\cos^2 x - \\sin^2 x} = \\frac{1}{\\cos 2x} = \\sec 2x\\)."
+},
+{
+  id: 168, topic: "trigid", calc: false, type: "mc",
+  q: "Solve on \\([0, 2\\pi]\\): \\(\\sqrt{3}\\cot\\theta + 2\\cos\\theta\\cot\\theta = 0\\)",
+  choices: [
+    "\\(\\left\\{\\frac{\\pi}{2}, \\frac{3\\pi}{2}, \\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\right\\}\\)",
+    "\\(\\left\\{\\frac{\\pi}{2}, \\frac{3\\pi}{2}\\right\\}\\) only",
+    "\\(\\left\\{\\frac{\\pi}{6}, \\frac{11\\pi}{6}\\right\\}\\)",
+    "\\(\\left\\{\\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\right\\}\\) only"
+  ],
+  answer: 0,
+  expl: "Factor out \\(\\cot\\theta\\): \\(\\cot\\theta(\\sqrt{3} + 2\\cos\\theta) = 0\\). \\(\\cot\\theta = 0\\) where \\(\\cos\\theta = 0\\): \\(\\frac{\\pi}{2}, \\frac{3\\pi}{2}\\). And \\(\\cos\\theta = -\\frac{\\sqrt3}{2}\\): \\(\\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\). Never divide by \\(\\cot\\theta\\) — you'd lose half the answers."
+},
+{
+  id: 169, topic: "trigid", calc: true, type: "mc",
+  q: "Solve on \\([0, 2\\pi)\\), rounding to the nearest thousandth: \\(e^x\\tan^2 x - e^x\\tan x - 12e^x = 0\\)",
+  choices: [
+    "\\(\\{1.326,\\ 1.893,\\ 4.467,\\ 5.034\\}\\)",
+    "\\(\\{1.326,\\ 4.467\\}\\) only",
+    "\\(\\{0,\\ 1.326,\\ 1.893\\}\\)",
+    "no solution, because \\(e^x \\ne 0\\)"
+  ],
+  answer: 0,
+  expl: "Factor out \\(e^x\\) (never zero, so discard it): \\(\\tan^2 x - \\tan x - 12 = (\\tan x - 4)(\\tan x + 3) = 0\\). \\(\\tan x = 4\\): \\(x = 1.326\\) and \\(1.326 + \\pi = 4.467\\). \\(\\tan x = -3\\): reference \\(1.249\\), so \\(\\pi - 1.249 = 1.893\\) and \\(2\\pi - 1.249 = 5.034\\). Tangent solutions repeat every \\(\\pi\\)."
+},
+
+// ================= EXP/LOG (packet additions) =================
+{
+  id: 170, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(\\dfrac{1}{2}e^{\\ln 5x} = 40\\)",
+  answer: ["16"],
+  expl: "Multiply by 2: \\(e^{\\ln 5x} = 80\\). Since \\(e\\) and \\(\\ln\\) undo each other, \\(5x = 80\\), so \\(x = 16\\)."
+},
+{
+  id: 171, topic: "explog", calc: true, type: "mc",
+  q: "Solve, to the nearest thousandth: \\(-2 + \\ln(3 - x) = 7\\)",
+  choices: [
+    "\\(x \\approx -8100.084\\)",
+    "\\(x \\approx 8103.084\\)",
+    "\\(x \\approx -145.413\\)",
+    "\\(x \\approx 2.999\\)"
+  ],
+  answer: 0,
+  expl: "Isolate the log: \\(\\ln(3 - x) = 9\\). Exponentiate: \\(3 - x = e^9\\), so \\(x = 3 - e^9 \\approx 3 - 8103.084 = -8100.084\\). Yes, the answer is supposed to be huge and negative — don't second-guess it."
+},
+{
+  id: 172, topic: "explog", calc: false, type: "mc",
+  q: "For \\(f(x) = e^{x+3} + 5\\), which statement is true?",
+  choices: [
+    "horizontal asymptote \\(y = 5\\); range \\((5, \\infty)\\); shifted left 3, up 5",
+    "horizontal asymptote \\(y = 3\\); range \\((3, \\infty)\\); shifted right 3, up 5",
+    "horizontal asymptote \\(y = 5\\); range \\([5, \\infty)\\); shifted right 3, up 5",
+    "no asymptote; range all reals"
+  ],
+  answer: 0,
+  expl: "Parent \\(y = e^x\\) has asymptote \\(y = 0\\). The \\(+5\\) outside lifts the asymptote to \\(y = 5\\) and the \\(x + 3\\) inside shifts LEFT 3. The graph never touches the asymptote, so the range is \\((5, \\infty)\\) — open parenthesis. As \\(x \\to -\\infty\\), \\(y \\to 5\\)."
+},
+
+// ================= POLY/RATIONALS (packet additions) =================
+{
+  id: 173, topic: "poly", calc: false, type: "mc",
+  q: "Determine the domain, in interval notation, of \\(f(x) = \\dfrac{2x + 1}{x^2 + 7x - 30}\\).",
+  choices: [
+    "\\((-\\infty, -10) \\cup (-10, 3) \\cup (3, \\infty)\\)",
+    "\\((-\\infty, -3) \\cup (-3, 10) \\cup (10, \\infty)\\)",
+    "\\((-\\infty, -\\frac{1}{2}) \\cup (-\\frac{1}{2}, \\infty)\\)",
+    "all real numbers"
+  ],
+  answer: 0,
+  expl: "Fractions are undefined when the denominator is 0: \\(x^2 + 7x - 30 = (x + 10)(x - 3) = 0\\) at \\(x = -10, 3\\). Cut those two points out of the number line."
+},
+{
+  id: 174, topic: "poly", calc: false, type: "mc",
+  q: "For \\(g(x) = \\dfrac{3x^2 - 6x - 105}{x^2 - 25}\\), which statement is true?",
+  choices: [
+    "vertical asymptote \\(x = 5\\); hole at \\(\\left(-5, \\frac{18}{5}\\right)\\); horizontal asymptote \\(y = 3\\)",
+    "vertical asymptotes \\(x = 5\\) and \\(x = -5\\); horizontal asymptote \\(y = 3\\)",
+    "vertical asymptote \\(x = -5\\); hole at \\(\\left(5, \\frac{18}{5}\\right)\\); horizontal asymptote \\(y = 3\\)",
+    "no vertical asymptotes; horizontal asymptote \\(y = 0\\)"
+  ],
+  answer: 0,
+  expl: "Factor: \\(\\dfrac{3(x-7)(x+5)}{(x-5)(x+5)}\\). The \\((x+5)\\) cancels → hole at \\(x = -5\\) with height \\(\\frac{3(-12)}{-10} = \\frac{18}{5}\\). The \\((x-5)\\) doesn't cancel → vertical asymptote \\(x = 5\\). Equal degrees → \\(y = \\frac{3}{1} = 3\\). On the test, justify with limits."
+},
+{
+  id: 175, topic: "poly", calc: false, type: "mc",
+  q: "Find the domain of \\(y = \\sqrt{7 - 4x}\\), in interval notation.",
+  choices: [
+    "\\(\\left(-\\infty, \\frac{7}{4}\\right]\\)",
+    "\\(\\left[\\frac{7}{4}, \\infty\\right)\\)",
+    "\\(\\left(-\\infty, \\frac{7}{4}\\right)\\)",
+    "\\(\\left[-\\frac{7}{4}, \\infty\\right)\\)"
+  ],
+  answer: 0,
+  expl: "Need \\(7 - 4x \\ge 0\\), so \\(x \\le \\frac{7}{4}\\). Careful: dividing by \\(-4\\) flips the inequality. Square bracket because equality is allowed."
+},
+
+// ================= FUNCTIONS (packet additions) =================
+{
+  id: 176, topic: "functions", calc: false, type: "input",
+  q: "Given \\(f(x) = \\begin{cases} e^x, & x > 0 \\\\ 2^{3x}, & x \\le 0 \\end{cases}\\) and \\(g(x) = \\begin{cases} \\ln\\frac{x}{4}, & x \\ge 4 \\\\ x + 1, & x < 4 \\end{cases}\\), find \\(f(g(4))\\).",
+  answer: ["1"],
+  expl: "Inside out, choosing the right branch each time. \\(g(4)\\): since \\(4 \\ge 4\\), use \\(\\ln\\frac{4}{4} = \\ln 1 = 0\\). Then \\(f(0)\\): since \\(0 \\le 0\\), use \\(2^{3(0)} = 2^0 = 1\\)."
+},
+{
+  id: 177, topic: "functions", calc: false, type: "mc",
+  q: "Find the inverse of \\(g(x) = x^2 - 49\\).",
+  choices: [
+    "\\(g^{-1}(x) = \\pm\\sqrt{x + 49}\\)",
+    "\\(g^{-1}(x) = \\pm\\sqrt{x - 49}\\)",
+    "\\(g^{-1}(x) = \\sqrt{x} + 7\\)",
+    "\\(g^{-1}(x) = \\frac{1}{x^2 - 49}\\)"
+  ],
+  answer: 0,
+  expl: "Swap and solve: \\(x = y^2 - 49 \\Rightarrow y^2 = x + 49 \\Rightarrow y = \\pm\\sqrt{x + 49}\\). The \\(+49\\) (not \\(-49\\)) is the trap — move the constant to the other side first."
+},
+
+// ================= CONICS (packet additions) =================
+{
+  id: 178, topic: "conics", calc: false, type: "mc",
+  q: "Express \\(4x^2 + 16y^2 - 32x - 192y + 576 = 0\\) in standard form.",
+  choices: [
+    "\\(\\dfrac{(x-4)^2}{16} + \\dfrac{(y-6)^2}{4} = 1\\)",
+    "\\(\\dfrac{(x-4)^2}{4} + \\dfrac{(y-6)^2}{16} = 1\\)",
+    "\\(\\dfrac{(x+4)^2}{16} + \\dfrac{(y+6)^2}{4} = 1\\)",
+    "\\(\\dfrac{(x-4)^2}{64} + \\dfrac{(y-6)^2}{16} = 1\\)"
+  ],
+  answer: 0,
+  expl: "Complete the square: \\(4(x^2 - 8x + 16) + 16(y^2 - 12y + 36) = -576 + 64 + 576 = 64\\). So \\(4(x-4)^2 + 16(y-6)^2 = 64\\); divide by 64: \\(\\frac{(x-4)^2}{16} + \\frac{(y-6)^2}{4} = 1\\). Remember to multiply what you added by the leading 4 and 16."
+},
+{
+  id: 179, topic: "conics", calc: false, type: "mc",
+  q: "Find the foci of the ellipse \\(\\dfrac{(x-4)^2}{16} + \\dfrac{(y-6)^2}{4} = 1\\).",
+  choices: [
+    "\\((4 \\pm 2\\sqrt{3},\\ 6)\\)",
+    "\\((4,\\ 6 \\pm 2\\sqrt{3})\\)",
+    "\\((4 \\pm \\sqrt{20},\\ 6)\\)",
+    "\\((\\pm 2\\sqrt{3},\\ 0)\\)"
+  ],
+  answer: 0,
+  expl: "\\(c^2 = a^2 - b^2 = 16 - 4 = 12\\), so \\(c = \\sqrt{12} = 2\\sqrt{3}\\). The major axis is horizontal (16 under the \\(x\\) term), so move \\(c\\) left/right from the center \\((4, 6)\\): \\((4 \\pm 2\\sqrt3, 6)\\)."
+},
+{
+  id: 180, topic: "conics", calc: false, type: "mc",
+  q: "A hyperbola has center \\((2, 2)\\), opens left/right, with \\(a = 4\\) and \\(b = 3\\). Its equation is…",
+  choices: [
+    "\\(\\dfrac{(x-2)^2}{16} - \\dfrac{(y-2)^2}{9} = 1\\)",
+    "\\(\\dfrac{(y-2)^2}{9} - \\dfrac{(x-2)^2}{16} = 1\\)",
+    "\\(\\dfrac{(x-2)^2}{4} - \\dfrac{(y-2)^2}{3} = 1\\)",
+    "\\(\\dfrac{(x-2)^2}{16} + \\dfrac{(y-2)^2}{9} = 1\\)"
+  ],
+  answer: 0,
+  expl: "Opens left/right → the \\(x\\) term is positive and comes first, with \\(a^2 = 16\\) under it: \\(\\frac{(x-2)^2}{16} - \\frac{(y-2)^2}{9} = 1\\). Your packet's margin note: \"\\(a^2\\) always 1st in hyperbola.\""
+},
+
+// ================= VECTORS / POLAR / PARAMETRIC (packet additions) =================
+{
+  id: 181, topic: "vectors", calc: false, type: "mc",
+  q: "When converting the polar point \\(\\left(-4, \\dfrac{5\\pi}{4}\\right)\\) to rectangular coordinates, what is the value of \\(x\\) in simplest form?",
+  choices: ["\\(2\\sqrt{2}\\)", "\\(-2\\sqrt{2}\\)", "\\(2\\)", "\\(-4\\)"],
+  answer: 0,
+  expl: "\\(x = r\\cos\\theta = -4\\cos\\frac{5\\pi}{4} = -4\\left(-\\frac{\\sqrt2}{2}\\right) = 2\\sqrt{2}\\). The negative \\(r\\) times the negative cosine gives a positive — track both signs."
+},
+{
+  id: 182, topic: "vectors", calc: false, type: "mc",
+  q: "The graph of the polar equation \\(r = 6\\sin\\theta\\) is…",
+  choices: [
+    "a circle of diameter 6 sitting on top of the pole (centered at \\((0, 3)\\))",
+    "a circle of radius 6 centered at the origin",
+    "a rose with 6 petals",
+    "a spiral"
+  ],
+  answer: 0,
+  expl: "\\(r = a\\sin\\theta\\) is always a circle of diameter \\(a\\) through the pole, centered up the \\(y\\)-axis. Check key values: \\(r(0) = 0\\), \\(r(\\frac{\\pi}{2}) = 6\\), \\(r(\\pi) = 0\\). (\\(r = a\\cos\\theta\\) gives the sideways version.)"
+},
+{
+  id: 183, topic: "vectors", calc: false, type: "mc",
+  q: "Given \\(r = 8 - \\cos\\theta\\), what is the average rate of change of \\(r\\) with respect to \\(\\theta\\) on \\(\\left[\\frac{\\pi}{2}, \\pi\\right]\\)?",
+  choices: ["\\(\\dfrac{2}{\\pi}\\)", "\\(\\dfrac{1}{\\pi}\\)", "\\(\\dfrac{\\pi}{2}\\)", "\\(-\\dfrac{2}{\\pi}\\)"],
+  answer: 0,
+  expl: "Average rate of change \\(= \\dfrac{r(\\pi) - r(\\pi/2)}{\\pi - \\pi/2} = \\dfrac{9 - 8}{\\pi/2} = \\dfrac{2}{\\pi}\\). Since it's positive, the curve is moving AWAY from the origin on this interval — that's part (b) of the packet problem."
+},
+{
+  id: 184, topic: "vectors", calc: false, type: "mc",
+  q: "Calculate \\(\\lVert \\mathbf{v} \\rVert\\) for \\(\\mathbf{v} = \\langle 7, -2 \\rangle\\).",
+  choices: ["\\(\\sqrt{53}\\)", "\\(\\sqrt{45}\\)", "\\(5\\)", "\\(53\\)"],
+  answer: 0,
+  expl: "\\(\\lVert\\mathbf{v}\\rVert = \\sqrt{7^2 + (-2)^2} = \\sqrt{49 + 4} = \\sqrt{53}\\). It doesn't simplify — leave it as a radical on the no-calc section."
+},
+{
+  id: 185, topic: "vectors", calc: false, type: "mc",
+  q: "Given \\(\\mathbf{u} = \\langle -7, 2 \\rangle\\) and \\(\\mathbf{v} = \\langle 3, -1 \\rangle\\), find \\(2\\mathbf{u} - 3\\mathbf{v}\\).",
+  choices: [
+    "\\(\\langle -23, 7 \\rangle\\)",
+    "\\(\\langle -5, 1 \\rangle\\)",
+    "\\(\\langle -23, 1 \\rangle\\)",
+    "\\(\\langle -11, 7 \\rangle\\)"
+  ],
+  answer: 0,
+  expl: "\\(2\\mathbf{u} = \\langle -14, 4 \\rangle\\) and \\(-3\\mathbf{v} = \\langle -9, 3 \\rangle\\). Add: \\(\\langle -23, 7 \\rangle\\). The second component is the trap: \\(4 - 3(-1) = 4 + 3 = 7\\)."
+},
+{
+  id: 186, topic: "vectors", calc: false, type: "mc",
+  q: "Eliminate the parameter: \\(x(t) = 2t^2 - 1\\), \\(y(t) = t + 8\\).",
+  choices: [
+    "\\(x = 2(y - 8)^2 - 1\\)",
+    "\\(y = 2(x - 8)^2 - 1\\)",
+    "\\(x = 2y^2 - 17\\)",
+    "\\(y = \\sqrt{2x} + 8\\)"
+  ],
+  answer: 0,
+  expl: "Solve the simpler equation for \\(t\\): \\(t = y - 8\\). Substitute into \\(x\\): \\(x = 2(y - 8)^2 - 1\\). A sideways parabola — exactly the curve you sketch in the packet's parametric problem."
+},
+{
+  id: 187, topic: "vectors", calc: false, type: "input",
+  q: "A curve is defined by \\(x(t) = 2t^2 - 1\\), \\(y(t) = t + 8\\). The curve crosses the \\(x\\)-axis where \\(y = 0\\). What is the \\(x\\)-coordinate of that point?",
+  answer: ["127"],
+  expl: "Set \\(y(t) = 0\\): \\(t = -8\\). Then \\(x(-8) = 2(-8)^2 - 1 = 2(64) - 1 = 127\\). Zeros of a parametric curve: solve \\(y = 0\\) for \\(t\\), then plug that \\(t\\) into \\(x\\)."
+},
+{
+  id: 188, topic: "vectors", calc: true, type: "mc",
+  q: "A particle moves along the polar curve \\(r = \\cos\\theta\\) with \\(\\theta = t\\). Find its position vector \\(\\langle x, y \\rangle\\) at \\(t = 3\\), to the nearest tenth.",
+  choices: [
+    "\\(\\langle 1.0, -0.1 \\rangle\\)",
+    "\\(\\langle -1.0, 0.1 \\rangle\\)",
+    "\\(\\langle 0.1, -1.0 \\rangle\\)",
+    "\\(\\langle -0.9,\\ 0.9 \\rangle\\)"
+  ],
+  answer: 0,
+  expl: "Position: \\(x = r\\cos\\theta = \\cos(3)\\cos(3) \\approx 0.98\\), \\(y = r\\sin\\theta = \\cos(3)\\sin(3) \\approx -0.14\\). Rounded: \\(\\langle 1.0, -0.1 \\rangle\\). Radian mode — always."
 },
 ];
