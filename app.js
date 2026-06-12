@@ -391,7 +391,8 @@ function checkPractice() {
   let html = `<div class="verdict">${correct ? praise[Math.floor(Math.random() * praise.length)] : encourage[Math.floor(Math.random() * encourage.length)]}</div>`;
   if (!correct && q.type === "mc") html += `<div><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
   if (!correct && q.type === "input") html += `<div><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
-  if (SIMPLE[q.id]) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[q.id]}</div>`;
+  const simpleLine = q.simple || SIMPLE[q.id];
+  if (simpleLine) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simpleLine}</div>`;
   html += `<div class="expl-detail">${q.expl}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
