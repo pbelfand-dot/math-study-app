@@ -17,7 +17,7 @@ you'll get a link you can open anywhere.
 
 ## What's inside
 
-- **390 questions** across 13 topics (30 per topic), weighted toward what's actually on the
+- **455 questions** across 13 topics (35 per topic), each rated Easy/Medium/Hard, weighted toward what's actually on the
   final: derivative rules (product/quotient/chain), tangent lines & particle
   motion, limits & continuity (incl. IVT), integrals & Riemann sums, unit
   circle & trig graphs, trig identities & equations, exponentials & logs,

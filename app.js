@@ -107,13 +107,41 @@ function renderHome() {
     ? `Redo the ${n} question${n === 1 ? "" : "s"} you've missed`
     : "No missed questions yet — nice!";
 
+  // Readiness dashboard: aggregate across all questions
+  let totAtt = 0, totRight = 0, totWrong = 0, solid = 0;
+  QUESTIONS.forEach((q) => {
+    const s = store.perQuestion[q.id];
+    if (s && s.right + s.wrong > 0) {
+      totAtt++;
+      totRight += s.right; totWrong += s.wrong;
+      if (s.right > s.wrong || (s.right > 0 && s.wrong === 0)) solid++;
+    }
+  });
+  const acc = (totRight + totWrong) ? Math.round((100 * totRight) / (totRight + totWrong)) : 0;
+  const coverage = Math.round((100 * totAtt) / QUESTIONS.length);
+  const readiness = Math.round((100 * solid) / QUESTIONS.length);
+  const rColor = readiness >= 70 ? "good" : readiness >= 40 ? "mid" : "low";
+  $("dashboard").innerHTML = `
+    <div class="dash-ring dash-${rColor}" style="--p:${readiness}%">
+      <div class="dash-ring-num">${readiness}%</div>
+      <div class="dash-ring-lbl">ready</div>
+    </div>
+    <div class="dash-stats">
+      <div class="dash-stat"><span class="dash-val">${totAtt}</span><span class="dash-lbl">of ${QUESTIONS.length} tried</span></div>
+      <div class="dash-stat"><span class="dash-val">${acc}%</span><span class="dash-lbl">accuracy</span></div>
+      <div class="dash-stat"><span class="dash-val">${solid}</span><span class="dash-lbl">solid</span></div>
+      <div class="dash-stat"><span class="dash-val">🔥 ${store.bestStreak || 0}</span><span class="dash-lbl">best streak</span></div>
+    </div>`;
+
   // Topic progress
   const tp = $("topic-progress");
   tp.innerHTML = "";
   Object.entries(TOPICS).forEach(([key, label]) => {
     const qs = QUESTIONS.filter((q) => q.topic === key);
     let right = 0, attempted = 0;
+    const dc = { easy: 0, medium: 0, hard: 0 };
     qs.forEach((q) => {
+      dc[diffOf(q)]++;
       const s = store.perQuestion[q.id];
       if (s && s.right + s.wrong > 0) {
         attempted++;
@@ -121,13 +149,14 @@ function renderHome() {
       }
     });
     const seenPct = Math.round((attempted / qs.length) * 100);
-    const acc = attempted ? Math.round((right / attempted) * 100) : 0;
+    const acc2 = attempted ? Math.round((right / attempted) * 100) : 0;
     const row = document.createElement("button");
     row.className = "topic-row clickable";
     row.innerHTML = `
       <span class="topic-name">${label} <span class="topic-go">Practice →</span></span>
-      <span class="topic-stat">${attempted}/${qs.length} tried${attempted ? ` · ${acc}% solid` : ""}</span>
-      <div class="bar"><div class="bar-fill ${attempted && acc >= 80 ? "good" : acc < 50 && attempted ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
+      <span class="topic-stat">${attempted}/${qs.length} tried${attempted ? ` · ${acc2}% solid` : ""}</span>
+      <span class="topic-diffs"><span class="td td-easy">${dc.easy} easy</span><span class="td td-medium">${dc.medium} med</span><span class="td td-hard">${dc.hard} hard</span></span>
+      <div class="bar"><div class="bar-fill ${attempted && acc2 >= 80 ? "good" : acc2 < 50 && attempted ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
     row.addEventListener("click", () => startTopicPractice(key, label));
     tp.appendChild(row);
   });
@@ -166,6 +195,13 @@ $("btn-review-missed").addEventListener("click", () => {
   if (!store.missed.length) { alert("Nothing to fix — you haven't missed any questions yet. Go practice!"); return; }
   const qs = shuffle(store.missed.map((id) => QBYID[id]).filter(Boolean));
   startSession({ mode: "practice", label: "Fixing mistakes", questions: qs });
+});
+
+$("btn-warmup").addEventListener("click", () => {
+  // 5 mixed questions from final topics, spread across difficulties
+  const pool = QUESTIONS.filter((q) => !NON_FINAL_TOPICS.includes(q.topic));
+  const qs = shuffle(pool).slice(0, 5);
+  startSession({ mode: "practice", label: "⚡ Warm-up", questions: qs });
 });
 
 // ---------- Practice setup ----------
