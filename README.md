@@ -6,11 +6,17 @@ calculus) final, built from the teacher's review packets (transcribed in
 
 ## How to use it
 
-**Option 1 (easiest):** download/clone this repo and double-click `index.html`. It opens in your browser and just works.
+The layout is fully responsive — it works on a computer and on an iPhone.
 
-**Option 2 (study from your phone):** turn on GitHub Pages for this repo
-(Settings → Pages → Deploy from branch → pick this branch, root folder) and
-you'll get a link you can open anywhere.
+**On a computer:** download/clone this repo and double-click `index.html`
+(or open `Math4H-Final-Prep.html`, the single-file version). It just works.
+
+**On an iPhone (recommended — study anywhere):** turn on GitHub Pages for this
+repo (Settings → Pages → Deploy from branch → pick this branch, root folder) to
+get a link. Open that link in Safari, tap the **Share** button, then **Add to
+Home Screen** — it launches full-screen like a real app, and your progress is
+saved on the phone. (You can also AirDrop `Math4H-Final-Prep.html` to the phone
+and open it in Safari.)
 
 > The app needs internet access the first time so it can load the math-rendering
 > library (KaTeX) from a CDN — after that your browser usually caches it.
