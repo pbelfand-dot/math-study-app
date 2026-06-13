@@ -76,6 +76,10 @@ const $ = (id) => document.getElementById(id);
 const LETTERS = ["A", "B", "C", "D"];
 const QBYID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 
+// ---------- Difficulty ----------
+const DIFF_LABEL = { easy: "🟢 Easy", medium: "🟡 Medium", hard: "🔴 Hard" };
+const diffOf = (q) => q.diff || (typeof DIFFICULTY !== "undefined" && DIFFICULTY[q.id]) || "medium";
+
 // ---------- Navigation ----------
 const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "reference"];
 function show(name) {
@@ -192,6 +196,7 @@ function singleSelect(containerId, attr) {
     })
   );
 }
+singleSelect("diff-chips");
 singleSelect("calc-chips");
 singleSelect("count-chips");
 
@@ -199,13 +204,16 @@ $("btn-start-practice").addEventListener("click", () => {
   if (!selectedTopics.size) { alert("Pick at least one topic!"); return; }
   const calcMode = $("calc-chips").querySelector(".selected").dataset.calc;
   const countSel = $("count-chips").querySelector(".selected").dataset.count;
+  const diffMode = $("diff-chips").querySelector(".selected").dataset.diff;
   let pool = QUESTIONS.filter((q) => selectedTopics.has(q.topic));
   if (calcMode === "no") pool = pool.filter((q) => !q.calc);
   if (calcMode === "yes") pool = pool.filter((q) => q.calc);
+  if (diffMode !== "all") pool = pool.filter((q) => diffOf(q) === diffMode);
   if (!pool.length) { alert("No questions match those filters — try widening them."); return; }
   let qs = shuffle(pool);
   if (countSel !== "all") qs = qs.slice(0, parseInt(countSel, 10));
-  startSession({ mode: "practice", label: "Practice", questions: qs });
+  const label = diffMode === "all" ? "Practice" : DIFF_LABEL[diffMode] + " practice";
+  startSession({ mode: "practice", label: label, questions: qs });
 });
 
 // ---------- Test setup ----------
@@ -301,6 +309,10 @@ function renderQuestion() {
   const isTest = session.mode === "test";
   $("quiz-progress").textContent = `Question ${session.idx + 1} of ${session.questions.length}`;
   $("q-topic").textContent = TOPICS[q.topic];
+  const dlevel = diffOf(q);
+  const dpill = $("q-diff");
+  dpill.textContent = DIFF_LABEL[dlevel];
+  dpill.className = "pill diff-pill diff-" + dlevel;
   $("q-calc").textContent = q.calc ? "🧮 Calculator OK" : "🚫 No calculator";
   setMath($("q-text"), q.q);
 
@@ -603,7 +615,7 @@ function renderResults(results, score, isTest, totalOverride) {
       }
       const rightAns = r.q.type === "mc" ? `${LETTERS[r.q.answer]}. ${r.q.choices[r.q.answer]}` : r.q.answer[0];
       div.innerHTML = `
-        <div class="ri-head">${r.correct ? "✅" : "❌"} Question ${i + 1} · ${TOPICS[r.q.topic]}</div>
+        <div class="ri-head">${r.correct ? "✅" : "❌"} Question ${i + 1} · ${TOPICS[r.q.topic]} · ${DIFF_LABEL[diffOf(r.q)]}</div>
         <div class="ri-q">${r.q.q}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}

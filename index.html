@@ -82,6 +82,14 @@
       <button class="link-btn" id="chips-none">Clear</button>
     </div>
 
+    <h2 class="section-title">Difficulty</h2>
+    <div class="chips" id="diff-chips">
+      <button class="chip selected" data-diff="all">All</button>
+      <button class="chip" data-diff="easy">🟢 Easy</button>
+      <button class="chip" data-diff="medium">🟡 Medium</button>
+      <button class="chip" data-diff="hard">🔴 Hard</button>
+    </div>
+
     <h2 class="section-title">Calculator</h2>
     <div class="chips" id="calc-chips">
       <button class="chip selected" data-calc="both">Both</button>
@@ -135,6 +143,7 @@
     <div class="quiz-body">
       <div class="q-meta">
         <span id="q-topic" class="pill pill-soft"></span>
+        <span id="q-diff" class="pill diff-pill"></span>
         <span id="q-calc" class="pill pill-soft"></span>
         <button id="btn-flag" class="flag-btn hidden">🚩 Flag for review</button>
       </div>

@@ -250,6 +250,10 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
   font-weight: 700;
 }
 .pill-soft { background: var(--accent-soft); color: var(--accent); }
+.diff-pill { border: 1px solid transparent; }
+.diff-easy { background: var(--good-soft); color: var(--good); }
+.diff-medium { background: #fff4e6; color: #d9480f; }
+.diff-hard { background: var(--bad-soft); color: var(--bad); }
 .timer {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
