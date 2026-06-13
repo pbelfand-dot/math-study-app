@@ -196,6 +196,50 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .td-medium { background: #fff4e6; color: #d9480f; }
 .td-hard { background: var(--bad-soft); color: var(--bad); }
 
+/* Per-topic status pill + colored left edge */
+.topic-status {
+  justify-self: end;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+.st-ns { background: #eef0f4; color: var(--muted); }
+.st-weak { background: var(--bad-soft); color: var(--bad); }
+.st-ok { background: #fff4e6; color: #d9480f; }
+.st-strong { background: var(--good-soft); color: var(--good); }
+.topic-row.s-weak { border-left: 4px solid var(--bad); }
+.topic-row.s-ok { border-left: 4px solid var(--warn); }
+.topic-row.s-strong { border-left: 4px solid var(--good); }
+.topic-row.s-ns { border-left: 4px solid var(--border); }
+
+/* Weak-spots quick-pick card */
+.weak-spots {
+  background: var(--bad-soft);
+  border: 1px solid #f1c0c0;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.weak-title { font-weight: 800; color: var(--bad); margin-bottom: 10px; font-size: 0.95rem; }
+.weak-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.weak-chip {
+  background: var(--card);
+  border: 1.5px solid var(--bad);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+}
+.weak-chip .weak-acc { background: var(--bad); color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; }
+.weak-chip:hover { background: var(--bad); color: #fff; }
+.weak-chip:hover .weak-acc { background: #fff; color: var(--bad); }
+
 /* ===== Topic progress ===== */
 .topic-progress { display: flex; flex-direction: column; gap: 10px; }
 .topic-row {
@@ -703,6 +747,7 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
     </div>
 
     <h2 class="section-title">Practice by topic <span class="muted" style="font-weight:400;font-size:0.85rem">— tap any topic to drill just that one</span></h2>
+    <div id="weak-spots" class="weak-spots hidden"></div>
     <div id="topic-progress" class="topic-progress"></div>
 
     <h2 class="section-title">Recent tests</h2>
@@ -4962,31 +5007,71 @@ function renderHome() {
       <div class="dash-stat"><span class="dash-val">🔥 ${store.bestStreak || 0}</span><span class="dash-lbl">best streak</span></div>
     </div>`;
 
-  // Topic progress
-  const tp = $("topic-progress");
-  tp.innerHTML = "";
-  Object.entries(TOPICS).forEach(([key, label]) => {
+  // Per-topic stats (used for both the weak-spots picker and the topic list)
+  const topicStats = Object.entries(TOPICS).map(([key, label]) => {
     const qs = QUESTIONS.filter((q) => q.topic === key);
-    let right = 0, attempted = 0;
+    let right = 0, wrong = 0, attempted = 0, solid = 0;
     const dc = { easy: 0, medium: 0, hard: 0 };
     qs.forEach((q) => {
       dc[diffOf(q)]++;
       const s = store.perQuestion[q.id];
       if (s && s.right + s.wrong > 0) {
-        attempted++;
-        if (s.right > s.wrong || (s.right > 0 && s.wrong === 0)) right++;
+        attempted++; right += s.right; wrong += s.wrong;
+        if (s.right > s.wrong || (s.right > 0 && s.wrong === 0)) solid++;
       }
     });
-    const seenPct = Math.round((attempted / qs.length) * 100);
-    const acc2 = attempted ? Math.round((right / attempted) * 100) : 0;
+    const accuracy = (right + wrong) ? Math.round((100 * right) / (right + wrong)) : 0;
+    const solidPct = Math.round((100 * solid) / qs.length);
+    // status: not started / needs work / getting there / strong
+    let status;
+    if (!attempted) status = { cls: "ns", label: "Not started" };
+    else if (accuracy < 60) status = { cls: "weak", label: "Needs work" };
+    else if (accuracy < 80) status = { cls: "ok", label: "Getting there" };
+    else status = { cls: "strong", label: "Strong" };
+    return { key, label, total: qs.length, attempted, accuracy, solidPct, dc, status };
+  });
+
+  // Weak-spots quick-pick: the topics you do worst on (attempted, accuracy < 80),
+  // weakest first. Tap one to drill it immediately.
+  const ws = $("weak-spots");
+  const weak = topicStats
+    .filter((t) => t.attempted >= 1 && t.accuracy < 80)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 4);
+  if (weak.length) {
+    ws.classList.remove("hidden");
+    ws.innerHTML = `<div class="weak-title">🎯 Your weak spots — tap to drill</div>
+      <div class="weak-chips">${weak.map((t) =>
+        `<button class="weak-chip" data-topic="${t.key}">${t.label}<span class="weak-acc">${t.accuracy}%</span></button>`
+      ).join("")}</div>`;
+    ws.querySelectorAll(".weak-chip").forEach((b) =>
+      b.addEventListener("click", () => startTopicPractice(b.dataset.topic, TOPICS[b.dataset.topic]))
+    );
+  } else {
+    ws.classList.add("hidden");
+    ws.innerHTML = "";
+  }
+
+  // Topic list — weakest attempted topics first, then untried, then strong
+  const tp = $("topic-progress");
+  tp.innerHTML = "";
+  const order = topicStats.slice().sort((a, b) => {
+    const rank = (t) => t.attempted === 0 ? 1 : 0; // attempted first
+    if (rank(a) !== rank(b)) return rank(a) - rank(b);
+    if (a.attempted && b.attempted) return a.accuracy - b.accuracy; // weakest first
+    return 0;
+  });
+  order.forEach((t) => {
+    const seenPct = Math.round((t.attempted / t.total) * 100);
     const row = document.createElement("button");
-    row.className = "topic-row clickable";
+    row.className = "topic-row clickable s-" + t.status.cls;
     row.innerHTML = `
-      <span class="topic-name">${label} <span class="topic-go">Practice →</span></span>
-      <span class="topic-stat">${attempted}/${qs.length} tried${attempted ? ` · ${acc2}% solid` : ""}</span>
-      <span class="topic-diffs"><span class="td td-easy">${dc.easy} easy</span><span class="td td-medium">${dc.medium} med</span><span class="td td-hard">${dc.hard} hard</span></span>
-      <div class="bar"><div class="bar-fill ${attempted && acc2 >= 80 ? "good" : acc2 < 50 && attempted ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
-    row.addEventListener("click", () => startTopicPractice(key, label));
+      <span class="topic-name">${t.label} <span class="topic-go">Practice →</span></span>
+      <span class="topic-status st-${t.status.cls}">${t.status.label}${t.attempted ? ` · ${t.accuracy}%` : ""}</span>
+      <span class="topic-stat">${t.attempted}/${t.total} tried</span>
+      <span class="topic-diffs"><span class="td td-easy">${t.dc.easy} easy</span><span class="td td-medium">${t.dc.medium} med</span><span class="td td-hard">${t.dc.hard} hard</span></span>
+      <div class="bar"><div class="bar-fill ${t.status.cls === "strong" ? "good" : t.status.cls === "weak" ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
+    row.addEventListener("click", () => startTopicPractice(t.key, t.label));
     tp.appendChild(row);
   });
 

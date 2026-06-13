@@ -133,31 +133,71 @@ function renderHome() {
       <div class="dash-stat"><span class="dash-val">🔥 ${store.bestStreak || 0}</span><span class="dash-lbl">best streak</span></div>
     </div>`;
 
-  // Topic progress
-  const tp = $("topic-progress");
-  tp.innerHTML = "";
-  Object.entries(TOPICS).forEach(([key, label]) => {
+  // Per-topic stats (used for both the weak-spots picker and the topic list)
+  const topicStats = Object.entries(TOPICS).map(([key, label]) => {
     const qs = QUESTIONS.filter((q) => q.topic === key);
-    let right = 0, attempted = 0;
+    let right = 0, wrong = 0, attempted = 0, solid = 0;
     const dc = { easy: 0, medium: 0, hard: 0 };
     qs.forEach((q) => {
       dc[diffOf(q)]++;
       const s = store.perQuestion[q.id];
       if (s && s.right + s.wrong > 0) {
-        attempted++;
-        if (s.right > s.wrong || (s.right > 0 && s.wrong === 0)) right++;
+        attempted++; right += s.right; wrong += s.wrong;
+        if (s.right > s.wrong || (s.right > 0 && s.wrong === 0)) solid++;
       }
     });
-    const seenPct = Math.round((attempted / qs.length) * 100);
-    const acc2 = attempted ? Math.round((right / attempted) * 100) : 0;
+    const accuracy = (right + wrong) ? Math.round((100 * right) / (right + wrong)) : 0;
+    const solidPct = Math.round((100 * solid) / qs.length);
+    // status: not started / needs work / getting there / strong
+    let status;
+    if (!attempted) status = { cls: "ns", label: "Not started" };
+    else if (accuracy < 60) status = { cls: "weak", label: "Needs work" };
+    else if (accuracy < 80) status = { cls: "ok", label: "Getting there" };
+    else status = { cls: "strong", label: "Strong" };
+    return { key, label, total: qs.length, attempted, accuracy, solidPct, dc, status };
+  });
+
+  // Weak-spots quick-pick: the topics you do worst on (attempted, accuracy < 80),
+  // weakest first. Tap one to drill it immediately.
+  const ws = $("weak-spots");
+  const weak = topicStats
+    .filter((t) => t.attempted >= 1 && t.accuracy < 80)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 4);
+  if (weak.length) {
+    ws.classList.remove("hidden");
+    ws.innerHTML = `<div class="weak-title">🎯 Your weak spots — tap to drill</div>
+      <div class="weak-chips">${weak.map((t) =>
+        `<button class="weak-chip" data-topic="${t.key}">${t.label}<span class="weak-acc">${t.accuracy}%</span></button>`
+      ).join("")}</div>`;
+    ws.querySelectorAll(".weak-chip").forEach((b) =>
+      b.addEventListener("click", () => startTopicPractice(b.dataset.topic, TOPICS[b.dataset.topic]))
+    );
+  } else {
+    ws.classList.add("hidden");
+    ws.innerHTML = "";
+  }
+
+  // Topic list — weakest attempted topics first, then untried, then strong
+  const tp = $("topic-progress");
+  tp.innerHTML = "";
+  const order = topicStats.slice().sort((a, b) => {
+    const rank = (t) => t.attempted === 0 ? 1 : 0; // attempted first
+    if (rank(a) !== rank(b)) return rank(a) - rank(b);
+    if (a.attempted && b.attempted) return a.accuracy - b.accuracy; // weakest first
+    return 0;
+  });
+  order.forEach((t) => {
+    const seenPct = Math.round((t.attempted / t.total) * 100);
     const row = document.createElement("button");
-    row.className = "topic-row clickable";
+    row.className = "topic-row clickable s-" + t.status.cls;
     row.innerHTML = `
-      <span class="topic-name">${label} <span class="topic-go">Practice →</span></span>
-      <span class="topic-stat">${attempted}/${qs.length} tried${attempted ? ` · ${acc2}% solid` : ""}</span>
-      <span class="topic-diffs"><span class="td td-easy">${dc.easy} easy</span><span class="td td-medium">${dc.medium} med</span><span class="td td-hard">${dc.hard} hard</span></span>
-      <div class="bar"><div class="bar-fill ${attempted && acc2 >= 80 ? "good" : acc2 < 50 && attempted ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
-    row.addEventListener("click", () => startTopicPractice(key, label));
+      <span class="topic-name">${t.label} <span class="topic-go">Practice →</span></span>
+      <span class="topic-status st-${t.status.cls}">${t.status.label}${t.attempted ? ` · ${t.accuracy}%` : ""}</span>
+      <span class="topic-stat">${t.attempted}/${t.total} tried</span>
+      <span class="topic-diffs"><span class="td td-easy">${t.dc.easy} easy</span><span class="td td-medium">${t.dc.medium} med</span><span class="td td-hard">${t.dc.hard} hard</span></span>
+      <div class="bar"><div class="bar-fill ${t.status.cls === "strong" ? "good" : t.status.cls === "weak" ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
+    row.addEventListener("click", () => startTopicPractice(t.key, t.label));
     tp.appendChild(row);
   });
 

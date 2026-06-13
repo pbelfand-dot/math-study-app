@@ -180,6 +180,50 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .td-medium { background: #fff4e6; color: #d9480f; }
 .td-hard { background: var(--bad-soft); color: var(--bad); }
 
+/* Per-topic status pill + colored left edge */
+.topic-status {
+  justify-self: end;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+.st-ns { background: #eef0f4; color: var(--muted); }
+.st-weak { background: var(--bad-soft); color: var(--bad); }
+.st-ok { background: #fff4e6; color: #d9480f; }
+.st-strong { background: var(--good-soft); color: var(--good); }
+.topic-row.s-weak { border-left: 4px solid var(--bad); }
+.topic-row.s-ok { border-left: 4px solid var(--warn); }
+.topic-row.s-strong { border-left: 4px solid var(--good); }
+.topic-row.s-ns { border-left: 4px solid var(--border); }
+
+/* Weak-spots quick-pick card */
+.weak-spots {
+  background: var(--bad-soft);
+  border: 1px solid #f1c0c0;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.weak-title { font-weight: 800; color: var(--bad); margin-bottom: 10px; font-size: 0.95rem; }
+.weak-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.weak-chip {
+  background: var(--card);
+  border: 1.5px solid var(--bad);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+}
+.weak-chip .weak-acc { background: var(--bad); color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; }
+.weak-chip:hover { background: var(--bad); color: #fff; }
+.weak-chip:hover .weak-acc { background: #fff; color: var(--bad); }
+
 /* ===== Topic progress ===== */
 .topic-progress { display: flex; flex-direction: column; gap: 10px; }
 .topic-row {
