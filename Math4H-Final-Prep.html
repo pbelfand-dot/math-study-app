@@ -2210,6 +2210,1832 @@ const QUESTIONS = [
   answer: 0,
   expl: "Position: \\(x = r\\cos\\theta = \\cos(3)\\cos(3) \\approx 0.98\\), \\(y = r\\sin\\theta = \\cos(3)\\sin(3) \\approx -0.14\\). Rounded: \\(\\langle 1.0, -0.1 \\rangle\\). Radian mode — always."
 },
+// ===== batch: qa-calculus =====
+// ================= DERIVATIVES: RULES (200–217) =================
+{
+  id: 200, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,\\dfrac{1}{x^2}\\).",
+  choices: ["\\(\\dfrac{2}{x^3}\\)", "\\(-\\dfrac{2}{x}\\)", "\\(-\\dfrac{2}{x^3}\\)", "\\(\\dfrac{1}{2x}\\)"],
+  answer: 2,
+  simple: "Rewrite 1/x² as x to the −2 power, then bring the −2 down and drop the power to −3, giving −2/x³.",
+  expl: "Rewrite first: \\(\\frac{1}{x^2} = x^{-2}\\). Power rule: \\(-2x^{-3} = -\\frac{2}{x^3}\\). Trap: the exponent goes DOWN to \\(-3\\) (one less than \\(-2\\)), and don't drop the negative sign."
+},
+{
+  id: 201, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,\\sqrt{x}\\).",
+  choices: ["\\(\\dfrac{1}{2\\sqrt{x}}\\)", "\\(\\dfrac{2}{\\sqrt{x}}\\)", "\\(\\dfrac{\\sqrt{x}}{2}\\)", "\\(-\\dfrac{1}{2\\sqrt{x}}\\)"],
+  answer: 0,
+  simple: "√x is x to the ½ power, so the derivative is ½ times x to the −½, which is 1 over 2√x.",
+  expl: "Rewrite \\(\\sqrt{x} = x^{1/2}\\), then power rule: \\(\\frac{1}{2}x^{-1/2} = \\frac{1}{2\\sqrt{x}}\\). Memorize this one — it shows up constantly."
+},
+{
+  id: 202, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = x^4 - 2x^3 + 5x\\), find \\(f'(1)\\).",
+  answer: ["3"],
+  simple: "Take the derivative term by term with the power rule, then plug in 1: you get 4 − 6 + 5 = 3.",
+  expl: "Power rule on each term: \\(f'(x) = 4x^3 - 6x^2 + 5\\). At \\(x = 1\\): \\(4 - 6 + 5 = 3\\)."
+},
+{
+  id: 203, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,x^{2/3}\\).",
+  choices: ["\\(\\dfrac{3}{2}x^{1/3}\\)", "\\(\\dfrac{2}{3}x^{-1/3}\\)", "\\(\\dfrac{2}{3}x^{1/3}\\)", "\\(x^{-1/3}\\)"],
+  answer: 1,
+  simple: "Bring the ⅔ down front and subtract 1 from the exponent: ⅔ minus 1 is −⅓.",
+  expl: "Power rule works for fractions too: \\(\\frac{d}{dx}x^{2/3} = \\frac{2}{3}x^{2/3 - 1} = \\frac{2}{3}x^{-1/3}\\). Trap: \\(\\frac{2}{3} - 1 = -\\frac{1}{3}\\), not \\(+\\frac{1}{3}\\)."
+},
+{
+  id: 204, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(f(x) = x^2 e^x\\), find \\(f'(x)\\).",
+  choices: ["\\(2xe^x\\)", "\\(2xe^{x-1}\\)", "\\(x^2 e^x\\)", "\\(e^x(x^2 + 2x)\\)"],
+  answer: 3,
+  simple: "Product rule: first times derivative of second plus second times derivative of first, then factor out eˣ.",
+  expl: "Product rule: \\(f'(x) = x^2 \\cdot e^x + e^x \\cdot 2x = e^x(x^2 + 2x)\\). Trap: \\(2xe^x\\) alone means you differentiated each factor separately — that's not how products work."
+},
+{
+  id: 205, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,(x\\sin x)\\).",
+  choices: ["\\(\\sin x + x\\cos x\\)", "\\(\\cos x\\)", "\\(x\\cos x\\)", "\\(\\sin x - x\\cos x\\)"],
+  answer: 0,
+  simple: "Product rule: keep x times the derivative of sin (which is cos), plus sin times the derivative of x (which is 1).",
+  expl: "Product rule: \\(\\frac{d}{dx}(x\\sin x) = 1 \\cdot \\sin x + x \\cdot \\cos x = \\sin x + x\\cos x\\). Choice \\(\\cos x\\) is the trap of multiplying the two derivatives."
+},
+{
+  id: 206, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(f(x) = \\dfrac{3x + 1}{x - 2}\\), find \\(f'(x)\\).",
+  choices: ["\\(3\\)", "\\(\\dfrac{7}{(x - 2)^2}\\)", "\\(-\\dfrac{7}{(x - 2)^2}\\)", "\\(\\dfrac{6x - 5}{(x - 2)^2}\\)"],
+  answer: 2,
+  simple: "Quotient rule: bottom times derivative of top minus top times derivative of bottom, all over the bottom squared — the numerator collapses to −7.",
+  expl: "Quotient rule: \\(f'(x) = \\dfrac{(x-2)(3) - (3x+1)(1)}{(x-2)^2} = \\dfrac{3x - 6 - 3x - 1}{(x-2)^2} = \\dfrac{-7}{(x-2)^2}\\). Trap: the order matters — flipping the subtraction gives \\(+7\\)."
+},
+{
+  id: 207, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = \\dfrac{x^2}{x + 1}\\), find \\(f'(1)\\). Express as a fraction or decimal.",
+  answer: ["3/4", "0.75"],
+  simple: "Quotient rule gives (x² + 2x) over (x+1)², and plugging in 1 gives 3 over 4.",
+  expl: "Quotient rule: \\(f'(x) = \\dfrac{(x+1)(2x) - x^2(1)}{(x+1)^2} = \\dfrac{x^2 + 2x}{(x+1)^2}\\). At \\(x = 1\\): \\(\\dfrac{1 + 2}{4} = \\dfrac{3}{4}\\)."
+},
+{
+  id: 208, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,(2x^3 + 1)^5\\).",
+  choices: [
+    "\\(5(2x^3 + 1)^4\\)",
+    "\\(30x^2(2x^3 + 1)^4\\)",
+    "\\(6x^2(2x^3 + 1)^4\\)",
+    "\\((6x^2)^5\\)"
+  ],
+  answer: 1,
+  simple: "Bring the 5 down, drop the power to 4, then multiply by the derivative of the inside, 6x², to get 30x² out front.",
+  expl: "Chain rule: \\(5(2x^3+1)^4 \\cdot \\frac{d}{dx}(2x^3+1) = 5(2x^3+1)^4 \\cdot 6x^2 = 30x^2(2x^3+1)^4\\). Forgetting the inside derivative gives choice A — the classic chain-rule miss."
+},
+{
+  id: 209, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,\\cos(4x)\\).",
+  choices: ["\\(-4\\sin(4x)\\)", "\\(4\\sin(4x)\\)", "\\(-\\sin(4x)\\)", "\\(-4\\cos(4x)\\)"],
+  answer: 0,
+  simple: "Cos turns into negative sin, and the chain rule multiplies by the 4 from inside.",
+  expl: "Chain rule: \\(\\frac{d}{dx}\\cos(4x) = -\\sin(4x) \\cdot 4 = -4\\sin(4x)\\). Two traps in one: don't lose the negative from \\(\\cos \\to -\\sin\\), and don't forget the inner derivative 4."
+},
+{
+  id: 210, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,e^{x^2}\\).",
+  choices: ["\\(e^{x^2}\\)", "\\(x^2 e^{x^2 - 1}\\)", "\\(2xe^{x^2}\\)", "\\(2xe^{2x}\\)"],
+  answer: 2,
+  simple: "e to the something keeps itself and gets multiplied by the derivative of the something, which is 2x.",
+  expl: "Chain rule: \\(\\frac{d}{dx}e^{u} = e^{u} \\cdot u'\\) with \\(u = x^2\\), so the answer is \\(e^{x^2} \\cdot 2x\\). Trap: \\(x^2 e^{x^2-1}\\) is the power rule wrongly applied to an exponential."
+},
+{
+  id: 211, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,\\sec x\\).",
+  choices: ["\\(\\sec^2 x\\)", "\\(\\sec x\\tan x\\)", "\\(-\\csc x\\cot x\\)", "\\(\\tan x\\)"],
+  answer: 1,
+  simple: "The derivative of sec is sec times tan — it's on the formula sheet, but know it cold.",
+  expl: "\\(\\frac{d}{dx}\\sec x = \\sec x\\tan x\\). Don't mix it up: \\(\\sec^2 x\\) is the derivative of \\(\\tan x\\), and \\(-\\csc x\\cot x\\) is the derivative of \\(\\csc x\\)."
+},
+{
+  id: 212, topic: "deriv", calc: false, type: "mc",
+  q: "Find \\(\\dfrac{d}{dx}\\,\\tan(3x)\\).",
+  choices: [
+    "\\(\\sec^2(3x)\\)",
+    "\\(3\\sec(3x)\\tan(3x)\\)",
+    "\\(-3\\csc^2(3x)\\)",
+    "\\(3\\sec^2(3x)\\)"
+  ],
+  answer: 3,
+  simple: "Tan becomes sec squared, then the chain rule tacks on a 3 from the inside.",
+  expl: "Chain rule: \\(\\frac{d}{dx}\\tan(3x) = \\sec^2(3x) \\cdot 3 = 3\\sec^2(3x)\\). Choice A forgot the chain rule's factor of 3."
+},
+{
+  id: 213, topic: "deriv", calc: false, type: "input",
+  q: "If \\(g(x) = e^{2x}\\), find \\(g'(0)\\).",
+  answer: ["2"],
+  simple: "e to the 2x differentiates to 2 times itself, and e⁰ is 1, so you get 2.",
+  expl: "\\(g'(x) = 2e^{2x}\\) (the chain rule brings down the 2). At \\(x = 0\\): \\(2e^0 = 2(1) = 2\\)."
+},
+{
+  id: 214, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = \\ln x + x^2\\), find \\(f'(1)\\).",
+  answer: ["3"],
+  simple: "The derivative of ln x is 1/x and the derivative of x² is 2x, so at x = 1 you get 1 + 2 = 3.",
+  expl: "\\(f'(x) = \\frac{1}{x} + 2x\\). At \\(x = 1\\): \\(1 + 2 = 3\\)."
+},
+{
+  id: 215, topic: "deriv", calc: false, type: "input",
+  q: "Let \\(h(x) = f(x)\\,g(x)\\). A table gives \\(f(2) = 3\\), \\(f'(2) = -1\\), \\(g(2) = 4\\), \\(g'(2) = 5\\). Find \\(h'(2)\\).",
+  answer: ["11"],
+  simple: "Product rule with the table numbers: (−1)(4) + (3)(5) = −4 + 15 = 11.",
+  expl: "Product rule: \\(h'(2) = f'(2)g(2) + f(2)g'(2) = (-1)(4) + (3)(5) = -4 + 15 = 11\\). Trap: \\(f'(2)g'(2)\\) (multiplying the derivatives) is wrong."
+},
+{
+  id: 216, topic: "deriv", calc: false, type: "mc",
+  q: "If \\(y = 5\\sin x - 2\\cos x\\), find \\(\\dfrac{dy}{dx}\\).",
+  choices: [
+    "\\(5\\cos x + 2\\sin x\\)",
+    "\\(5\\cos x - 2\\sin x\\)",
+    "\\(-5\\cos x - 2\\sin x\\)",
+    "\\(5\\sin x + 2\\cos x\\)"
+  ],
+  answer: 0,
+  simple: "Sin becomes cos, and cos becomes negative sin — so the minus in front of cos flips to a plus.",
+  expl: "\\(\\frac{d}{dx}\\sin x = \\cos x\\) and \\(\\frac{d}{dx}\\cos x = -\\sin x\\), so \\(y' = 5\\cos x - 2(-\\sin x) = 5\\cos x + 2\\sin x\\). The double negative is the whole trap."
+},
+{
+  id: 217, topic: "deriv", calc: false, type: "input",
+  q: "If \\(f(x) = \\dfrac{1}{x}\\), find \\(f'(2)\\). Express as a fraction or decimal.",
+  answer: ["-1/4", "-0.25"],
+  simple: "1/x is x to the −1, so the derivative is −1/x², and plugging in 2 gives −1/4.",
+  expl: "Rewrite \\(\\frac{1}{x} = x^{-1}\\), so \\(f'(x) = -x^{-2} = -\\frac{1}{x^2}\\). At \\(x = 2\\): \\(-\\frac{1}{4}\\). Don't lose the negative sign."
+},
+
+// ============ TANGENT LINES & MOTION (220–239) ============
+{
+  id: 220, topic: "derivapp", calc: false, type: "mc",
+  q: "Write the equation of the line tangent to \\(f(x) = x^3 - 2x\\) at \\(x = 2\\).",
+  choices: ["\\(y = 4x - 4\\)", "\\(y = 10x - 16\\)", "\\(y = 12x - 20\\)", "\\(y = 10x + 4\\)"],
+  answer: 1,
+  simple: "The point is (2, 4) and the slope is f′(2) = 10, so the line is y − 4 = 10(x − 2), which is y = 10x − 16.",
+  expl: "Point: \\(f(2) = 8 - 4 = 4\\). Slope: \\(f'(x) = 3x^2 - 2\\), so \\(f'(2) = 10\\). Tangent: \\(y - 4 = 10(x - 2) \\Rightarrow y = 10x - 16\\). Trap: \\(y = 4x - 4\\) uses \\(f(2)\\) as the slope."
+},
+{
+  id: 221, topic: "derivapp", calc: false, type: "input",
+  q: "Find the slope of the line tangent to \\(f(x) = x^2 - 3x\\) at \\(x = 4\\).",
+  answer: ["5"],
+  simple: "The slope of the tangent is the derivative at the point: 2(4) − 3 = 5.",
+  expl: "Tangent slope = derivative value: \\(f'(x) = 2x - 3\\), so \\(f'(4) = 8 - 3 = 5\\)."
+},
+{
+  id: 222, topic: "derivapp", calc: false, type: "mc",
+  q: "Write the equation of the line tangent to \\(f(x) = e^x\\) at \\(x = 0\\).",
+  choices: ["\\(y = x + 1\\)", "\\(y = x\\)", "\\(y = ex + 1\\)", "\\(y = x - 1\\)"],
+  answer: 0,
+  simple: "At x = 0 the curve passes through (0, 1) with slope e⁰ = 1, so the tangent is y = x + 1.",
+  expl: "\\(f(0) = e^0 = 1\\) and \\(f'(x) = e^x\\) gives slope \\(f'(0) = 1\\). Tangent: \\(y - 1 = 1(x - 0)\\), i.e. \\(y = x + 1\\)."
+},
+{
+  id: 223, topic: "derivapp", calc: false, type: "input",
+  q: "Find the average rate of change of \\(f(x) = x^3\\) on the interval \\([1, 3]\\).",
+  answer: ["13"],
+  simple: "Average rate of change is just the slope between the endpoints: (27 − 1) over (3 − 1) = 13.",
+  expl: "Average rate of change = \\(\\dfrac{f(3) - f(1)}{3 - 1} = \\dfrac{27 - 1}{2} = 13\\). No derivative needed — it's the secant slope."
+},
+{
+  id: 224, topic: "derivapp", calc: false, type: "mc",
+  q: "The average rate of change of \\(f\\) on \\([a, b]\\) is given by…",
+  choices: [
+    "\\(f'(a)\\)",
+    "\\(f'(b) - f'(a)\\)",
+    "\\(\\dfrac{f(b) - f(a)}{b - a}\\)",
+    "\\(\\dfrac{f(b) + f(a)}{2}\\)"
+  ],
+  answer: 2,
+  simple: "Average rate of change is the slope of the line between the two endpoints — change in output over change in input.",
+  expl: "Average rate of change is the secant slope \\(\\dfrac{f(b)-f(a)}{b-a}\\). The \\(\\textbf{instantaneous}\\) rate at a single point is the derivative \\(f'(a)\\) — don't mix them up."
+},
+{
+  id: 225, topic: "derivapp", calc: false, type: "mc",
+  q: "A car's position is \\(s(t) = t^2 + 3t\\) miles after \\(t\\) hours. What is its instantaneous velocity at \\(t = 2\\)?",
+  choices: ["\\(4\\) mph", "\\(10\\) mph", "\\(5\\) mph", "\\(7\\) mph"],
+  answer: 3,
+  simple: "Instantaneous velocity is the derivative: 2t + 3 at t = 2 gives 7.",
+  expl: "Instantaneous velocity = \\(s'(t) = 2t + 3\\), so \\(s'(2) = 7\\). Trap: \\(s(2) = 10\\) is the position, and \\(\\frac{s(2)-s(0)}{2} = 5\\) is the average velocity — the question asks for instantaneous."
+},
+{
+  id: 226, topic: "derivapp", calc: false, type: "mc",
+  q: "On what interval is \\(f(x) = x^3 - 27x\\) decreasing?",
+  choices: [
+    "\\((-3, 3)\\)",
+    "\\((-\\infty, -3) \\cup (3, \\infty)\\)",
+    "\\((0, 3)\\)",
+    "\\((-\\infty, 3)\\)"
+  ],
+  answer: 0,
+  simple: "Take the derivative, find where it's negative — between its zeros at −3 and 3 — and that's where f goes downhill.",
+  expl: "\\(f'(x) = 3x^2 - 27 = 3(x-3)(x+3)\\). Sign chart: \\(f' < 0\\) between the zeros, so \\(f\\) is decreasing on \\((-3, 3)\\). An upward parabola is negative between its roots."
+},
+{
+  id: 227, topic: "derivapp", calc: false, type: "mc",
+  q: "Given \\(f'(x) = x(x - 4)\\), on what interval is \\(f\\) decreasing?",
+  choices: ["\\((-\\infty, 0)\\)", "\\((0, 4)\\)", "\\((4, \\infty)\\)", "\\((-\\infty, 0) \\cup (4, \\infty)\\)"],
+  answer: 1,
+  simple: "You're handed the derivative; it's negative between its zeros 0 and 4, so f decreases there.",
+  expl: "You already have \\(f'\\) — just sign-chart it. \\(x(x-4) < 0\\) between the zeros \\(0\\) and \\(4\\), so \\(f\\) is decreasing on \\((0, 4)\\)."
+},
+{
+  id: 228, topic: "derivapp", calc: false, type: "mc",
+  q: "Given \\(f'(x) = (x - 2)^2(x + 1)\\), at which \\(x\\)-value(s) does \\(f\\) have a relative extremum?",
+  choices: [
+    "\\(x = 2\\) only",
+    "\\(x = -1\\) and \\(x = 2\\)",
+    "\\(x = -1\\) only",
+    "none"
+  ],
+  answer: 2,
+  simple: "The squared factor never flips the sign of f′, so only x = −1 (where the sign actually changes) gives a real low point.",
+  expl: "Extrema require \\(f'\\) to change sign. \\((x-2)^2 \\ge 0\\) always, so \\(f'\\) does NOT change sign at \\(x = 2\\). At \\(x = -1\\), \\(f'\\) goes from negative to positive → relative minimum. Squared factors are the classic trap."
+},
+{
+  id: 229, topic: "derivapp", calc: false, type: "mc",
+  q: "Given \\(f'(x) = (x - 3)(x + 2)\\), at which \\(x\\)-value does \\(f\\) have a relative MAXIMUM?",
+  choices: ["\\(x = -2\\)", "\\(x = 3\\)", "\\(x = \\frac{1}{2}\\)", "\\(f\\) has no relative maximum"],
+  answer: 0,
+  simple: "f′ switches from positive to negative at x = −2, so the graph peaks there; at x = 3 it bottoms out instead.",
+  expl: "Sign chart of \\(f'\\): positive for \\(x < -2\\), negative on \\((-2, 3)\\), positive for \\(x > 3\\). A \\(+\\to-\\) change is a max (at \\(x = -2\\)); \\(-\\to+\\) is a min (at \\(x = 3\\))."
+},
+{
+  id: 230, topic: "derivapp", calc: false, type: "input",
+  q: "At what \\(x\\)-value does \\(f(x) = x^2 - 8x + 1\\) have its relative minimum?",
+  answer: ["4"],
+  simple: "Set the derivative 2x − 8 equal to zero and you land at x = 4, the bottom of the parabola.",
+  expl: "\\(f'(x) = 2x - 8 = 0\\) at \\(x = 4\\), and \\(f'\\) changes from negative to positive there → relative minimum. (Matches the vertex shortcut \\(x = -\\frac{b}{2a} = 4\\).)"
+},
+{
+  id: 231, topic: "derivapp", calc: false, type: "input",
+  q: "A particle's position is \\(s(t) = t^3 - 9t^2 + 24t\\) for \\(t \\ge 0\\). Find the FIRST time \\(t\\) at which the particle is at rest.",
+  answer: ["2"],
+  simple: "At rest means velocity zero: the velocity factors as 3(t − 2)(t − 4), so the first stop is at t = 2.",
+  expl: "At rest \\(\\Leftrightarrow v(t) = s'(t) = 0\\): \\(3t^2 - 18t + 24 = 3(t-2)(t-4) = 0\\) at \\(t = 2\\) and \\(t = 4\\). The first is \\(t = 2\\)."
+},
+{
+  id: 232, topic: "derivapp", calc: false, type: "mc",
+  q: "A particle moves with velocity \\(v(t) = t^2 - 6t + 8\\). On what interval is the particle moving to the LEFT?",
+  choices: ["\\((-\\infty, 2)\\)", "\\((2, 4)\\)", "\\((4, \\infty)\\)", "\\((2, 8)\\)"],
+  answer: 1,
+  simple: "Moving left means negative velocity, and v factors as (t − 2)(t − 4), which is negative between 2 and 4.",
+  expl: "Moving left \\(\\Leftrightarrow v(t) < 0\\). Factor: \\((t-2)(t-4) < 0\\) between the zeros, so on \\((2, 4)\\). Sign chart the velocity, not the position."
+},
+{
+  id: 233, topic: "derivapp", calc: false, type: "mc",
+  q: "A particle's position is \\(s(t) = 2t^3 - 5t^2 + 7\\). Find its velocity at \\(t = 2\\).",
+  choices: ["\\(14\\)", "\\(3\\)", "\\(24\\)", "\\(4\\)"],
+  answer: 3,
+  simple: "Velocity is the derivative of position: 6t² − 10t at t = 2 gives 24 − 20 = 4.",
+  expl: "\\(v(t) = s'(t) = 6t^2 - 10t\\), so \\(v(2) = 24 - 20 = 4\\). Trap: \\(s(2) = 3\\) is the position and \\(s''(2) = 14\\) is the acceleration."
+},
+{
+  id: 234, topic: "derivapp", calc: false, type: "input",
+  q: "A particle's position is \\(s(t) = t^4 - 3t^2\\). Find its acceleration at \\(t = 1\\).",
+  answer: ["6"],
+  simple: "Take the derivative twice — velocity then acceleration — and plug in 1 to get 12 − 6 = 6.",
+  expl: "Acceleration is the second derivative: \\(v(t) = 4t^3 - 6t\\), so \\(a(t) = 12t^2 - 6\\) and \\(a(1) = 12 - 6 = 6\\)."
+},
+{
+  id: 235, topic: "derivapp", calc: false, type: "mc",
+  q: "At \\(t = 2\\), a particle has velocity \\(v(2) = -6\\) and acceleration \\(a(2) = -3\\). At that moment its speed is…",
+  choices: [
+    "increasing, because \\(v\\) and \\(a\\) have the same sign",
+    "decreasing, because both values are negative",
+    "decreasing, because \\(a\\) is closer to zero than \\(v\\)",
+    "neither, because the particle is moving left"
+  ],
+  answer: 0,
+  simple: "Velocity and acceleration are both negative — same sign — so the particle is getting faster (in the leftward direction).",
+  expl: "Speed increases when \\(v\\) and \\(a\\) have the SAME sign (the push is in the direction of motion). Both are negative here, so speed is increasing even though the particle moves left. Negative velocity does not mean slowing down."
+},
+{
+  id: 236, topic: "derivapp", calc: false, type: "mc",
+  q: "At some instant, \\(v = 5\\) and \\(a = -2\\). Is the particle's speed increasing or decreasing?",
+  choices: [
+    "increasing, because \\(v > 0\\)",
+    "decreasing, because \\(v\\) and \\(a\\) have opposite signs",
+    "increasing, because \\(v + a > 0\\)",
+    "cannot be determined"
+  ],
+  answer: 1,
+  simple: "The particle moves right but is being pushed left — opposite signs — so it's slowing down.",
+  expl: "Opposite signs of \\(v\\) and \\(a\\) mean the acceleration opposes the motion → speed decreasing. Justify with the signs; that's the sentence your teacher wants on the free response."
+},
+{
+  id: 237, topic: "derivapp", calc: true, type: "mc",
+  q: "Write the equation of the line tangent to \\(f(x) = \\ln x\\) at \\(x = 2\\). (Decimals rounded to the nearest thousandth.)",
+  choices: [
+    "\\(y = 0.5x + 0.693\\)",
+    "\\(y = 0.693x + 0.5\\)",
+    "\\(y = 0.5x - 0.307\\)",
+    "\\(y = 0.5x\\)"
+  ],
+  answer: 2,
+  simple: "The point is (2, ln 2 ≈ 0.693) and the slope is ½, so the line works out to y = 0.5x − 0.307.",
+  expl: "Point: \\(f(2) = \\ln 2 \\approx 0.693\\). Slope: \\(f'(x) = \\frac{1}{x}\\), so \\(f'(2) = 0.5\\). Then \\(y - 0.693 = 0.5(x - 2)\\) gives \\(y = 0.5x - 0.307\\). Trap: \\(y = 0.5x + 0.693\\) forgets to distribute the \\(0.5(x-2)\\)."
+},
+{
+  id: 238, topic: "derivapp", calc: true, type: "input",
+  q: "Find the instantaneous rate of change of \\(f(x) = e^x\\) at \\(x = 1\\), rounded to two decimal places.",
+  answer: ["2.72"],
+  simple: "The derivative of eˣ is itself, so the rate at x = 1 is e ≈ 2.72.",
+  expl: "\\(f'(x) = e^x\\), so the instantaneous rate at \\(x = 1\\) is \\(e^1 = e \\approx 2.72\\). (On the calculator section, evaluate \\(\\frac{d}{dx}e^x\\big|_{x=1}\\) directly.)"
+},
+{
+  id: 239, topic: "derivapp", calc: true, type: "input",
+  q: "A particle's position is \\(s(t) = t^3 - 4t^2 + 2\\). Find the POSITIVE time \\(t\\) at which the particle is at rest. (Exact fraction, or round to the nearest thousandth.)",
+  answer: ["8/3", "2.667"],
+  simple: "Set the velocity 3t² − 8t equal to zero; besides t = 0 you get t = 8/3, about 2.667.",
+  expl: "\\(v(t) = s'(t) = 3t^2 - 8t = t(3t - 8) = 0\\) at \\(t = 0\\) and \\(t = \\frac{8}{3} \\approx 2.667\\). The positive time is \\(\\frac{8}{3}\\)."
+},
+
+// ============ INTEGRALS & RIEMANN SUMS (240–263) ============
+{
+  id: 240, topic: "integ", calc: false, type: "mc",
+  q: "Find the general antiderivative: \\(\\displaystyle\\int x^4\\,dx\\)",
+  choices: ["\\(4x^3 + C\\)", "\\(\\dfrac{x^5}{5} + C\\)", "\\(x^5 + C\\)", "\\(5x^5 + C\\)"],
+  answer: 1,
+  simple: "Reverse the power rule: raise the power to 5, then divide by the new power.",
+  expl: "Reverse power rule: \\(\\int x^n dx = \\frac{x^{n+1}}{n+1} + C\\), so \\(\\int x^4 dx = \\frac{x^5}{5} + C\\). Trap: \\(4x^3\\) is the derivative, the opposite operation."
+},
+{
+  id: 241, topic: "integ", calc: false, type: "mc",
+  q: "Find the general antiderivative: \\(\\displaystyle\\int (6x^2 - 4x)\\,dx\\)",
+  choices: [
+    "\\(2x^3 - 2x^2 + C\\)",
+    "\\(12x - 4 + C\\)",
+    "\\(6x^3 - 4x^2 + C\\)",
+    "\\(3x^3 - 2x^2 + C\\)"
+  ],
+  answer: 0,
+  simple: "Bump each power up one and divide by the new power: 6x² becomes 2x³ and 4x becomes 2x².",
+  expl: "Term by term: \\(\\int 6x^2 dx = \\frac{6x^3}{3} = 2x^3\\) and \\(\\int 4x\\,dx = 2x^2\\), giving \\(2x^3 - 2x^2 + C\\). Trap: forgetting to divide by the new exponent gives \\(6x^3 - 4x^2\\)."
+},
+{
+  id: 242, topic: "integ", calc: false, type: "mc",
+  q: "Find the general antiderivative: \\(\\displaystyle\\int \\frac{1}{x^3}\\,dx\\)",
+  choices: [
+    "\\(\\dfrac{1}{2x^2} + C\\)",
+    "\\(-\\dfrac{3}{x^4} + C\\)",
+    "\\(-\\dfrac{1}{2x^2} + C\\)",
+    "\\(\\ln(x^3) + C\\)"
+  ],
+  answer: 2,
+  simple: "Rewrite as x to the −3, raise the power to −2 and divide by −2, giving −1 over 2x².",
+  expl: "Rewrite: \\(\\int x^{-3} dx = \\frac{x^{-2}}{-2} + C = -\\frac{1}{2x^2} + C\\). The exponent goes UP from \\(-3\\) to \\(-2\\), and dividing by \\(-2\\) brings the minus sign — both classic slip-ups."
+},
+{
+  id: 243, topic: "integ", calc: false, type: "mc",
+  q: "Find the general antiderivative: \\(\\displaystyle\\int \\sqrt{x}\\,dx\\)",
+  choices: [
+    "\\(\\dfrac{3}{2}x^{3/2} + C\\)",
+    "\\(\\dfrac{1}{2\\sqrt{x}} + C\\)",
+    "\\(\\dfrac{2}{3}x^{1/2} + C\\)",
+    "\\(\\dfrac{2}{3}x^{3/2} + C\\)"
+  ],
+  answer: 3,
+  simple: "√x is x to the ½; raising the power to 3/2 and dividing by 3/2 means multiplying by ⅔.",
+  expl: "\\(\\int x^{1/2} dx = \\frac{x^{3/2}}{3/2} + C = \\frac{2}{3}x^{3/2} + C\\). Dividing by \\(\\frac{3}{2}\\) flips it to \\(\\frac{2}{3}\\). Choice B is the derivative of \\(\\sqrt{x}\\) — the wrong direction."
+},
+{
+  id: 244, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_0^3 x^2\\,dx\\)",
+  answer: ["9"],
+  simple: "The antiderivative is x³/3; plug in 3 and 0 and subtract to get 27/3 = 9.",
+  expl: "\\(\\int_0^3 x^2 dx = \\left[\\frac{x^3}{3}\\right]_0^3 = \\frac{27}{3} - 0 = 9\\)."
+},
+{
+  id: 245, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_1^2 4x^3\\,dx\\)",
+  answer: ["15"],
+  simple: "The antiderivative of 4x³ is x⁴, so it's 16 minus 1, which is 15.",
+  expl: "\\(\\int_1^2 4x^3 dx = \\left[x^4\\right]_1^2 = 16 - 1 = 15\\)."
+},
+{
+  id: 246, topic: "integ", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\int_0^2 (3x^2 - 2x + 1)\\,dx\\)",
+  choices: ["\\(6\\)", "\\(4\\)", "\\(9\\)", "\\(14\\)"],
+  answer: 0,
+  simple: "Antidifferentiate to x³ − x² + x, then plug in 2: 8 − 4 + 2 = 6.",
+  expl: "\\(\\left[x^3 - x^2 + x\\right]_0^2 = 8 - 4 + 2 = 6\\). Trap: \\(9\\) is what you get by plugging \\(x=2\\) into the integrand instead of the antiderivative."
+},
+{
+  id: 247, topic: "integ", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\int_1^2 \\frac{3}{x^4}\\,dx\\). Express as a fraction or decimal.",
+  answer: ["7/8", "0.875"],
+  simple: "Rewrite as 3x to the −4; the antiderivative is −1/x³, and 1 minus 1/8 is 7/8.",
+  expl: "\\(\\int_1^2 3x^{-4} dx = \\left[\\frac{3x^{-3}}{-3}\\right]_1^2 = \\left[-\\frac{1}{x^3}\\right]_1^2 = -\\frac{1}{8} - (-1) = \\frac{7}{8}\\). Raise the exponent from \\(-4\\) up to \\(-3\\)."
+},
+{
+  id: 248, topic: "integ", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\int_1^4 \\sqrt{x}\\,dx\\)",
+  choices: ["\\(7\\)", "\\(\\dfrac{14}{3}\\)", "\\(\\dfrac{21}{2}\\)", "\\(\\dfrac{16}{3}\\)"],
+  answer: 1,
+  simple: "The antiderivative is ⅔ x to the 3/2; at 4 that's ⅔·8 and at 1 it's ⅔·1, so ⅔·7 = 14/3.",
+  expl: "\\(\\int_1^4 x^{1/2} dx = \\left[\\frac{2}{3}x^{3/2}\\right]_1^4 = \\frac{2}{3}(8 - 1) = \\frac{14}{3}\\). (Note \\(4^{3/2} = (\\sqrt4)^3 = 8\\).) Trap: \\(\\frac{21}{2}\\) comes from multiplying by \\(\\frac{3}{2}\\) instead of \\(\\frac{2}{3}\\)."
+},
+{
+  id: 249, topic: "integ", calc: false, type: "mc",
+  q: "Using the area interpretation, evaluate \\(\\displaystyle\\int_2^5 2\\,dx\\).",
+  choices: ["\\(10\\)", "\\(3\\)", "\\(6\\)", "\\(7\\)"],
+  answer: 2,
+  simple: "It's just a rectangle 3 wide and 2 tall, so the area is 6.",
+  expl: "The region under \\(y = 2\\) from \\(x = 2\\) to \\(x = 5\\) is a rectangle: width \\(5 - 2 = 3\\), height 2, area \\(6\\). No antiderivative gymnastics needed."
+},
+{
+  id: 250, topic: "integ", calc: false, type: "mc",
+  q: "Using the area interpretation, evaluate \\(\\displaystyle\\int_0^6 x\\,dx\\).",
+  choices: ["\\(18\\)", "\\(36\\)", "\\(6\\)", "\\(12\\)"],
+  answer: 0,
+  simple: "The region under y = x from 0 to 6 is a triangle with base 6 and height 6: half of 36 is 18.",
+  expl: "The region is a right triangle with base 6 and height 6: area \\(\\frac{1}{2}(6)(6) = 18\\). Check with the antiderivative: \\(\\left[\\frac{x^2}{2}\\right]_0^6 = 18\\). Trap: 36 forgets the \\(\\frac{1}{2}\\)."
+},
+{
+  id: 251, topic: "integ", calc: false, type: "input",
+  q: "A continuous function has table values: \\(f(0) = 4\\), \\(f(2) = 7\\), \\(f(5) = 11\\), \\(f(6) = 10\\). Using the subintervals \\([0,2]\\), \\([2,5]\\), \\([5,6]\\), find the LEFT Riemann sum approximation of \\(\\displaystyle\\int_0^6 f(x)\\,dx\\).",
+  answer: ["40"],
+  simple: "Each rectangle uses the height from its left edge: 2·4 + 3·7 + 1·11 = 8 + 21 + 11 = 40.",
+  expl: "Left sum = (width)(left height) on each piece: \\(2(4) + 3(7) + 1(11) = 8 + 21 + 11 = 40\\). The widths are NOT equal — read them off the table."
+},
+{
+  id: 252, topic: "integ", calc: false, type: "mc",
+  q: "Using the same table — \\(f(0) = 4\\), \\(f(2) = 7\\), \\(f(5) = 11\\), \\(f(6) = 10\\) and subintervals \\([0,2]\\), \\([2,5]\\), \\([5,6]\\) — find the RIGHT Riemann sum approximation of \\(\\displaystyle\\int_0^6 f(x)\\,dx\\).",
+  choices: ["\\(40\\)", "\\(32\\)", "\\(48.5\\)", "\\(57\\)"],
+  answer: 3,
+  simple: "Now each rectangle uses the height from its right edge: 2·7 + 3·11 + 1·10 = 14 + 33 + 10 = 57.",
+  expl: "Right sum = (width)(right height): \\(2(7) + 3(11) + 1(10) = 14 + 33 + 10 = 57\\). Trap: 40 is the LEFT sum, and 32 is just adding the \\(f\\) values with no widths."
+},
+{
+  id: 253, topic: "integ", calc: false, type: "input",
+  q: "Table: \\(f(0) = 3\\), \\(f(1) = 5\\), \\(f(2) = 8\\), \\(f(3) = 4\\), \\(f(4) = 6\\). Using four subintervals of width 1, find the LEFT Riemann sum approximation of \\(\\displaystyle\\int_0^4 f(x)\\,dx\\).",
+  answer: ["20"],
+  simple: "With width 1 you just add the first four values: 3 + 5 + 8 + 4 = 20.",
+  expl: "Left sum uses \\(x = 0, 1, 2, 3\\): \\(1(3) + 1(5) + 1(8) + 1(4) = 20\\). The last value \\(f(4) = 6\\) is never used in a left sum."
+},
+{
+  id: 254, topic: "integ", calc: false, type: "mc",
+  q: "Same table: \\(f(0) = 3\\), \\(f(1) = 5\\), \\(f(2) = 8\\), \\(f(3) = 4\\), \\(f(4) = 6\\), four subintervals of width 1. The RIGHT Riemann sum approximation of \\(\\displaystyle\\int_0^4 f(x)\\,dx\\) is…",
+  choices: ["\\(20\\)", "\\(23\\)", "\\(26\\)", "\\(21.5\\)"],
+  answer: 1,
+  simple: "Right sum skips the first value and adds the last four: 5 + 8 + 4 + 6 = 23.",
+  expl: "Right sum uses \\(x = 1, 2, 3, 4\\): \\(5 + 8 + 4 + 6 = 23\\). Trap: 26 adds all five table values — a Riemann sum with \\(n\\) rectangles only uses \\(n\\) heights."
+},
+{
+  id: 255, topic: "integ", calc: false, type: "input",
+  q: "Table: \\(f(0) = 3\\), \\(f(1) = 5\\), \\(f(2) = 8\\), \\(f(3) = 4\\), \\(f(4) = 6\\). Using TWO subintervals of width 2 (\\([0,2]\\) and \\([2,4]\\)), find the MIDPOINT Riemann sum approximation of \\(\\displaystyle\\int_0^4 f(x)\\,dx\\).",
+  answer: ["18"],
+  simple: "The midpoints of the two strips are x = 1 and x = 3, so the sum is 2·5 + 2·4 = 18.",
+  expl: "Midpoint sum: each rectangle's height comes from the middle of its subinterval — \\(x = 1\\) for \\([0,2]\\) and \\(x = 3\\) for \\([2,4]\\): \\(2(5) + 2(4) = 18\\)."
+},
+{
+  id: 256, topic: "integ", calc: false, type: "mc",
+  q: "To compute a MIDPOINT Riemann sum for \\(\\displaystyle\\int_0^4 f(x)\\,dx\\) with two equal subintervals, you evaluate \\(f\\) at which \\(x\\)-values?",
+  choices: [
+    "\\(x = 1\\) and \\(x = 3\\)",
+    "\\(x = 0\\) and \\(x = 2\\)",
+    "\\(x = 2\\) and \\(x = 4\\)",
+    "\\(x = 0\\) and \\(x = 4\\)"
+  ],
+  answer: 0,
+  simple: "Split [0, 4] into [0, 2] and [2, 4]; the middles of those strips are 1 and 3.",
+  expl: "The subintervals are \\([0,2]\\) and \\([2,4]\\); their midpoints are \\(x = 1\\) and \\(x = 3\\). Choices B and C are the left and right endpoint lists."
+},
+{
+  id: 257, topic: "integ", calc: false, type: "mc",
+  q: "If \\(f\\) is increasing on \\([a, b]\\), a RIGHT Riemann sum for \\(\\displaystyle\\int_a^b f(x)\\,dx\\) is…",
+  choices: ["an underestimate", "exact", "an overestimate", "impossible to compare"],
+  answer: 2,
+  simple: "When the graph climbs, the right edge of each strip is its tallest point, so the rectangles poke above the curve.",
+  expl: "For an increasing function the right endpoint is the highest value on each subinterval, so every rectangle sticks above the curve → overestimate. (Left sums underestimate; both flip for decreasing functions.)"
+},
+{
+  id: 258, topic: "integ", calc: false, type: "mc",
+  q: "If \\(f\\) is DECREASING on \\([a, b]\\), a LEFT Riemann sum for \\(\\displaystyle\\int_a^b f(x)\\,dx\\) is…",
+  choices: ["an underestimate", "an overestimate", "exact", "zero"],
+  answer: 1,
+  simple: "When the graph falls, the left edge of each strip is the tallest point, so the rectangles overshoot the area.",
+  expl: "For a decreasing function the left endpoint is the highest value on each subinterval, so the rectangles rise above the curve → overestimate. It's the mirror image of the increasing case."
+},
+{
+  id: 259, topic: "integ", calc: false, type: "mc",
+  q: "Let \\(L\\) and \\(R\\) be the left and right Riemann sums for \\(\\displaystyle\\int_a^b f(x)\\,dx\\). If \\(f\\) is increasing on \\([a, b]\\), which ordering is correct?",
+  choices: [
+    "\\(L \\le \\displaystyle\\int_a^b f(x)\\,dx \\le R\\)",
+    "\\(R \\le \\displaystyle\\int_a^b f(x)\\,dx \\le L\\)",
+    "\\(\\displaystyle\\int_a^b f(x)\\,dx \\le L \\le R\\)",
+    "\\(L = R\\) always"
+  ],
+  answer: 0,
+  simple: "Going uphill, left rectangles are too short and right rectangles are too tall, so the true area sits between them.",
+  expl: "Increasing \\(f\\): left endpoints are the minimum heights (undershoot) and right endpoints the maximum (overshoot), so \\(L \\le \\int_a^b f \\le R\\). For decreasing \\(f\\) the inequality reverses."
+},
+{
+  id: 260, topic: "integ", calc: false, type: "input",
+  q: "A continuous function has table values: \\(f(1) = 5\\), \\(f(4) = 3\\), \\(f(6) = 8\\), \\(f(10) = 2\\). Using the subintervals \\([1,4]\\), \\([4,6]\\), \\([6,10]\\), find the LEFT Riemann sum approximation of \\(\\displaystyle\\int_1^{10} f(x)\\,dx\\).",
+  answer: ["53"],
+  simple: "Width times left height for each strip: 3·5 + 2·3 + 4·8 = 15 + 6 + 32 = 53.",
+  expl: "Widths are \\(3, 2, 4\\); left heights are \\(5, 3, 8\\): \\(3(5) + 2(3) + 4(8) = 15 + 6 + 32 = 53\\). Don't assume equal widths — subtract the \\(x\\)-values."
+},
+{
+  id: 261, topic: "integ", calc: false, type: "mc",
+  q: "Same table: \\(f(1) = 5\\), \\(f(4) = 3\\), \\(f(6) = 8\\), \\(f(10) = 2\\), subintervals \\([1,4]\\), \\([4,6]\\), \\([6,10]\\). The RIGHT Riemann sum approximation of \\(\\displaystyle\\int_1^{10} f(x)\\,dx\\) is…",
+  choices: ["\\(53\\)", "\\(18\\)", "\\(33\\)", "\\(43\\)"],
+  answer: 2,
+  simple: "Width times right height: 3·3 + 2·8 + 4·2 = 9 + 16 + 8 = 33.",
+  expl: "Right heights are \\(3, 8, 2\\) with widths \\(3, 2, 4\\): \\(3(3) + 2(8) + 4(2) = 9 + 16 + 8 = 33\\). Trap: 53 is the left sum and 18 is the heights added without widths."
+},
+{
+  id: 262, topic: "integ", calc: true, type: "input",
+  q: "Evaluate \\(\\displaystyle\\int_0^2 e^x\\,dx\\), rounded to the nearest thousandth.",
+  answer: ["6.389"],
+  simple: "The antiderivative of eˣ is itself, so the answer is e² − 1 ≈ 6.389.",
+  expl: "\\(\\int_0^2 e^x dx = \\left[e^x\\right]_0^2 = e^2 - e^0 = e^2 - 1 \\approx 7.389 - 1 = 6.389\\). Don't forget to subtract \\(e^0 = 1\\), not 0."
+},
+{
+  id: 263, topic: "integ", calc: true, type: "mc",
+  q: "Using a calculator, \\(\\displaystyle\\int_1^3 \\ln x\\,dx\\) is closest to…",
+  choices: ["\\(2.197\\)", "\\(1.099\\)", "\\(3.296\\)", "\\(1.296\\)"],
+  answer: 3,
+  simple: "Punch the definite integral into the calculator: the area under ln x from 1 to 3 is about 1.296.",
+  expl: "On the calculator section, evaluate \\(\\int_1^3 \\ln x\\,dx\\) directly: \\(\\approx 1.296\\) (exactly \\(3\\ln 3 - 2\\)). Trap: \\(1.099\\) is just \\(\\ln 3\\), the height at the endpoint, not the area."
+},
+
+// ===== batch: qb-limits-functions =====
+// ================= LIMITS & CONTINUITY (ids 270-286) =================
+{
+  id: 270, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to 2} \\frac{x^2 + 3x - 10}{x - 2}\\)",
+  answer: ["7"],
+  simple: "Plugging in 2 gives 0/0, so factor the top into (x+5)(x−2), cancel the (x−2), and plug in 2: you get 7.",
+  expl: "Direct substitution gives \\(\\frac{0}{0}\\), so factor: \\(\\dfrac{(x+5)(x-2)}{x-2} = x + 5\\) for \\(x \\ne 2\\). The limit is \\(2 + 5 = 7\\). A \\(\\frac{0}{0}\\) form doesn't mean DNE — it means \"do more algebra.\""
+},
+{
+  id: 271, topic: "limits", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to -3} \\frac{x^2 + x - 6}{x + 3}\\)",
+  choices: ["\\(0\\)", "\\(5\\)", "\\(-5\\)", "does not exist"],
+  answer: 2,
+  simple: "It's 0/0, so factor the top into (x+3)(x−2), cancel, and plug in −3 to get −3 − 2 = −5.",
+  expl: "It's \\(\\frac{0}{0}\\); factor: \\(\\dfrac{(x+3)(x-2)}{x+3} = x - 2\\), so the limit is \\(-3 - 2 = -5\\). Trap: a \\(\\frac{0}{0}\\) form is indeterminate, not automatically DNE — and watch the sign: \\(-3 - 2\\), not \\(3 + 2\\)."
+},
+{
+  id: 272, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to \\infty} \\frac{6x^3 - x}{2x^3 + 5x^2}\\)",
+  answer: ["3"],
+  simple: "Top and bottom are both degree 3, so the answer is just the front numbers divided: 6 ÷ 2 = 3.",
+  expl: "Degrees are equal (both 3), so the limit is the ratio of leading coefficients: \\(\\dfrac{6}{2} = 3\\). The \\(-x\\) and \\(5x^2\\) terms become irrelevant as \\(x\\) grows."
+},
+{
+  id: 273, topic: "limits", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to \\infty} \\frac{4x^2 + 1}{x^3 - 7}\\)",
+  choices: ["\\(0\\)", "\\(4\\)", "\\(+\\infty\\)", "\\(-\\dfrac{4}{7}\\)"],
+  answer: 0,
+  simple: "The bottom's degree (3) beats the top's (2), so the bottom wins the race and the fraction shrinks to 0.",
+  expl: "Bottom degree (3) is bigger than top degree (2), so the denominator grows faster and the limit is \\(0\\). Trap: the ratio of leading coefficients (4) only applies when the degrees are EQUAL."
+},
+{
+  id: 274, topic: "limits", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to \\infty} \\frac{x^3 + 2x}{5x^2 + 1}\\)",
+  choices: ["\\(0\\)", "\\(+\\infty\\)", "\\(\\dfrac{1}{5}\\)", "\\(5\\)"],
+  answer: 1,
+  simple: "The top's degree (3) beats the bottom's (2), so the fraction just keeps growing without bound: infinity.",
+  expl: "Top degree (3) beats bottom degree (2), so the numerator dominates and the limit is \\(+\\infty\\) (everything is positive for large \\(x\\)). Third case of the degree-comparison rule: top bigger → no finite limit."
+},
+{
+  id: 275, topic: "limits", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to 3^-} \\frac{1}{x - 3}\\)",
+  choices: ["\\(0\\)", "\\(+\\infty\\)", "\\(\\dfrac{1}{3}\\)", "\\(-\\infty\\)"],
+  answer: 3,
+  simple: "Coming at 3 from the left, x − 3 is a tiny negative number, and 1 divided by tiny-negative blows up to negative infinity.",
+  expl: "From the left, \\(x - 3\\) is a small NEGATIVE number, e.g. \\(\\frac{1}{2.99 - 3} = -100\\), so the values plunge to \\(-\\infty\\). Trap: from the right it would be \\(+\\infty\\) — the side determines the sign."
+},
+{
+  id: 276, topic: "limits", calc: false, type: "mc",
+  q: "Let \\(f(x) = \\begin{cases} x^2 + 1, & x < 2 \\\\ 3x - 1, & x \\ge 2 \\end{cases}\\). What is \\(\\displaystyle\\lim_{x \\to 2} f(x)\\)?",
+  choices: ["\\(5\\)", "does not exist", "\\(4\\)", "\\(7\\)"],
+  answer: 0,
+  simple: "Both pieces give 5 at x = 2 (2² + 1 = 5 and 3·2 − 1 = 5), so the two sides agree and the limit is 5.",
+  expl: "Check both sides of the break: left piece gives \\(2^2 + 1 = 5\\), right piece gives \\(3(2) - 1 = 5\\). They match, so the limit is \\(5\\). Trap: piecewise does NOT automatically mean the limit fails — you must actually compare the sides."
+},
+{
+  id: 277, topic: "limits", calc: false, type: "mc",
+  q: "Let \\(g(x) = \\begin{cases} 2x + 1, & x < 1 \\\\ x^2 - 3, & x \\ge 1 \\end{cases}\\). What is \\(\\displaystyle\\lim_{x \\to 1} g(x)\\)?",
+  choices: ["\\(3\\)", "\\(-2\\)", "\\(\\dfrac{1}{2}\\)", "does not exist"],
+  answer: 3,
+  simple: "The left piece heads to 3 but the right piece heads to −2; the sides disagree, so there's no limit.",
+  expl: "Left limit: \\(2(1) + 1 = 3\\). Right limit: \\(1^2 - 3 = -2\\). Since \\(3 \\ne -2\\), the two-sided limit does not exist. Trap: you can't average the sides — a limit requires both one-sided limits to be EQUAL."
+},
+{
+  id: 278, topic: "limits", calc: false, type: "input",
+  q: "Let \\(h(x) = \\begin{cases} x^2 - 4, & x < 3 \\\\ 2x - 4, & x \\ge 3 \\end{cases}\\). Find \\(\\displaystyle\\lim_{x \\to 3^+} h(x)\\).",
+  answer: ["2"],
+  simple: "From the right of 3 you're on the 2x − 4 piece, so plug in 3: 2·3 − 4 = 2.",
+  expl: "\\(x \\to 3^+\\) means \\(x > 3\\), which uses the \\(2x - 4\\) branch: \\(2(3) - 4 = 2\\). Trap: the LEFT limit is \\(3^2 - 4 = 5\\), so don't grab the wrong piece — the \\(+\\) tells you which side you're on."
+},
+{
+  id: 279, topic: "limits", calc: false, type: "input",
+  q: "Let \\(f(x) = \\begin{cases} kx - 1, & x < 4 \\\\ 2x + 7, & x \\ge 4 \\end{cases}\\). Find the value of \\(k\\) that makes \\(f\\) continuous at \\(x = 4\\).",
+  answer: ["4"],
+  simple: "Make the two pieces meet at x = 4: set 4k − 1 equal to 2·4 + 7 = 15, and solve to get k = 4.",
+  expl: "Continuity at the break needs left limit = right limit: \\(4k - 1 = 2(4) + 7 = 15\\), so \\(4k = 16\\) and \\(k = 4\\). Setting the two pieces equal AT the break point is the whole game."
+},
+{
+  id: 280, topic: "limits", calc: false, type: "mc",
+  q: "Which statement describes the discontinuities of \\(f(x) = \\dfrac{x - 5}{x^2 - 25}\\)?",
+  choices: [
+    "vertical asymptotes at both \\(x = 5\\) and \\(x = -5\\)",
+    "a hole at \\(x = 5\\) and a vertical asymptote at \\(x = -5\\)",
+    "a hole at \\(x = -5\\) and a vertical asymptote at \\(x = 5\\)",
+    "holes at both \\(x = 5\\) and \\(x = -5\\)"
+  ],
+  answer: 1,
+  simple: "The (x − 5) on top cancels the one hiding in the bottom, leaving a hole at 5, while x = −5 still kills the bottom and makes an asymptote.",
+  expl: "Factor: \\(\\dfrac{x-5}{(x-5)(x+5)} = \\dfrac{1}{x+5}\\) for \\(x \\ne 5\\). The cancelled factor \\(x - 5\\) gives a removable hole at \\(x = 5\\) (height \\(\\frac{1}{10}\\)); the surviving factor gives a vertical asymptote at \\(x = -5\\). Cancels → hole; doesn't cancel → asymptote."
+},
+{
+  id: 281, topic: "limits", calc: false, type: "mc",
+  q: "Let \\(g(x) = \\begin{cases} x + 1, & x \\le 1 \\\\ x^2 + 3, & x > 1 \\end{cases}\\). What type of discontinuity does \\(g\\) have at \\(x = 1\\)?",
+  choices: [
+    "removable (a hole)",
+    "infinite (a vertical asymptote)",
+    "jump",
+    "none — \\(g\\) is continuous at \\(x = 1\\)"
+  ],
+  answer: 2,
+  simple: "The left side lands at 2 and the right side lands at 4, so the graph leaps from one height to another — a jump.",
+  expl: "Left limit: \\(1 + 1 = 2\\); right limit: \\(1^2 + 3 = 4\\). Both one-sided limits are finite but unequal, which is exactly a jump discontinuity. (A hole would need the limit to exist; an asymptote would need a side to blow up to \\(\\pm\\infty\\).)"
+},
+{
+  id: 282, topic: "limits", calc: false, type: "mc",
+  q: "\\(f\\) is continuous on \\([1, 4]\\) with \\(f(1) = -6\\) and \\(f(4) = 3\\). By the Intermediate Value Theorem, which statement MUST be true?",
+  choices: [
+    "\\(f(c) = 0\\) for at least one \\(c\\) in \\((1, 4)\\)",
+    "\\(f(c) = 0\\) for exactly one \\(c\\) in \\((1, 4)\\)",
+    "\\(f\\) is increasing on \\([1, 4]\\)",
+    "\\(f(2.5) = -1.5\\)"
+  ],
+  answer: 0,
+  simple: "A continuous graph going from −6 up to 3 has to cross zero somewhere in between — at least once, but maybe more times.",
+  expl: "\\(f\\) is continuous and \\(-6 < 0 < 3\\), so the IVT guarantees \\(f(c) = 0\\) for SOME \\(c\\) in \\((1,4)\\). Trap: the IVT never says \"exactly once\" or where — the function could wiggle through zero several times."
+},
+{
+  id: 283, topic: "limits", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to 0} \\frac{\\sin(5x)}{x}\\)",
+  answer: ["5"],
+  simple: "For tiny x, sin(5x) acts just like 5x, so the fraction acts like 5x/x, which is 5.",
+  expl: "Rewrite: \\(\\dfrac{\\sin(5x)}{x} = 5 \\cdot \\dfrac{\\sin(5x)}{5x} \\to 5 \\cdot 1 = 5\\), using \\(\\lim_{u \\to 0}\\frac{\\sin u}{u} = 1\\). Shortcut: \\(\\lim_{x\\to 0}\\frac{\\sin(kx)}{x} = k\\)."
+},
+{
+  id: 284, topic: "limits", calc: true, type: "input",
+  q: "Using a calculator in radian mode, estimate \\(\\displaystyle\\lim_{x \\to 0} \\frac{\\sin(6x)}{2x}\\) by evaluating at \\(x = 0.001\\). The limit is what integer?",
+  answer: ["3"],
+  simple: "Typing sin(0.006)/0.002 gives about 2.99998, so the limit is 3 — which matches the shortcut 6 ÷ 2.",
+  expl: "Numerically: \\(\\dfrac{\\sin(0.006)}{0.002} \\approx 2.99998 \\to 3\\). Algebraically: \\(\\dfrac{\\sin(6x)}{2x} = \\dfrac{6}{2}\\cdot\\dfrac{\\sin(6x)}{6x} \\to 3\\). Trap: degree mode wrecks this — the famous limit only works in radians."
+},
+{
+  id: 285, topic: "limits", calc: false, type: "mc",
+  q: "Evaluate: \\(\\displaystyle\\lim_{x \\to -1} \\frac{2x^2 + 5x + 1}{x + 3}\\)",
+  choices: ["\\(0\\)", "\\(1\\)", "\\(-1\\)", "does not exist"],
+  answer: 2,
+  simple: "The bottom isn't zero at x = −1, so just plug in: (2 − 5 + 1)/(−1 + 3) = −2/2 = −1.",
+  expl: "Substituting \\(x = -1\\) gives \\(\\dfrac{2 - 5 + 1}{2} = \\dfrac{-2}{2} = -1\\) — no zero denominator, so direct substitution finishes it. Don't factor reflexively: if plugging in works, you're done."
+},
+{
+  id: 286, topic: "limits", calc: false, type: "mc",
+  q: "Define \\(f(x) = \\dfrac{x^2 - 1}{x - 1}\\) for \\(x \\ne 1\\), and \\(f(1) = 5\\). What is \\(\\displaystyle\\lim_{x \\to 1} f(x)\\)?",
+  choices: ["\\(5\\)", "\\(2\\)", "does not exist", "\\(0\\)"],
+  answer: 1,
+  simple: "The limit only cares where the graph is heading (x + 1 → 2), not the lonely dot someone stuck at height 5.",
+  expl: "Near \\(x = 1\\): \\(\\dfrac{(x-1)(x+1)}{x-1} = x + 1 \\to 2\\). The limit ignores the actual value \\(f(1) = 5\\) — that mismatch just means \\(f\\) is discontinuous there. Classic trap: the limit is about the approach, not the dot."
+},
+
+// ================= FUNCTIONS & TRANSFORMATIONS (ids 290-302) =================
+{
+  id: 290, topic: "functions", calc: false, type: "mc",
+  q: "What is the domain of \\(f(x) = \\dfrac{\\sqrt{2x + 6}}{x - 1}\\)?",
+  choices: [
+    "\\(x \\ge -3\\)",
+    "\\(x \\ge -3\\) and \\(x \\ne 1\\)",
+    "\\(x > -3\\) and \\(x \\ne 1\\)",
+    "\\(x \\ge 3\\) and \\(x \\ne 1\\)"
+  ],
+  answer: 1,
+  simple: "The square root needs 2x + 6 ≥ 0 (so x ≥ −3), AND the bottom can't be zero (so x ≠ 1) — you need both rules at once.",
+  expl: "Two restrictions: radicand \\(2x + 6 \\ge 0 \\Rightarrow x \\ge -3\\), and denominator \\(x - 1 \\ne 0 \\Rightarrow x \\ne 1\\). Trap: \\(x = -3\\) is allowed (\\(\\sqrt{0} = 0\\) on top is fine) — only the denominator gets the strict exclusion."
+},
+{
+  id: 291, topic: "functions", calc: false, type: "mc",
+  q: "What is the range of \\(f(x) = -(x - 2)^2 + 3\\)?",
+  choices: ["\\(y \\le 3\\)", "\\(y \\ge 3\\)", "\\(y < 3\\)", "all real numbers"],
+  answer: 0,
+  simple: "It's an upside-down parabola whose peak is at height 3, so the outputs are 3 and everything below it.",
+  expl: "Vertex form with a negative leading coefficient: the parabola opens DOWN from vertex \\((2, 3)\\), so the maximum value 3 is achieved (at \\(x = 2\\)) and the range is \\(y \\le 3\\). Trap: it must be \\(\\le\\), not \\(<\\), because the vertex is on the graph."
+},
+{
+  id: 292, topic: "functions", calc: false, type: "input",
+  q: "If \\(f(x) = 2x - 1\\) and \\(g(x) = x^2 + 3\\), find \\(g(f(2))\\).",
+  answer: ["12"],
+  simple: "Work inside-out: f(2) = 3 first, then g(3) = 9 + 3 = 12.",
+  expl: "Inside first: \\(f(2) = 2(2) - 1 = 3\\). Then \\(g(3) = 3^2 + 3 = 12\\). Trap: \\(f(g(2)) = f(7) = 13\\) is different — order matters in composition."
+},
+{
+  id: 293, topic: "functions", calc: false, type: "input",
+  q: "Let \\(f(x) = \\begin{cases} x^2, & x < 0 \\\\ x + 4, & x \\ge 0 \\end{cases}\\). Find \\(f(f(-3))\\).",
+  answer: ["13"],
+  simple: "First pass: −3 is negative so square it to get 9; second pass: 9 is positive so add 4 to get 13.",
+  expl: "Inner: \\(-3 < 0\\), so \\(f(-3) = (-3)^2 = 9\\). Outer: \\(9 \\ge 0\\), so \\(f(9) = 9 + 4 = 13\\). Trap: re-check which branch applies at EACH step — the input switches sides of the break."
+},
+{
+  id: 294, topic: "functions", calc: false, type: "mc",
+  q: "What is the inverse of \\(f(x) = x^3 + 2\\)?",
+  choices: [
+    "\\(f^{-1}(x) = \\sqrt[3]{x} - 2\\)",
+    "\\(f^{-1}(x) = (x - 2)^3\\)",
+    "\\(f^{-1}(x) = \\sqrt[3]{x - 2}\\)",
+    "\\(f^{-1}(x) = \\dfrac{1}{x^3 + 2}\\)"
+  ],
+  answer: 2,
+  simple: "To undo \"cube, then add 2,\" reverse the steps in reverse order: subtract 2 first, then take the cube root.",
+  expl: "Swap and solve: \\(x = y^3 + 2 \\Rightarrow y^3 = x - 2 \\Rightarrow y = \\sqrt[3]{x - 2}\\). Trap: undo operations in REVERSE order (subtract 2 before cube-rooting), and remember \\(f^{-1} \\ne \\frac{1}{f}\\)."
+},
+{
+  id: 295, topic: "functions", calc: false, type: "input",
+  q: "If \\(f(x) = \\dfrac{x + 1}{x - 2}\\), find \\(f^{-1}(3)\\).",
+  answer: ["7/2", "3.5"],
+  simple: "Asking for the inverse at 3 just means: what x makes the function spit out 3? Solve (x+1)/(x−2) = 3 to get x = 7/2.",
+  expl: "\\(f^{-1}(3)\\) is the input whose output is 3: \\(\\dfrac{x+1}{x-2} = 3 \\Rightarrow x + 1 = 3x - 6 \\Rightarrow 7 = 2x \\Rightarrow x = \\dfrac{7}{2}\\). Check: \\(f(3.5) = \\frac{4.5}{1.5} = 3\\) ✓. No need to build the whole inverse formula."
+},
+{
+  id: 296, topic: "functions", calc: false, type: "mc",
+  q: "Which sequence of transformations turns \\(y = f(x)\\) into \\(y = 2f(x + 1) - 3\\)?",
+  choices: [
+    "shift right 1, stretch vertically by 2, shift down 3",
+    "shift left 1, shift down 3, then stretch vertically by 2",
+    "stretch vertically by 2, shift left 1, shift up 3",
+    "shift left 1, stretch vertically by 2, then shift down 3"
+  ],
+  answer: 3,
+  simple: "The +1 inside moves it left 1, the 2 out front makes it twice as tall, and only after stretching do you slide it down 3.",
+  expl: "Inside: \\(x + 1\\) shifts LEFT 1 (opposite of the sign). Outside: multiply by 2 (vertical stretch) BEFORE subtracting 3 (shift down), because the \\(-3\\) is not inside the multiplication. Trap: stretching after shifting down would also stretch the \\(-3\\) into \\(-6\\)."
+},
+{
+  id: 297, topic: "functions", calc: false, type: "mc",
+  q: "Compared to \\(y = f(x)\\), the graph of \\(y = f(2x)\\) is…",
+  choices: [
+    "compressed horizontally by a factor of \\(\\frac{1}{2}\\) (twice as narrow)",
+    "stretched horizontally by a factor of 2 (twice as wide)",
+    "stretched vertically by a factor of 2",
+    "shifted left 2"
+  ],
+  answer: 0,
+  simple: "Multiplying x inside by 2 makes everything happen twice as fast, squeezing the graph to half its width.",
+  expl: "Inside changes act horizontally and INVERSELY: \\(f(2x)\\) reaches each feature at half the \\(x\\)-value, a horizontal compression by \\(\\frac{1}{2}\\). Trap: people expect \"times 2 = wider,\" but inside multipliers shrink."
+},
+{
+  id: 298, topic: "functions", calc: false, type: "mc",
+  q: "The function \\(f(x) = x^3 + 1\\) is…",
+  choices: ["even", "odd", "neither even nor odd", "both even and odd"],
+  answer: 2,
+  simple: "The +1 ruins the symmetry: flipping x gives −x³ + 1, which matches neither the original nor its exact opposite.",
+  expl: "\\(f(-x) = -x^3 + 1\\). That's not \\(f(x) = x^3 + 1\\) (not even) and not \\(-f(x) = -x^3 - 1\\) (not odd). Trap: \\(x^3\\) alone is odd, but the constant term \\(+1\\) has even degree (\\(1 = x^0\\)), so the mix is neither."
+},
+{
+  id: 299, topic: "functions", calc: false, type: "input",
+  q: "Find the average rate of change of \\(f(x) = x^3 - 2x\\) on the interval \\([-1, 2]\\).",
+  answer: ["1"],
+  simple: "It's just the slope between the two endpoints: the function goes from 1 up to 4 while x goes from −1 to 2, so 3 ÷ 3 = 1.",
+  expl: "\\(\\dfrac{f(2) - f(-1)}{2 - (-1)} = \\dfrac{(8 - 4) - (-1 + 2)}{3} = \\dfrac{4 - 1}{3} = 1\\). Watch the signs: \\(f(-1) = -1 + 2 = +1\\), and the denominator is \\(2 - (-1) = 3\\)."
+},
+{
+  id: 300, topic: "functions", calc: true, type: "mc",
+  q: "Find the average rate of change of \\(f(x) = \\ln x\\) on \\([1, 5]\\), rounded to three decimals.",
+  choices: ["\\(0.175\\)", "\\(0.402\\)", "\\(1.609\\)", "\\(2.485\\)"],
+  answer: 1,
+  simple: "Slope between endpoints: ln 5 is about 1.609 and ln 1 is 0, so divide 1.609 by the run of 4 to get about 0.402.",
+  expl: "\\(\\dfrac{f(5) - f(1)}{5 - 1} = \\dfrac{\\ln 5 - \\ln 1}{4} = \\dfrac{1.6094 - 0}{4} \\approx 0.402\\). Traps: 1.609 is forgetting to divide by 4, and 0.175 is using \\(\\log_{10}\\) instead of \\(\\ln\\)."
+},
+{
+  id: 301, topic: "functions", calc: false, type: "mc",
+  q: "Which function is one-to-one on all real numbers (and therefore has an inverse function)?",
+  choices: ["\\(f(x) = x^2\\)", "\\(f(x) = |x|\\)", "\\(f(x) = \\cos x\\)", "\\(f(x) = x^3\\)"],
+  answer: 3,
+  simple: "Only x³ never repeats an output — the others give the same answer for two different inputs (like 2 and −2), failing the horizontal line test.",
+  expl: "\\(x^3\\) is strictly increasing, so it passes the horizontal line test. The others fail: \\(x^2\\) and \\(|x|\\) send \\(\\pm 2\\) to the same output, and \\(\\cos x\\) repeats every \\(2\\pi\\). One-to-one = no repeated outputs = invertible."
+},
+{
+  id: 302, topic: "functions", calc: false, type: "input",
+  q: "What is the smallest value of \\(x\\) in the domain of \\(f(x) = \\sqrt{3x - 12}\\)?",
+  answer: ["4"],
+  simple: "The stuff under the root must be at least 0, so solve 3x − 12 ≥ 0 to find the domain starts at x = 4.",
+  expl: "Need \\(3x - 12 \\ge 0 \\Rightarrow x \\ge 4\\), so the smallest allowed input is \\(x = 4\\) (where \\(f(4) = \\sqrt{0} = 0\\) is perfectly fine). The endpoint is included — square roots allow zero, just not negatives."
+},
+
+// ================= POLYNOMIALS & RATIONALS (ids 310-317) =================
+{
+  id: 310, topic: "poly", calc: false, type: "input",
+  q: "For \\(f(x) = (x^2 - 4)(x + 2)\\), what is the multiplicity of the zero \\(x = -2\\)?",
+  answer: ["2"],
+  simple: "Factor x² − 4 into (x−2)(x+2) first — then you can see (x+2) shows up twice, so the multiplicity is 2.",
+  expl: "Fully factor: \\((x^2 - 4)(x + 2) = (x - 2)(x + 2)(x + 2) = (x-2)(x+2)^2\\). The factor \\(x + 2\\) appears twice, so \\(x = -2\\) has multiplicity 2 (the graph bounces there). Trap: a hidden factor inside \\(x^2 - 4\\) — always factor completely before counting."
+},
+{
+  id: 311, topic: "poly", calc: false, type: "mc",
+  q: "Describe the end behavior of \\(f(x) = 3x^4 - x^3 + 2\\).",
+  choices: [
+    "both ends go up",
+    "both ends go down",
+    "left end down, right end up",
+    "left end up, right end down"
+  ],
+  answer: 0,
+  simple: "Even power with a positive front number means both tails point up, like a smile.",
+  expl: "Only the leading term \\(3x^4\\) matters: even degree means both ends go the same way, and the positive coefficient sends them UP — as \\(x \\to \\pm\\infty\\), \\(f \\to +\\infty\\). The \\(-x^3\\) can't compete for large \\(|x|\\)."
+},
+{
+  id: 312, topic: "poly", calc: false, type: "input",
+  q: "What is the remainder when \\(f(x) = 2x^3 - 5x^2 + x - 7\\) is divided by \\(x + 1\\)?",
+  answer: ["-15"],
+  simple: "Dividing by x + 1 means plug in −1 (not +1!): −2 − 5 − 1 − 7 = −15.",
+  expl: "Remainder Theorem: dividing by \\(x + 1 = x - (-1)\\) gives remainder \\(f(-1) = -2 - 5 - 1 - 7 = -15\\). Trap: evaluate at \\(-1\\), not \\(+1\\). Since the remainder isn't 0, the Factor Theorem says \\(x + 1\\) is NOT a factor."
+},
+{
+  id: 313, topic: "poly", calc: false, type: "mc",
+  q: "A cubic polynomial with real coefficients has zeros \\(3\\) and \\(2i\\). What is the third zero?",
+  choices: ["\\(-3\\)", "\\(3 - 2i\\)", "\\(-2i\\)", "\\(-2\\)"],
+  answer: 2,
+  simple: "Imaginary zeros always travel in mirror pairs, so 2i's partner −2i must also be a zero.",
+  expl: "Real coefficients force complex zeros into conjugate pairs: \\(2i = 0 + 2i\\) pairs with \\(0 - 2i = -2i\\). A cubic has exactly 3 zeros, so they are \\(3, 2i, -2i\\). Trap: the conjugate of \\(2i\\) is \\(-2i\\), not \\(3 - 2i\\) — don't mix it with the real zero."
+},
+{
+  id: 314, topic: "poly", calc: false, type: "mc",
+  q: "For \\(g(x) = \\dfrac{2x^2 + 2x - 12}{x^2 - 4}\\), which statement is true?",
+  choices: [
+    "vertical asymptotes at \\(x = 2\\) and \\(x = -2\\); horizontal asymptote \\(y = 2\\)",
+    "hole at \\(\\left(2, \\frac{5}{2}\\right)\\); vertical asymptote \\(x = -2\\); horizontal asymptote \\(y = 2\\)",
+    "hole at \\(\\left(-2, \\frac{5}{2}\\right)\\); vertical asymptote \\(x = 2\\); horizontal asymptote \\(y = 2\\)",
+    "hole at \\(\\left(2, \\frac{5}{2}\\right)\\); vertical asymptote \\(x = -2\\); horizontal asymptote \\(y = 0\\)"
+  ],
+  answer: 1,
+  simple: "Factoring lets (x − 2) cancel, leaving a hole at x = 2 of height 5/2, an asymptote at x = −2, and equal degrees give the flat line y = 2.",
+  expl: "Factor: \\(\\dfrac{2(x+3)(x-2)}{(x-2)(x+2)} = \\dfrac{2(x+3)}{x+2}\\) for \\(x \\ne 2\\). Cancelled factor → hole at \\(x = 2\\) with height \\(\\frac{2(5)}{4} = \\frac{5}{2}\\); surviving factor → vertical asymptote \\(x = -2\\); equal degrees → horizontal asymptote \\(y = \\frac{2}{1} = 2\\)."
+},
+{
+  id: 315, topic: "poly", calc: false, type: "mc",
+  q: "Determine the domain, in interval notation, of \\(f(x) = \\dfrac{x + 4}{x^2 - 2x - 8}\\).",
+  choices: [
+    "\\((-\\infty, -4) \\cup (-4, \\infty)\\)",
+    "\\((-\\infty, -4) \\cup (-4, 2) \\cup (2, \\infty)\\)",
+    "\\([-2, 4]\\)",
+    "\\((-\\infty, -2) \\cup (-2, 4) \\cup (4, \\infty)\\)"
+  ],
+  answer: 3,
+  simple: "Only the bottom matters for domain: x² − 2x − 8 factors into (x−4)(x+2), so kick out x = 4 and x = −2 and keep everything else.",
+  expl: "Set the denominator \\(\\ne 0\\): \\(x^2 - 2x - 8 = (x - 4)(x + 2) = 0\\) at \\(x = 4, -2\\), so the domain is \\((-\\infty, -2) \\cup (-2, 4) \\cup (4, \\infty)\\). Trap: the numerator's zero \\(x = -4\\) is perfectly legal — only denominator zeros leave the domain."
+},
+{
+  id: 316, topic: "poly", calc: false, type: "mc",
+  q: "What is the slant (oblique) asymptote of \\(f(x) = \\dfrac{x^2 - 3x + 5}{x + 1}\\)?",
+  choices: ["\\(y = x - 4\\)", "\\(y = x - 3\\)", "\\(y = x\\)", "there is no slant asymptote"],
+  answer: 0,
+  simple: "Long-divide the top by the bottom: you get x − 4 with a leftover that fades away, so the graph hugs the line y = x − 4.",
+  expl: "Top degree is exactly one more than bottom → slant asymptote. Divide: \\(x^2 - 3x + 5 = (x+1)(x - 4) + 9\\), so \\(f(x) = x - 4 + \\dfrac{9}{x+1}\\); the fraction vanishes for large \\(x\\), leaving \\(y = x - 4\\). Trap: don't just match the \\(x\\)-terms — the division produces \\(-4\\), not \\(-3\\)."
+},
+{
+  id: 317, topic: "poly", calc: false, type: "mc",
+  q: "Solve the inequality \\(x^3 - 4x \\ge 0\\).",
+  choices: [
+    "\\(x \\ge 2\\)",
+    "\\((-2, 0) \\cup (2, \\infty)\\)",
+    "\\([-2, 0] \\cup [2, \\infty)\\)",
+    "\\((-\\infty, -2] \\cup [0, 2]\\)"
+  ],
+  answer: 2,
+  simple: "Factor into x(x−2)(x+2), test a point in each of the four sections, and keep the positive ones — including the endpoints since ≥ allows equality.",
+  expl: "Factor: \\(x(x - 2)(x + 2) \\ge 0\\) with zeros \\(-2, 0, 2\\). Sign chart: negative, positive, negative, positive on the four intervals, so keep \\([-2, 0]\\) and \\([2, \\infty)\\). Trap: \\(\\ge\\) means brackets — include the zeros, and don't forget the middle interval \\([-2, 0]\\)."
+},
+
+// ===== batch: qc-trig-conics =====
+// ================= TRIG: UNIT CIRCLE & GRAPHS (320-328) =================
+{
+  id: 320, topic: "trig", calc: false, type: "mc",
+  q: "What is the exact value of \\(\\sec\\dfrac{7\\pi}{6} - \\cot\\dfrac{4\\pi}{3}\\)?",
+  choices: ["\\(\\sqrt{3}\\)", "\\(-\\sqrt{3}\\)", "\\(-\\dfrac{\\sqrt{3}}{3}\\)", "\\(\\dfrac{\\sqrt{3}}{3}\\)"],
+  answer: 1,
+  simple: "At 210° sec is 1/cos = −2/√3, and at 240° cot is +1/√3 (both legs negative, so it's positive); subtracting gives −2√3/3 − √3/3 = −√3.",
+  expl: "\\(\\sec\\frac{7\\pi}{6} = \\frac{1}{\\cos(7\\pi/6)} = \\frac{1}{-\\sqrt{3}/2} = -\\frac{2\\sqrt{3}}{3}\\) (QIII, cosine negative). \\(\\cot\\frac{4\\pi}{3} = \\frac{\\cos(4\\pi/3)}{\\sin(4\\pi/3)} = \\frac{-1/2}{-\\sqrt{3}/2} = +\\frac{\\sqrt{3}}{3}\\) — trap: cotangent is POSITIVE in QIII. So \\(-\\frac{2\\sqrt{3}}{3} - \\frac{\\sqrt{3}}{3} = -\\frac{3\\sqrt{3}}{3} = -\\sqrt{3}\\)."
+},
+{
+  id: 321, topic: "trig", calc: false, type: "input",
+  q: "Evaluate \\(\\csc\\dfrac{11\\pi}{6}\\).",
+  answer: ["-2"],
+  simple: "csc is 1 over sin; at 11π/6 (bottom-right of the circle) sin is −1/2, and flipping −1/2 gives −2.",
+  expl: "\\(\\frac{11\\pi}{6} = 330°\\) is in QIV with reference angle \\(\\frac{\\pi}{6}\\), so \\(\\sin\\frac{11\\pi}{6} = -\\frac{1}{2}\\). Then \\(\\csc\\frac{11\\pi}{6} = \\frac{1}{-1/2} = -2\\)."
+},
+{
+  id: 322, topic: "trig", calc: true, type: "input",
+  q: "Convert \\(2.4\\) radians to degrees. Round to the nearest tenth. (Answer in degrees.)",
+  answer: ["137.5"],
+  simple: "Radians → degrees means multiply by 180/π: 2.4 × 180/π ≈ 137.5°.",
+  expl: "Multiply by \\(\\frac{180°}{\\pi}\\): \\(2.4 \\times \\frac{180}{\\pi} = \\frac{432}{\\pi} \\approx 137.5°\\). Sanity check: \\(2.4\\) rad is a bit less than \\(\\pi \\approx 3.14\\) rad \\(= 180°\\), so an answer under \\(180°\\) makes sense."
+},
+{
+  id: 323, topic: "trig", calc: false, type: "mc",
+  q: "Which angle in \\([0, 2\\pi)\\) is coterminal with \\(-\\dfrac{11\\pi}{4}\\)?",
+  choices: ["\\(\\dfrac{3\\pi}{4}\\)", "\\(\\dfrac{7\\pi}{4}\\)", "\\(\\dfrac{5\\pi}{4}\\)", "\\(\\dfrac{\\pi}{4}\\)"],
+  answer: 2,
+  simple: "Keep adding full circles (2π) until you land between 0 and 2π: −11π/4 + 2π = −3π/4, then + 2π again = 5π/4.",
+  expl: "Add \\(2\\pi = \\frac{8\\pi}{4}\\) until you're in \\([0, 2\\pi)\\): \\(-\\frac{11\\pi}{4} + \\frac{8\\pi}{4} = -\\frac{3\\pi}{4}\\), still negative, so add again: \\(-\\frac{3\\pi}{4} + \\frac{8\\pi}{4} = \\frac{5\\pi}{4}\\). Trap: \\(\\frac{3\\pi}{4}\\) is what you get if you just erase the minus sign."
+},
+{
+  id: 324, topic: "trig", calc: false, type: "input",
+  q: "What is the reference angle of \\(320°\\)? (Answer in degrees.)",
+  answer: ["40"],
+  simple: "320° is in the bottom-right quadrant, just 40° short of a full circle, so its distance to the x-axis is 40°.",
+  expl: "\\(320°\\) is in Quadrant IV, where the reference angle is the distance to \\(360°\\): \\(360° - 320° = 40°\\). Reference angles are always between \\(0°\\) and \\(90°\\)."
+},
+{
+  id: 325, topic: "trig", calc: false, type: "mc",
+  q: "For \\(y = 4\\sin(3x - \\pi) + 2\\), which statement is correct?",
+  choices: [
+    "amplitude 4, period \\(\\dfrac{2\\pi}{3}\\), phase shift right \\(\\dfrac{\\pi}{3}\\)",
+    "amplitude 4, period \\(\\dfrac{2\\pi}{3}\\), phase shift right \\(\\pi\\)",
+    "amplitude 4, period \\(6\\pi\\), phase shift right \\(\\dfrac{\\pi}{3}\\)",
+    "amplitude 2, period \\(\\dfrac{2\\pi}{3}\\), phase shift left \\(\\dfrac{\\pi}{3}\\)"
+  ],
+  answer: 0,
+  simple: "The 4 out front is the height of the wave, the 3 squeezes a full cycle into 2π/3, and factoring gives 3(x − π/3), a slide right by π/3 — not π.",
+  expl: "Factor the inside first: \\(4\\sin\\!\\big(3(x - \\frac{\\pi}{3})\\big) + 2\\). Amplitude \\(|A| = 4\\), period \\(\\frac{2\\pi}{B} = \\frac{2\\pi}{3}\\), phase shift right \\(\\frac{\\pi}{3}\\), midline \\(y = 2\\). Classic trap: reading the shift as \\(\\pi\\) without dividing by \\(B = 3\\)."
+},
+{
+  id: 326, topic: "trig", calc: false, type: "mc",
+  q: "What is the period of \\(y = 2\\cos\\!\\left(\\dfrac{\\pi x}{4}\\right)\\)?",
+  choices: ["\\(\\dfrac{\\pi}{2}\\)", "\\(4\\)", "\\(8\\)", "\\(8\\pi\\)"],
+  answer: 2,
+  simple: "Period is 2π divided by the number multiplying x: 2π ÷ (π/4) = 8 — the π's cancel, so no π in the answer.",
+  expl: "Period \\(= \\frac{2\\pi}{B} = \\frac{2\\pi}{\\pi/4} = 2\\pi \\cdot \\frac{4}{\\pi} = 8\\). When \\(B\\) contains \\(\\pi\\), the \\(\\pi\\)'s cancel and the period is a plain number — that's the giveaway that \\(8\\pi\\) is wrong."
+},
+{
+  id: 327, topic: "trig", calc: false, type: "mc",
+  q: "Evaluate \\(\\arcsin\\!\\left(-\\dfrac{\\sqrt{2}}{2}\\right)\\) (the principal value).",
+  choices: ["\\(-\\dfrac{\\pi}{4}\\)", "\\(\\dfrac{7\\pi}{4}\\)", "\\(\\dfrac{5\\pi}{4}\\)", "\\(\\dfrac{\\pi}{4}\\)"],
+  answer: 0,
+  simple: "You need the angle between −π/2 and π/2 whose sin is −√2/2 — that's −π/4, not an angle most of the way around the circle.",
+  expl: "Arcsine only outputs angles in \\(\\left[-\\frac{\\pi}{2}, \\frac{\\pi}{2}\\right]\\). The angle there with sine \\(-\\frac{\\sqrt{2}}{2}\\) is \\(-\\frac{\\pi}{4}\\). Trap: \\(\\frac{7\\pi}{4}\\) has the right sine but is outside the principal range."
+},
+{
+  id: 328, topic: "trig", calc: false, type: "input",
+  q: "What is the minimum value of \\(y = 7\\sin(2x) - 4\\)?",
+  answer: ["-11"],
+  simple: "The sine part swings between −7 and 7, so the lowest the whole thing gets is −7 − 4 = −11.",
+  expl: "\\(\\sin(2x)\\) ranges from \\(-1\\) to \\(1\\), so \\(7\\sin(2x)\\) ranges from \\(-7\\) to \\(7\\). Minimum \\(= -7 - 4 = -11\\). The \\(2\\) inside changes the period, not the height."
+},
+
+// ================= TRIG: IDENTITIES & EQUATIONS (330-341) =================
+{
+  id: 330, topic: "trigid", calc: false, type: "input",
+  q: "If \\(\\cos\\theta = -\\dfrac{3}{5}\\) and \\(\\theta\\) is in Quadrant II, find \\(\\tan 2\\theta\\).",
+  answer: ["24/7"],
+  simple: "In the second quadrant tan θ = −4/3; plug t = −4/3 into 2t/(1 − t²) and the negatives cancel, giving 24/7.",
+  expl: "QII: \\(\\sin\\theta = +\\frac{4}{5}\\), so \\(\\tan\\theta = \\frac{4/5}{-3/5} = -\\frac{4}{3}\\). Then \\(\\tan 2\\theta = \\dfrac{2\\tan\\theta}{1 - \\tan^2\\theta} = \\dfrac{-8/3}{1 - 16/9} = \\dfrac{-8/3}{-7/9} = \\frac{24}{7}\\). A positive answer is right — \\(2\\theta\\) lands in QIII where tangent is positive."
+},
+{
+  id: 331, topic: "trigid", calc: false, type: "mc",
+  q: "Simplify: \\(\\dfrac{1}{\\sec x + \\tan x}\\)",
+  choices: ["\\(\\sec x + \\tan x\\)", "\\(1\\)", "\\(\\cos x - \\sin x\\)", "\\(\\sec x - \\tan x\\)"],
+  answer: 3,
+  simple: "Multiply top and bottom by sec x − tan x; the bottom becomes sec² − tan² = 1, leaving just sec x − tan x on top.",
+  expl: "Multiply by the conjugate: \\(\\dfrac{1}{\\sec x + \\tan x} \\cdot \\dfrac{\\sec x - \\tan x}{\\sec x - \\tan x} = \\dfrac{\\sec x - \\tan x}{\\sec^2 x - \\tan^2 x} = \\sec x - \\tan x\\), since the Pythagorean identity gives \\(\\sec^2 x - \\tan^2 x = 1\\)."
+},
+{
+  id: 332, topic: "trigid", calc: false, type: "mc",
+  q: "Simplify: \\(\\dfrac{\\csc x}{\\cot x + \\tan x}\\)",
+  choices: ["\\(\\sin x\\)", "\\(\\cos x\\)", "\\(\\sec x\\)", "\\(1\\)"],
+  answer: 1,
+  simple: "Multiply top and bottom by sin x · cos x: the bottom collapses to sin² + cos² = 1 and the top becomes cos x.",
+  expl: "Multiply numerator and denominator by \\(\\sin x\\cos x\\): the top becomes \\(\\frac{1}{\\sin x}\\cdot\\sin x\\cos x = \\cos x\\); the bottom becomes \\(\\cos^2 x + \\sin^2 x = 1\\). So the whole expression is \\(\\cos x\\). Same trick as the packet's \\(\\frac{\\csc^2 x}{\\cot^2 x - 1}\\) problem — clear the fractions-inside-fractions first."
+},
+{
+  id: 333, topic: "trigid", calc: false, type: "mc",
+  q: "If \\(\\sin\\theta = \\dfrac{5}{13}\\) and \\(\\theta\\) is in Quadrant II, find \\(\\sin 2\\theta\\).",
+  choices: ["\\(-\\dfrac{120}{169}\\)", "\\(\\dfrac{120}{169}\\)", "\\(-\\dfrac{60}{169}\\)", "\\(\\dfrac{119}{169}\\)"],
+  answer: 0,
+  simple: "Cos is −12/13 in the second quadrant, so 2 · (5/13) · (−12/13) = −120/169 — the quadrant makes it negative.",
+  expl: "QII makes cosine negative: \\(\\cos\\theta = -\\frac{12}{13}\\) (5-12-13 triangle). Then \\(\\sin 2\\theta = 2\\sin\\theta\\cos\\theta = 2\\cdot\\frac{5}{13}\\cdot\\left(-\\frac{12}{13}\\right) = -\\frac{120}{169}\\). Traps: forgetting the negative (QII) or the factor of 2; \\(\\frac{119}{169}\\) is \\(\\cos 2\\theta\\)."
+},
+{
+  id: 334, topic: "trigid", calc: false, type: "input",
+  q: "If \\(\\sin\\theta = \\dfrac{1}{4}\\), find the exact value of \\(\\cos 2\\theta\\).",
+  answer: ["7/8", "0.875"],
+  simple: "Use cos 2θ = 1 − 2sin²θ: that's 1 − 2(1/16) = 1 − 1/8 = 7/8, no need to find cos θ at all.",
+  expl: "Pick the form of \\(\\cos 2\\theta\\) that uses what you're given: \\(\\cos 2\\theta = 1 - 2\\sin^2\\theta = 1 - 2\\left(\\frac{1}{16}\\right) = \\frac{7}{8}\\). No quadrant info needed — \\(\\sin\\theta\\) is squared, so the sign doesn't matter."
+},
+{
+  id: 335, topic: "trigid", calc: false, type: "mc",
+  q: "Use a sum formula to find the exact value of \\(\\cos 105°\\).",
+  choices: [
+    "\\(\\dfrac{\\sqrt{6} - \\sqrt{2}}{4}\\)",
+    "\\(\\dfrac{\\sqrt{2} - \\sqrt{6}}{4}\\)",
+    "\\(\\dfrac{\\sqrt{6} + \\sqrt{2}}{4}\\)",
+    "\\(-\\dfrac{\\sqrt{6} + \\sqrt{2}}{4}\\)"
+  ],
+  answer: 1,
+  simple: "Split 105° into 60° + 45° and use the cosine sum formula; you get (√2 − √6)/4, a small negative number — which makes sense since 105° is past 90°.",
+  expl: "\\(\\cos 105° = \\cos(60° + 45°) = \\cos 60°\\cos 45° - \\sin 60°\\sin 45° = \\frac{1}{2}\\cdot\\frac{\\sqrt{2}}{2} - \\frac{\\sqrt{3}}{2}\\cdot\\frac{\\sqrt{2}}{2} = \\frac{\\sqrt{2} - \\sqrt{6}}{4}\\). Sanity check: \\(105°\\) is in QII, so cosine must be negative, and \\(\\sqrt{2} < \\sqrt{6}\\) ✓."
+},
+{
+  id: 336, topic: "trigid", calc: true, type: "mc",
+  q: "Solve on \\([0, 2\\pi)\\), rounding to the nearest thousandth: \\(2\\tan^2 x + \\tan x - 6 = 0\\)",
+  choices: [
+    "\\(\\{0.983,\\ 2.034,\\ 4.124,\\ 5.176\\}\\)",
+    "\\(\\{0.983,\\ 4.124\\}\\) only",
+    "\\(\\{0.983,\\ 1.107,\\ 4.124,\\ 4.249\\}\\)",
+    "\\(\\{2.034,\\ 5.176\\}\\) only"
+  ],
+  answer: 0,
+  simple: "Treat tan x like a variable and factor: tan x = 3/2 or tan x = −2; arctan each one, then add π to get the partner angle for each.",
+  expl: "Factor: \\((2\\tan x - 3)(\\tan x + 2) = 0\\), so \\(\\tan x = \\frac{3}{2}\\) or \\(\\tan x = -2\\). \\(\\tan x = 1.5\\): \\(x = \\arctan 1.5 \\approx 0.983\\) and \\(0.983 + \\pi \\approx 4.124\\). \\(\\tan x = -2\\): reference \\(\\arctan 2 \\approx 1.107\\), so \\(x = \\pi - 1.107 \\approx 2.034\\) and \\(2\\pi - 1.107 \\approx 5.176\\) (QII and QIV, where tangent is negative). Radian mode!"
+},
+{
+  id: 337, topic: "trigid", calc: false, type: "mc",
+  q: "Solve on \\([0, 2\\pi)\\): \\(2\\sin\\theta\\cos\\theta - \\sin\\theta = 0\\)",
+  choices: [
+    "\\(\\left\\{\\dfrac{\\pi}{3}, \\dfrac{5\\pi}{3}\\right\\}\\) only",
+    "\\(\\{0, \\pi\\}\\) only",
+    "\\(\\left\\{0, \\dfrac{\\pi}{3}, \\dfrac{2\\pi}{3}, \\pi\\right\\}\\)",
+    "\\(\\left\\{0, \\dfrac{\\pi}{3}, \\pi, \\dfrac{5\\pi}{3}\\right\\}\\)"
+  ],
+  answer: 3,
+  simple: "Pull sin θ out front instead of dividing it away: sin θ = 0 gives 0 and π, and cos θ = 1/2 gives π/3 and 5π/3 — four answers total.",
+  expl: "Factor out the common factor — never divide by it: \\(\\sin\\theta(2\\cos\\theta - 1) = 0\\). \\(\\sin\\theta = 0\\) at \\(\\theta = 0, \\pi\\); \\(\\cos\\theta = \\frac{1}{2}\\) at \\(\\theta = \\frac{\\pi}{3}, \\frac{5\\pi}{3}\\). Dividing both sides by \\(\\sin\\theta\\) silently throws away \\(0\\) and \\(\\pi\\)."
+},
+{
+  id: 338, topic: "trigid", calc: false, type: "input",
+  q: "How many solutions does \\(\\cos(3\\theta) = 1\\) have on \\([0, 2\\pi)\\)?",
+  answer: ["3"],
+  simple: "Cos of something equals 1 only at multiples of 2π; since 3θ runs from 0 up to 6π, it hits 0, 2π, and 4π — three answers.",
+  expl: "Let \\(u = 3\\theta\\). As \\(\\theta\\) runs over \\([0, 2\\pi)\\), \\(u\\) runs over \\([0, 6\\pi)\\). \\(\\cos u = 1\\) at \\(u = 0, 2\\pi, 4\\pi\\), giving \\(\\theta = 0, \\frac{2\\pi}{3}, \\frac{4\\pi}{3}\\) — 3 solutions. Trap: solving only on \\([0, 2\\pi)\\) for \\(u\\) gives just one."
+},
+{
+  id: 339, topic: "trigid", calc: false, type: "input",
+  q: "How many solutions does \\(\\cot^2\\theta - 3 = 0\\) have on \\([0, 2\\pi)\\)?",
+  answer: ["4"],
+  simple: "cot θ = ±√3 means the reference angle is 30°, and a ± value happens once in every quadrant — so 4 solutions.",
+  expl: "\\(\\cot\\theta = \\pm\\sqrt{3}\\), i.e. \\(\\tan\\theta = \\pm\\frac{1}{\\sqrt{3}}\\), reference angle \\(\\frac{\\pi}{6}\\). With both signs allowed there's one solution in each quadrant: \\(\\frac{\\pi}{6}, \\frac{5\\pi}{6}, \\frac{7\\pi}{6}, \\frac{11\\pi}{6}\\) — 4 total. Don't forget the negative square root."
+},
+{
+  id: 340, topic: "trigid", calc: false, type: "mc",
+  q: "Solve on \\([0, 2\\pi)\\): \\(\\csc\\theta + 2 = 0\\)",
+  choices: [
+    "\\(\\left\\{\\dfrac{\\pi}{6}, \\dfrac{5\\pi}{6}\\right\\}\\)",
+    "\\(\\left\\{\\dfrac{5\\pi}{6}, \\dfrac{7\\pi}{6}\\right\\}\\)",
+    "\\(\\left\\{\\dfrac{7\\pi}{6}, \\dfrac{11\\pi}{6}\\right\\}\\)",
+    "\\(\\left\\{\\dfrac{11\\pi}{6}\\right\\}\\) only"
+  ],
+  answer: 2,
+  simple: "csc θ = −2 flips to sin θ = −1/2, which happens at the two below-the-axis angles: 7π/6 and 11π/6.",
+  expl: "\\(\\csc\\theta = -2\\) means \\(\\sin\\theta = -\\frac{1}{2}\\). Sine is negative in QIII and QIV, reference angle \\(\\frac{\\pi}{6}\\): \\(\\theta = \\pi + \\frac{\\pi}{6} = \\frac{7\\pi}{6}\\) and \\(2\\pi - \\frac{\\pi}{6} = \\frac{11\\pi}{6}\\). Trap: \\(\\frac{\\pi}{6}, \\frac{5\\pi}{6}\\) is where sine is \\(+\\frac{1}{2}\\)."
+},
+{
+  id: 341, topic: "trigid", calc: false, type: "mc",
+  q: "Solve on \\([0, 2\\pi)\\): \\(2\\cos^2\\theta + 3\\cos\\theta + 1 = 0\\)",
+  choices: [
+    "\\(\\left\\{\\dfrac{2\\pi}{3}, \\dfrac{4\\pi}{3}\\right\\}\\) only",
+    "\\(\\left\\{\\dfrac{\\pi}{3}, \\pi, \\dfrac{5\\pi}{3}\\right\\}\\)",
+    "\\(\\left\\{\\dfrac{2\\pi}{3}, \\pi, \\dfrac{4\\pi}{3}\\right\\}\\)",
+    "\\(\\left\\{0, \\dfrac{2\\pi}{3}, \\dfrac{4\\pi}{3}\\right\\}\\)"
+  ],
+  answer: 2,
+  simple: "It factors like 2c² + 3c + 1 = (2c + 1)(c + 1): cos θ = −1/2 gives two angles, and cos θ = −1 adds one more at π — three answers.",
+  expl: "Factor as a quadratic in \\(\\cos\\theta\\): \\((2\\cos\\theta + 1)(\\cos\\theta + 1) = 0\\). \\(\\cos\\theta = -\\frac{1}{2}\\): \\(\\theta = \\frac{2\\pi}{3}, \\frac{4\\pi}{3}\\). \\(\\cos\\theta = -1\\): \\(\\theta = \\pi\\). Three solutions — don't drop the \\(\\cos\\theta = -1\\) branch (and \\(\\cos\\theta = -1\\) happens at \\(\\pi\\), not \\(0\\))."
+},
+
+// ================= EXPONENTIALS & LOGARITHMS (350-356) =================
+{
+  id: 350, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(3^{2x-1} = 27\\)",
+  answer: ["2"],
+  simple: "27 is 3³, so the exponents must match: 2x − 1 = 3, which gives x = 2.",
+  expl: "Match the bases: \\(27 = 3^3\\), so \\(3^{2x-1} = 3^3\\) forces \\(2x - 1 = 3\\), giving \\(x = 2\\). Check: \\(3^{2(2)-1} = 3^3 = 27\\) ✓."
+},
+{
+  id: 351, topic: "explog", calc: true, type: "mc",
+  q: "Solve \\(4e^{3x} = 20\\), rounding to the nearest thousandth.",
+  choices: ["\\(x \\approx 1.609\\)", "\\(x \\approx 0.536\\)", "\\(x \\approx 0.999\\)", "\\(x \\approx 4.828\\)"],
+  answer: 1,
+  simple: "Divide by 4 first so it's e^(3x) = 5, then take ln of both sides and divide by 3: ln 5 ÷ 3 ≈ 0.536.",
+  expl: "Isolate the exponential BEFORE taking the log: \\(e^{3x} = 5\\), so \\(3x = \\ln 5\\) and \\(x = \\frac{\\ln 5}{3} \\approx 0.536\\). Traps: \\(1.609\\) is \\(\\ln 5\\) without dividing by 3; \\(0.999 = \\frac{\\ln 20}{3}\\) comes from taking \\(\\ln\\) before dividing by 4."
+},
+{
+  id: 352, topic: "explog", calc: false, type: "mc",
+  q: "Which statement is true for \\(g(x) = -2 \\cdot 3^{x-1} + 6\\)?",
+  choices: [
+    "horizontal asymptote \\(y = 6\\); range \\((6, \\infty)\\)",
+    "horizontal asymptote \\(y = 0\\); range \\((-\\infty, \\infty)\\)",
+    "horizontal asymptote \\(y = 6\\); range \\((-\\infty, 6)\\)",
+    "horizontal asymptote \\(y = -2\\); range \\((-2, \\infty)\\)"
+  ],
+  answer: 2,
+  simple: "The +6 lifts the flat line the graph hugs up to y = 6, and the −2 flips the curve underneath that line, so all the y-values stay below 6.",
+  expl: "The vertical shift \\(+6\\) moves the asymptote from \\(y = 0\\) to \\(y = 6\\). The factor \\(-2\\) reflects the graph over its asymptote, so the curve lives BELOW it: range \\((-\\infty, 6)\\). As \\(x \\to -\\infty\\), \\(3^{x-1} \\to 0\\) and \\(g \\to 6\\); as \\(x \\to \\infty\\), \\(g \\to -\\infty\\)."
+},
+{
+  id: 353, topic: "explog", calc: false, type: "mc",
+  q: "Simplify for \\(x > 0\\): \\(e^{2\\ln x}\\)",
+  choices: ["\\(x^2\\)", "\\(2x\\)", "\\(e^2 x\\)", "\\(x^{e^2}\\)"],
+  answer: 0,
+  simple: "Slide the 2 up as a power first — e^(ln x²) — then the e and ln cancel each other, leaving x².",
+  expl: "Move the coefficient into the log first: \\(2\\ln x = \\ln x^2\\). Then \\(e^{\\ln x^2} = x^2\\) because \\(e\\) and \\(\\ln\\) are inverses. Trap: \\(e^{2\\ln x} \\ne 2x\\) — you can't cancel and leave the 2 behind."
+},
+{
+  id: 354, topic: "explog", calc: false, type: "input",
+  q: "Solve for \\(x\\): \\(\\log_2 x + \\log_2(x - 2) = 3\\). (Give the one valid solution.)",
+  answer: ["4"],
+  simple: "Combine into log₂ of x(x − 2) = 3, so x² − 2x = 8; that factors to x = 4 or x = −2, but −2 is illegal inside a log.",
+  expl: "Condense: \\(\\log_2[x(x-2)] = 3\\), so \\(x^2 - 2x = 2^3 = 8\\). Then \\(x^2 - 2x - 8 = (x-4)(x+2) = 0\\) gives \\(x = 4\\) or \\(x = -2\\). Domain check: \\(x = -2\\) makes \\(\\log_2 x\\) undefined — reject it. Only \\(x = 4\\) survives: \\(\\log_2 4 + \\log_2 2 = 2 + 1 = 3\\) ✓."
+},
+{
+  id: 355, topic: "explog", calc: false, type: "mc",
+  q: "Condense into a single logarithm: \\(2\\log x + \\dfrac{1}{2}\\log y - 3\\log z\\)",
+  choices: [
+    "\\(\\log\\!\\left(x^2\\sqrt{y}\\,z^3\\right)\\)",
+    "\\(\\log\\!\\left(\\dfrac{x^2\\sqrt{y}}{z^3}\\right)\\)",
+    "\\(\\log\\!\\left(x^2 + \\sqrt{y} - z^3\\right)\\)",
+    "\\(\\dfrac{\\log x^2 \\cdot \\log\\sqrt{y}}{\\log z^3}\\)"
+  ],
+  answer: 1,
+  simple: "Coefficients climb up as powers (x², √y, z³); then plus means multiply and minus means divide, so z³ ends up on the bottom.",
+  expl: "Move each coefficient up as an exponent: \\(\\log x^2 + \\log y^{1/2} - \\log z^3\\). Added logs multiply, subtracted logs divide: \\(\\log\\frac{x^2\\sqrt{y}}{z^3}\\). The subtraction puts \\(z^3\\) in the denominator — leaving it on top is the classic slip."
+},
+{
+  id: 356, topic: "explog", calc: true, type: "mc",
+  q: "A town's population (in thousands) is modeled by \\(P(t) = 240e^{0.032t}\\), with \\(t\\) in years. To the nearest tenth of a year, when does the population reach \\(400\\) thousand?",
+  choices: [
+    "\\(t \\approx 6.9\\) years",
+    "\\(t \\approx 0.5\\) years",
+    "\\(t \\approx 16.0\\) years",
+    "\\(t \\approx 187.2\\) years"
+  ],
+  answer: 2,
+  simple: "Divide both sides by 240 to get e^(0.032t) = 5/3, take ln of that, then divide by 0.032 — about 16 years.",
+  expl: "\\(240e^{0.032t} = 400 \\Rightarrow e^{0.032t} = \\frac{5}{3} \\Rightarrow 0.032t = \\ln\\frac{5}{3} \\approx 0.5108 \\Rightarrow t \\approx 16.0\\) years. Traps: \\(6.9\\) comes from using \\(\\log_{10}\\) instead of \\(\\ln\\); \\(187.2 = \\frac{\\ln 400}{0.032}\\) comes from forgetting to divide by 240 first."
+},
+
+// ================= CONIC SECTIONS (360-378) =================
+{
+  id: 360, topic: "conics", calc: false, type: "mc",
+  q: "Write \\(x^2 + y^2 + 8x - 2y + 8 = 0\\) in standard form.",
+  choices: [
+    "\\((x+4)^2 + (y-1)^2 = 9\\)",
+    "\\((x-4)^2 + (y+1)^2 = 9\\)",
+    "\\((x+8)^2 + (y-2)^2 = 60\\)",
+    "\\((x+4)^2 + (y-1)^2 = 3\\)"
+  ],
+  answer: 0,
+  simple: "Group the x's and y's and complete each square: add (8/2)² = 16 and (2/2)² = 1 to both sides, giving (x + 4)² + (y − 1)² = 9.",
+  expl: "\\((x^2 + 8x + 16) + (y^2 - 2y + 1) = -8 + 16 + 1 = 9\\), so \\((x+4)^2 + (y-1)^2 = 9\\): center \\((-4, 1)\\), radius 3. Traps: always HALVE the coefficient before squaring (not \\((x+8)^2\\)), and the 9 is \\(r^2\\), not \\(r\\)."
+},
+{
+  id: 361, topic: "conics", calc: false, type: "mc",
+  q: "Write the equation of the circle with center \\((3, -2)\\) that passes through the point \\((7, 1)\\).",
+  choices: [
+    "\\((x-3)^2 + (y+2)^2 = 5\\)",
+    "\\((x+3)^2 + (y-2)^2 = 25\\)",
+    "\\((x-3)^2 + (y+2)^2 = 25\\)",
+    "\\((x-7)^2 + (y-1)^2 = 25\\)"
+  ],
+  answer: 2,
+  simple: "The radius is the distance from (3, −2) to (7, 1) — a 3-4-5 triangle, so r = 5 — and 5² = 25 goes on the right side.",
+  expl: "\\(r^2 = (7-3)^2 + (1-(-2))^2 = 16 + 9 = 25\\). Center \\((h,k) = (3,-2)\\) flips signs inside: \\((x-3)^2 + (y+2)^2 = 25\\). Traps: writing \\(= 5\\) (that's \\(r\\), not \\(r^2\\)) or building the equation around the point instead of the center."
+},
+{
+  id: 362, topic: "conics", calc: false, type: "input",
+  q: "A diameter of a circle has endpoints \\((-2, 4)\\) and \\((6, 4)\\). What is the radius of the circle?",
+  answer: ["4"],
+  simple: "The endpoints are 8 apart, and that whole stretch is the diameter — the radius is half of it, 4.",
+  expl: "The endpoints are \\(|6 - (-2)| = 8\\) apart (same \\(y\\)), so the diameter is 8 and \\(r = \\frac{8}{2} = 4\\). Classic trap: answering 8 — that's the diameter, not the radius. (Center: midpoint \\((2, 4)\\).)"
+},
+{
+  id: 363, topic: "conics", calc: false, type: "mc",
+  q: "Find the focus of the parabola \\(x^2 = -12y\\).",
+  choices: ["\\((0, 3)\\)", "\\((0, -3)\\)", "\\((-3, 0)\\)", "\\((0, -12)\\)"],
+  answer: 1,
+  simple: "Match to x² = 4py: 4p = −12 so p = −3; the parabola opens downward, and the focus sits 3 below the vertex at (0, −3).",
+  expl: "Match \\(x^2 = 4py\\): \\(4p = -12\\), so \\(p = -3\\). The \\(x^2\\) form opens up/down; negative \\(p\\) means down, with focus \\((0, p) = (0, -3)\\) and directrix \\(y = 3\\). Trap: forgetting to divide by 4."
+},
+{
+  id: 364, topic: "conics", calc: false, type: "mc",
+  q: "What is the directrix of the parabola \\(y^2 = 16x\\)?",
+  choices: ["\\(x = 4\\)", "\\(y = -4\\)", "\\(x = -16\\)", "\\(x = -4\\)"],
+  answer: 3,
+  simple: "4p = 16 so p = 4; the parabola opens right toward its focus (4, 0), and the directrix is the vertical line 4 units the other way: x = −4.",
+  expl: "Match \\(y^2 = 4px\\): \\(4p = 16\\), so \\(p = 4\\). The \\(y^2\\) form opens left/right; here it opens right, focus \\((4, 0)\\), and the directrix is the line \\(p\\) units on the OPPOSITE side: \\(x = -4\\). It's vertical (\\(x = \\)), not horizontal — that's the trap."
+},
+{
+  id: 365, topic: "conics", calc: false, type: "input",
+  q: "For the parabola \\(x^2 = 20y\\), what is the distance from the vertex to the focus?",
+  answer: ["5"],
+  simple: "That distance is exactly p: since 4p = 20, p = 5.",
+  expl: "In \\(x^2 = 4py\\), the vertex-to-focus distance is \\(|p|\\). Here \\(4p = 20\\), so \\(p = 5\\). Trap: answering 20 — remember the 4 in \\(4p\\)."
+},
+{
+  id: 366, topic: "conics", calc: false, type: "mc",
+  q: "Write the equation of the parabola with vertex \\((0, 0)\\) and focus \\((0, -2)\\).",
+  choices: ["\\(x^2 = 8y\\)", "\\(y^2 = -8x\\)", "\\(x^2 = -8y\\)", "\\(x^2 = -2y\\)"],
+  answer: 2,
+  simple: "The focus is 2 straight down from the vertex, so p = −2 and the equation is x² = 4(−2)y, which is x² = −8y.",
+  expl: "The focus is below the vertex on the \\(y\\)-axis, so the parabola opens down: use \\(x^2 = 4py\\) with \\(p = -2\\), giving \\(x^2 = -8y\\). Traps: \\(y^2 = -8x\\) opens left (wrong axis), and \\(x^2 = -2y\\) forgets the 4 in \\(4p\\)."
+},
+{
+  id: 367, topic: "conics", calc: false, type: "mc",
+  q: "Find the vertices of the ellipse \\(\\dfrac{x^2}{9} + \\dfrac{y^2}{36} = 1\\).",
+  choices: ["\\((\\pm 3, 0)\\)", "\\((\\pm 6, 0)\\)", "\\((0, \\pm 6)\\)", "\\((0, \\pm 36)\\)"],
+  answer: 2,
+  simple: "The bigger number (36) sits under y², so the long axis is vertical and the vertices are √36 = 6 straight up and down.",
+  expl: "\\(a^2 = 36\\) is the LARGER denominator and it's under \\(y^2\\), so the major axis is vertical: vertices \\((0, \\pm a) = (0, \\pm 6)\\). The points \\((\\pm 3, 0)\\) are the co-vertices. Trap: assuming the major axis is always horizontal."
+},
+{
+  id: 368, topic: "conics", calc: false, type: "mc",
+  q: "Find the foci of the ellipse \\(\\dfrac{x^2}{9} + \\dfrac{y^2}{36} = 1\\).",
+  choices: ["\\((\\pm 3\\sqrt{3}, 0)\\)", "\\((0, \\pm 3\\sqrt{3})\\)", "\\((0, \\pm\\sqrt{45})\\)", "\\((0, \\pm 27)\\)"],
+  answer: 1,
+  simple: "For an ellipse c² = big minus small = 36 − 9 = 27, so the foci sit √27 = 3√3 up and down the long (vertical) axis.",
+  expl: "Ellipse: \\(c^2 = a^2 - b^2 = 36 - 9 = 27\\), so \\(c = 3\\sqrt{3}\\). The foci lie ON the major axis (vertical here): \\((0, \\pm 3\\sqrt{3})\\). Trap: \\(\\sqrt{45}\\) comes from ADDING \\(36 + 9\\) — that's the hyperbola rule, not the ellipse rule."
+},
+{
+  id: 369, topic: "conics", calc: false, type: "mc",
+  q: "Express \\(9x^2 + 4y^2 - 54x + 8y + 49 = 0\\) in standard form.",
+  choices: [
+    "\\(\\dfrac{(x-3)^2}{9} + \\dfrac{(y+1)^2}{4} = 1\\)",
+    "\\(\\dfrac{(x-3)^2}{4} + \\dfrac{(y+1)^2}{9} = 1\\)",
+    "\\(\\dfrac{(x+3)^2}{4} + \\dfrac{(y-1)^2}{9} = 1\\)",
+    "\\(\\dfrac{(x-3)^2}{2} + \\dfrac{(y+1)^2}{3} = 1\\)"
+  ],
+  answer: 1,
+  simple: "Factor the 9 and 4 out first, complete each square, and remember the +9 and +1 you add inside are really +81 and +4 on the right — total 36, then divide everything by 36.",
+  expl: "\\(9(x^2 - 6x + 9) + 4(y^2 + 2y + 1) = -49 + 81 + 4 = 36\\), so \\(9(x-3)^2 + 4(y+1)^2 = 36\\). Divide by 36: \\(\\frac{(x-3)^2}{4} + \\frac{(y+1)^2}{9} = 1\\). Trap: what you add inside the parentheses gets multiplied by the leading 9 and 4 before it goes on the right side."
+},
+{
+  id: 370, topic: "conics", calc: false, type: "mc",
+  q: "Find the foci of the ellipse \\(\\dfrac{(x-3)^2}{4} + \\dfrac{(y+1)^2}{9} = 1\\).",
+  choices: [
+    "\\((3 \\pm \\sqrt{5},\\ -1)\\)",
+    "\\((3,\\ -1 \\pm \\sqrt{13})\\)",
+    "\\((3,\\ -1 \\pm \\sqrt{5})\\)",
+    "\\((3,\\ -1 \\pm 5)\\)"
+  ],
+  answer: 2,
+  simple: "c² = 9 − 4 = 5, and since the bigger number is under the y-part, the foci go up and down √5 from the center (3, −1).",
+  expl: "\\(c^2 = a^2 - b^2 = 9 - 4 = 5\\), so \\(c = \\sqrt{5}\\). The major axis is vertical (9 under the \\(y\\) term), so move \\(\\pm\\sqrt{5}\\) vertically from the center \\((3, -1)\\): \\((3, -1 \\pm \\sqrt{5})\\). Traps: moving horizontally, or adding \\(9 + 4 = 13\\)."
+},
+{
+  id: 371, topic: "conics", calc: false, type: "input",
+  q: "What is the distance between the two foci of the ellipse \\(\\dfrac{x^2}{169} + \\dfrac{y^2}{144} = 1\\)?",
+  answer: ["10"],
+  simple: "c² = 169 − 144 = 25 puts each focus 5 from the center, so the two foci are 2 × 5 = 10 apart.",
+  expl: "\\(c^2 = 169 - 144 = 25\\), so \\(c = 5\\) and the foci are \\((\\pm 5, 0)\\). The distance BETWEEN them is \\(2c = 10\\). Trap: answering \\(c = 5\\) — the question asks focus-to-focus, not center-to-focus."
+},
+{
+  id: 372, topic: "conics", calc: false, type: "mc",
+  q: "Find the foci of the hyperbola \\(\\dfrac{x^2}{25} - \\dfrac{y^2}{144} = 1\\).",
+  choices: ["\\((0, \\pm 13)\\)", "\\((\\pm\\sqrt{119}, 0)\\)", "\\((\\pm 5, 0)\\)", "\\((\\pm 13, 0)\\)"],
+  answer: 3,
+  simple: "Hyperbolas ADD: c² = 25 + 144 = 169, so c = 13 and the foci are at (±13, 0) on the x-axis.",
+  expl: "For a hyperbola \\(c^2 = a^2 + b^2 = 25 + 144 = 169\\), so \\(c = 13\\). The \\(x^2\\) term is positive, so it opens left/right and the foci are \\((\\pm 13, 0)\\). Trap: \\(\\sqrt{119}\\) comes from subtracting like an ellipse — hyperbolas add. \\((\\pm 5, 0)\\) are the vertices."
+},
+{
+  id: 373, topic: "conics", calc: false, type: "mc",
+  q: "What are the asymptotes of the hyperbola \\(\\dfrac{y^2}{4} - \\dfrac{x^2}{25} = 1\\)?",
+  choices: [
+    "\\(y = \\pm\\dfrac{5}{2}x\\)",
+    "\\(y = \\pm\\dfrac{2}{5}x\\)",
+    "\\(y = \\pm\\dfrac{4}{25}x\\)",
+    "\\(y = \\pm\\dfrac{25}{4}x\\)"
+  ],
+  answer: 1,
+  simple: "This one opens up and down, so the slope is √(number under y) over √(number under x): 2/5.",
+  expl: "For \\(\\frac{y^2}{a^2} - \\frac{x^2}{b^2} = 1\\) (vertical transverse axis), the asymptotes are \\(y = \\pm\\frac{a}{b}x = \\pm\\frac{2}{5}x\\). Trap: the horizontal version uses \\(\\frac{b}{a}\\) — for both orientations, the slope is \\(\\frac{\\text{number from the } y \\text{ term}}{\\text{number from the } x \\text{ term}}\\) after square-rooting."
+},
+{
+  id: 374, topic: "conics", calc: false, type: "mc",
+  q: "Find the vertices of the hyperbola \\(\\dfrac{(y+2)^2}{9} - \\dfrac{(x-1)^2}{16} = 1\\).",
+  choices: [
+    "\\((1, 1)\\) and \\((1, -5)\\)",
+    "\\((4, -2)\\) and \\((-2, -2)\\)",
+    "\\((1, 2)\\) and \\((1, -6)\\)",
+    "\\((5, -2)\\) and \\((-3, -2)\\)"
+  ],
+  answer: 0,
+  simple: "The center is (1, −2) and the y-part is the positive one, so go up and down √9 = 3 from the center: (1, 1) and (1, −5).",
+  expl: "The \\(y\\) term is positive, so the hyperbola opens up/down from the center \\((1, -2)\\) with \\(a = \\sqrt{9} = 3\\): vertices \\((1, -2 \\pm 3) = (1, 1)\\) and \\((1, -5)\\). Traps: moving horizontally, or using \\(b = 4\\) instead of \\(a = 3\\)."
+},
+{
+  id: 375, topic: "conics", calc: false, type: "mc",
+  q: "Write the equation of the hyperbola with vertices \\((0, \\pm 6)\\) and foci \\((0, \\pm 10)\\).",
+  choices: [
+    "\\(\\dfrac{x^2}{36} - \\dfrac{y^2}{64} = 1\\)",
+    "\\(\\dfrac{y^2}{36} - \\dfrac{x^2}{100} = 1\\)",
+    "\\(\\dfrac{y^2}{36} + \\dfrac{x^2}{64} = 1\\)",
+    "\\(\\dfrac{y^2}{36} - \\dfrac{x^2}{64} = 1\\)"
+  ],
+  answer: 3,
+  simple: "a = 6 from the vertices and c = 10 from the foci, so b² = 100 − 36 = 64; the y² part goes first (positive) because everything is vertical.",
+  expl: "Vertices and foci on the \\(y\\)-axis → vertical transverse axis, so the \\(y^2\\) term is positive: \\(\\frac{y^2}{a^2} - \\frac{x^2}{b^2} = 1\\). \\(a = 6\\), \\(c = 10\\), and for hyperbolas \\(b^2 = c^2 - a^2 = 100 - 36 = 64\\). Result: \\(\\frac{y^2}{36} - \\frac{x^2}{64} = 1\\). Trap: putting \\(c^2 = 100\\) in the equation — \\(c\\) never appears in the standard form."
+},
+{
+  id: 376, topic: "conics", calc: false, type: "mc",
+  q: "Identify the conic: \\(9x^2 - 4y^2 - 18x - 16y - 43 = 0\\)",
+  choices: ["circle", "hyperbola", "parabola", "ellipse"],
+  answer: 1,
+  simple: "One squared term is positive and the other is negative (9x² versus −4y²) — opposite signs always mean hyperbola.",
+  expl: "Look at the squared terms: \\(9x^2\\) and \\(-4y^2\\) have OPPOSITE signs → hyperbola. (Same sign, same coefficient → circle; same sign, different coefficients → ellipse; only one squared term → parabola.)"
+},
+{
+  id: 377, topic: "conics", calc: false, type: "mc",
+  q: "Identify the conic: \\(y^2 - 4y - 8x + 12 = 0\\)",
+  choices: ["ellipse", "hyperbola", "circle", "parabola"],
+  answer: 3,
+  simple: "Only y is squared — the x just shows up plain — and exactly one squared variable means parabola.",
+  expl: "There's a \\(y^2\\) but no \\(x^2\\): with only ONE squared variable, it's a parabola (here \\((y-2)^2 = 8x - 8\\), opening right). Circles, ellipses, and hyperbolas all need both squares."
+},
+{
+  id: 378, topic: "conics", calc: false, type: "input",
+  q: "For the hyperbola \\(\\dfrac{x^2}{16} - \\dfrac{y^2}{9} = 1\\), what is the slope of its asymptote with positive slope?",
+  answer: ["3/4", "0.75"],
+  simple: "The guide lines have slope ±b/a = ±√9/√16, so the positive one is 3/4.",
+  expl: "For \\(\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1\\), the asymptotes are \\(y = \\pm\\frac{b}{a}x\\) with \\(a = 4\\), \\(b = 3\\): slopes \\(\\pm\\frac{3}{4}\\). Trap: \\(\\frac{4}{3}\\) swaps \\(a\\) and \\(b\\) — the \\(y\\)-number goes on top."
+},
+
+// ===== batch: qd-vectors-triangles-seq =====
+// ================= VECTORS, POLAR & PARAMETRIC (ids 380-393) =================
+{
+  id: 380, topic: "vectors", calc: false, type: "input",
+  q: "Find the magnitude of \\(\\mathbf{v} = \\langle 6, -8 \\rangle\\).",
+  answer: ["10"],
+  simple: "It's the 6-8-10 right triangle: √(36+64) = √100 = 10.",
+  expl: "\\(\\lVert\\mathbf{v}\\rVert = \\sqrt{6^2 + (-8)^2} = \\sqrt{36 + 64} = \\sqrt{100} = 10\\)."
+},
+{
+  id: 381, topic: "vectors", calc: false, type: "input",
+  q: "Compute the dot product \\(\\langle 3, 4 \\rangle \\cdot \\langle 5, -2 \\rangle\\).",
+  answer: ["7"],
+  simple: "Multiply matching slots and add: 3·5 + 4·(−2) = 15 − 8 = 7.",
+  expl: "\\(\\langle 3,4 \\rangle \\cdot \\langle 5,-2 \\rangle = 3(5) + 4(-2) = 15 - 8 = 7\\). The dot product is a single number, not a vector."
+},
+{
+  id: 382, topic: "vectors", calc: false, type: "mc",
+  q: "If \\(\\mathbf{u} = \\langle 2, -3 \\rangle\\) and \\(\\mathbf{v} = \\langle -1, 4 \\rangle\\), find \\(3\\mathbf{u} + 2\\mathbf{v}\\).",
+  choices: ["\\(\\langle 4, -1 \\rangle\\)", "\\(\\langle 4, 1 \\rangle\\)", "\\(\\langle 8, -1 \\rangle\\)", "\\(\\langle 1, 1 \\rangle\\)"],
+  answer: 0,
+  simple: "3u = ⟨6, −9⟩, 2v = ⟨−2, 8⟩. Add the slots: ⟨4, −1⟩.",
+  expl: "\\(3\\mathbf{u} = \\langle 6, -9 \\rangle\\), \\(2\\mathbf{v} = \\langle -2, 8 \\rangle\\); add componentwise: \\(\\langle 6-2,\\ -9+8 \\rangle = \\langle 4, -1 \\rangle\\)."
+},
+{
+  id: 383, topic: "vectors", calc: false, type: "mc",
+  q: "Which vector is orthogonal (perpendicular) to \\(\\langle 3, -5 \\rangle\\)?",
+  choices: ["\\(\\langle 5, 3 \\rangle\\)", "\\(\\langle 3, 5 \\rangle\\)", "\\(\\langle -3, 5 \\rangle\\)", "\\(\\langle 5, -3 \\rangle\\)"],
+  answer: 0,
+  simple: "Perpendicular means dot product 0. Check ⟨5,3⟩: 3·5 + (−5)·3 = 0. ✓",
+  expl: "Orthogonal vectors have dot product 0: \\(\\langle 3,-5 \\rangle \\cdot \\langle 5,3 \\rangle = 15 - 15 = 0\\) ✓. Quick trick: swap the components and negate one."
+},
+{
+  id: 384, topic: "vectors", calc: true, type: "mc",
+  q: "Find the angle between \\(\\mathbf{u} = \\langle 1, 0 \\rangle\\) and \\(\\mathbf{v} = \\langle 1, 1 \\rangle\\).",
+  choices: ["\\(45°\\)", "\\(30°\\)", "\\(60°\\)", "\\(90°\\)"],
+  answer: 0,
+  simple: "cos θ = (u·v)/(|u||v|) = 1/(1·√2) = 1/√2, which is 45°.",
+  expl: "\\(\\cos\\theta = \\dfrac{\\mathbf{u}\\cdot\\mathbf{v}}{\\lVert\\mathbf{u}\\rVert\\lVert\\mathbf{v}\\rVert} = \\dfrac{1}{(1)(\\sqrt2)} = \\dfrac{\\sqrt2}{2}\\), so \\(\\theta = 45°\\)."
+},
+{
+  id: 385, topic: "vectors", calc: false, type: "mc",
+  q: "What is the unit vector in the direction of \\(\\mathbf{v} = \\langle 3, 4 \\rangle\\)?",
+  choices: [
+    "\\(\\left\\langle \\frac{3}{5}, \\frac{4}{5} \\right\\rangle\\)",
+    "\\(\\left\\langle \\frac{4}{5}, \\frac{3}{5} \\right\\rangle\\)",
+    "\\(\\langle 3, 4 \\rangle\\)",
+    "\\(\\left\\langle \\frac{3}{25}, \\frac{4}{25} \\right\\rangle\\)"
+  ],
+  answer: 0,
+  simple: "Divide each part by the length. |v| = 5, so ⟨3/5, 4/5⟩.",
+  expl: "A unit vector is \\(\\frac{\\mathbf{v}}{\\lVert\\mathbf{v}\\rVert}\\). Here \\(\\lVert\\mathbf{v}\\rVert = \\sqrt{9+16} = 5\\), so the unit vector is \\(\\left\\langle \\frac{3}{5}, \\frac{4}{5} \\right\\rangle\\)."
+},
+{
+  id: 386, topic: "vectors", calc: true, type: "mc",
+  q: "A vector has magnitude 8 and direction angle \\(120°\\). What is its component form?",
+  choices: [
+    "\\(\\langle -4, 4\\sqrt{3} \\rangle\\)",
+    "\\(\\langle 4, 4\\sqrt{3} \\rangle\\)",
+    "\\(\\langle -4\\sqrt{3}, 4 \\rangle\\)",
+    "\\(\\langle 4\\sqrt{3}, -4 \\rangle\\)"
+  ],
+  answer: 0,
+  simple: "x = 8cos120° = −4, y = 8sin120° = 4√3. So ⟨−4, 4√3⟩.",
+  expl: "\\(\\langle \\lVert v\\rVert\\cos\\theta,\\ \\lVert v\\rVert\\sin\\theta \\rangle = \\langle 8\\cos 120°, 8\\sin 120° \\rangle = \\langle 8(-\\frac12), 8(\\frac{\\sqrt3}{2}) \\rangle = \\langle -4, 4\\sqrt3 \\rangle\\)."
+},
+{
+  id: 387, topic: "vectors", calc: false, type: "mc",
+  q: "Convert the polar point \\(\\left(6, \\dfrac{5\\pi}{6}\\right)\\) to rectangular coordinates.",
+  choices: [
+    "\\((-3\\sqrt{3}, 3)\\)",
+    "\\((3\\sqrt{3}, 3)\\)",
+    "\\((-3, 3\\sqrt{3})\\)",
+    "\\((3, -3\\sqrt{3})\\)"
+  ],
+  answer: 0,
+  simple: "x = 6cos(5π/6) = −3√3, y = 6sin(5π/6) = 3. Top-left, so x is negative.",
+  expl: "\\(x = r\\cos\\theta = 6\\cos\\frac{5\\pi}{6} = 6(-\\frac{\\sqrt3}{2}) = -3\\sqrt3\\); \\(y = r\\sin\\theta = 6\\sin\\frac{5\\pi}{6} = 6(\\frac12) = 3\\)."
+},
+{
+  id: 388, topic: "vectors", calc: false, type: "mc",
+  q: "Convert the rectangular point \\((-1, \\sqrt{3})\\) to polar form with \\(r > 0\\) and \\(0 \\le \\theta < 2\\pi\\).",
+  choices: [
+    "\\(\\left(2, \\dfrac{2\\pi}{3}\\right)\\)",
+    "\\(\\left(2, \\dfrac{\\pi}{3}\\right)\\)",
+    "\\(\\left(2, \\dfrac{5\\pi}{6}\\right)\\)",
+    "\\(\\left(4, \\dfrac{2\\pi}{3}\\right)\\)"
+  ],
+  answer: 0,
+  simple: "r = √(1+3) = 2. The point is top-left (QII), and the angle is 120° = 2π/3.",
+  expl: "\\(r = \\sqrt{(-1)^2 + (\\sqrt3)^2} = \\sqrt4 = 2\\). The point is in QII; \\(\\tan\\theta = \\frac{\\sqrt3}{-1}\\) gives reference \\(\\frac{\\pi}{3}\\), so \\(\\theta = \\pi - \\frac{\\pi}{3} = \\frac{2\\pi}{3}\\). Always check the quadrant."
+},
+{
+  id: 389, topic: "vectors", calc: false, type: "mc",
+  q: "The graph of the polar equation \\(r = 4\\cos\\theta\\) is…",
+  choices: [
+    "a circle of diameter 4 centered at \\((2, 0)\\)",
+    "a circle of radius 4 centered at the origin",
+    "a circle of diameter 4 centered at \\((0, 2)\\)",
+    "a four-petal rose"
+  ],
+  answer: 0,
+  simple: "r = (number)·cosθ is a sideways circle hugging the x-axis, diameter = that number.",
+  expl: "\\(r = a\\cos\\theta\\) is a circle of diameter \\(a\\) through the pole, centered on the x-axis at \\((\\frac{a}{2}, 0) = (2, 0)\\). (The \\(\\sin\\) version sits on the y-axis instead.)"
+},
+{
+  id: 390, topic: "vectors", calc: false, type: "mc",
+  q: "Which polar equation produces a cardioid?",
+  choices: [
+    "\\(r = 2 + 2\\sin\\theta\\)",
+    "\\(r = 4\\cos\\theta\\)",
+    "\\(r = 3\\)",
+    "\\(r = \\cos 2\\theta\\)"
+  ],
+  answer: 0,
+  simple: "A cardioid (heart shape) looks like r = a ± a·sinθ or cosθ — equal numbers.",
+  expl: "\\(r = a \\pm b\\sin\\theta\\) or \\(a \\pm b\\cos\\theta\\) with \\(a = b\\) is a cardioid. \\(r = 4\\cos\\theta\\) is a circle, \\(r = 3\\) is a circle at the origin, and \\(r = \\cos 2\\theta\\) is a 4-petal rose."
+},
+{
+  id: 391, topic: "vectors", calc: false, type: "mc",
+  q: "Eliminate the parameter: \\(x = 3t\\), \\(y = t^2 + 1\\).",
+  choices: [
+    "\\(y = \\dfrac{x^2}{9} + 1\\)",
+    "\\(y = x^2 + 1\\)",
+    "\\(y = 9x^2 + 1\\)",
+    "\\(y = \\dfrac{x^2}{3} + 1\\)"
+  ],
+  answer: 0,
+  simple: "Solve x = 3t for t = x/3, then sub in: y = (x/3)² + 1 = x²/9 + 1.",
+  expl: "From \\(x = 3t\\), \\(t = \\frac{x}{3}\\). Substitute into \\(y = t^2 + 1\\): \\(y = \\left(\\frac{x}{3}\\right)^2 + 1 = \\frac{x^2}{9} + 1\\)."
+},
+{
+  id: 392, topic: "vectors", calc: false, type: "input",
+  q: "A particle moves with \\(x(t) = t^2 - 4\\) and \\(y(t) = 2t + 1\\). What is its \\(x\\)-coordinate at \\(t = 3\\)?",
+  answer: ["5"],
+  simple: "Plug t = 3 into x: 3² − 4 = 9 − 4 = 5.",
+  expl: "\\(x(3) = 3^2 - 4 = 9 - 4 = 5\\). (Its full position would be \\((5, 7)\\).)"
+},
+{
+  id: 393, topic: "vectors", calc: false, type: "input",
+  q: "A parametric curve is \\(x(t) = t + 2\\), \\(y(t) = t^2 - 9\\). It crosses the \\(x\\)-axis where \\(y = 0\\) and \\(t > 0\\). What is the \\(x\\)-coordinate there?",
+  answer: ["5"],
+  simple: "y = 0 means t² = 9, so t = 3 (positive). Then x = 3 + 2 = 5.",
+  expl: "Set \\(y(t) = t^2 - 9 = 0 \\Rightarrow t = \\pm 3\\); take \\(t = 3\\). Then \\(x = 3 + 2 = 5\\). For zeros of a parametric curve, solve \\(y = 0\\) for \\(t\\), then plug into \\(x\\)."
+},
+
+// ================= TRIANGLES & APPLICATIONS (ids 400-421) =================
+{
+  id: 400, topic: "triangles", calc: false, type: "input",
+  q: "In triangle \\(ABC\\), \\(A = 52°\\) and \\(B = 68°\\). Find angle \\(C\\) (in degrees).",
+  answer: ["60"],
+  simple: "Angles add to 180: 180 − 52 − 68 = 60.",
+  expl: "The angles of a triangle sum to \\(180°\\): \\(C = 180° - 52° - 68° = 60°\\)."
+},
+{
+  id: 401, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(A = 40°\\), \\(B = 75°\\), and \\(a = 12\\). Find side \\(b\\) (round to 2 decimals).",
+  choices: ["\\(18.03\\)", "\\(15.42\\)", "\\(7.99\\)", "\\(20.11\\)"],
+  answer: 0,
+  simple: "Law of Sines: b/sin75° = 12/sin40°, so b = 12·sin75°/sin40° ≈ 18.03.",
+  expl: "\\(\\frac{b}{\\sin B} = \\frac{a}{\\sin A}\\), so \\(b = \\frac{12\\sin 75°}{\\sin 40°} = \\frac{12(0.9659)}{0.6428} \\approx 18.03\\)."
+},
+{
+  id: 402, topic: "triangles", calc: true, type: "mc",
+  q: "Two sides of a triangle are 9 and 12 with an included angle of \\(40°\\). Find the third side (round to 2 decimals).",
+  choices: ["\\(7.72\\)", "\\(8.62\\)", "\\(15.20\\)", "\\(6.51\\)"],
+  answer: 0,
+  simple: "Two sides + angle between = Law of Cosines: c² = 81+144 − 2·9·12·cos40°.",
+  expl: "\\(c^2 = 9^2 + 12^2 - 2(9)(12)\\cos 40° = 225 - 216(0.766) \\approx 59.5\\), so \\(c \\approx 7.72\\)."
+},
+{
+  id: 403, topic: "triangles", calc: true, type: "mc",
+  q: "A triangle has sides 7, 8, and 10. Find the measure of the angle opposite the side of length 10 (round to nearest degree).",
+  choices: ["\\(83°\\)", "\\(60°\\)", "\\(90°\\)", "\\(101°\\)"],
+  answer: 0,
+  simple: "Law of Cosines for the angle: cos C = (49+64−100)/(2·7·8) ≈ 0.116, so C ≈ 83°.",
+  expl: "\\(\\cos C = \\frac{7^2 + 8^2 - 10^2}{2(7)(8)} = \\frac{13}{112} \\approx 0.116\\), so \\(C \\approx 83°\\). The largest angle is opposite the longest side."
+},
+{
+  id: 404, topic: "triangles", calc: false, type: "input",
+  q: "Find the area of a triangle with sides \\(a = 10\\), \\(b = 6\\), and included angle \\(C = 30°\\).",
+  answer: ["15"],
+  simple: "Area = ½·a·b·sin C = ½·10·6·(1/2) = 15.",
+  expl: "\\(\\text{Area} = \\frac{1}{2}ab\\sin C = \\frac{1}{2}(10)(6)\\sin 30° = 30 \\cdot \\frac{1}{2} = 15\\)."
+},
+{
+  id: 405, topic: "triangles", calc: true, type: "mc",
+  q: "Find the area of a triangle with sides \\(a = 14\\), \\(b = 9\\), and included angle \\(C = 52°\\) (round to 1 decimal).",
+  choices: ["\\(49.6\\)", "\\(63.0\\)", "\\(99.3\\)", "\\(38.8\\)"],
+  answer: 0,
+  simple: "Area = ½·14·9·sin52° = 63·sin52° ≈ 49.6.",
+  expl: "\\(\\text{Area} = \\frac{1}{2}(14)(9)\\sin 52° = 63(0.788) \\approx 49.6\\)."
+},
+{
+  id: 406, topic: "triangles", calc: false, type: "mc",
+  q: "Given \\(A = 30°\\), \\(a = 3\\), \\(b = 10\\) (SSA), how many triangles are possible?",
+  choices: ["0", "1", "2", "infinitely many"],
+  answer: 0,
+  simple: "Needed height = 10·sin30° = 5, but side a = 3 is shorter, so it can't reach. Zero.",
+  expl: "Compare \\(a\\) with \\(h = b\\sin A = 10\\sin 30° = 5\\). Since \\(a = 3 < 5\\), side \\(a\\) is too short to reach the base — no triangle exists."
+},
+{
+  id: 407, topic: "triangles", calc: false, type: "mc",
+  q: "Given \\(A = 30°\\), \\(b = 10\\), and \\(a = 8\\) (SSA), how many triangles are possible?",
+  choices: ["2", "1", "0", "infinitely many"],
+  answer: 0,
+  simple: "Height = 10·sin30° = 5. Since 5 < a = 8 < b = 10, two triangles fit.",
+  expl: "With \\(h = b\\sin A = 5\\): since \\(h < a < b\\) (i.e. \\(5 < 8 < 10\\)), side \\(a\\) can swing to two positions, giving two triangles."
+},
+{
+  id: 408, topic: "triangles", calc: true, type: "mc",
+  q: "From a point 80 ft from the base of a tower, the angle of elevation to the top is \\(38°\\). How tall is the tower (nearest foot)?",
+  choices: ["\\(63\\) ft", "\\(49\\) ft", "\\(102\\) ft", "\\(56\\) ft"],
+  answer: 0,
+  simple: "tan38° = height/80, so height = 80·tan38° ≈ 63 ft.",
+  expl: "\\(\\tan 38° = \\frac{h}{80}\\), so \\(h = 80\\tan 38° \\approx 80(0.781) \\approx 63\\) ft. Calculator in DEGREE mode."
+},
+{
+  id: 409, topic: "triangles", calc: true, type: "mc",
+  q: "A 25-ft ladder leans against a wall, reaching 20 ft up. What angle (nearest degree) does it make with the ground?",
+  choices: ["\\(53°\\)", "\\(37°\\)", "\\(39°\\)", "\\(51°\\)"],
+  answer: 0,
+  simple: "sin θ = opposite/hyp = 20/25 = 0.8, so θ = arcsin(0.8) ≈ 53°.",
+  expl: "The 20 ft is opposite the ground angle, 25 ft is the hypotenuse: \\(\\sin\\theta = \\frac{20}{25} = 0.8\\), so \\(\\theta = \\sin^{-1}(0.8) \\approx 53°\\)."
+},
+{
+  id: 410, topic: "triangles", calc: true, type: "mc",
+  q: "From the top of a 120-ft cliff, the angle of depression to a boat is \\(25°\\). How far is the boat from the base of the cliff (nearest foot)?",
+  choices: ["\\(257\\) ft", "\\(56\\) ft", "\\(132\\) ft", "\\(284\\) ft"],
+  answer: 0,
+  simple: "tan25° = 120/distance, so distance = 120/tan25° ≈ 257 ft.",
+  expl: "The angle of depression equals the angle of elevation from the boat. \\(\\tan 25° = \\frac{120}{d}\\), so \\(d = \\frac{120}{\\tan 25°} \\approx 257\\) ft."
+},
+{
+  id: 411, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(a = 15\\), \\(b = 20\\), \\(C = 115°\\). Find side \\(c\\) (round to 2 decimals).",
+  choices: ["\\(29.64\\)", "\\(25.18\\)", "\\(12.34\\)", "\\(35.11\\)"],
+  answer: 0,
+  simple: "Law of Cosines: c² = 225+400 − 2·15·20·cos115° ≈ 878.6, so c ≈ 29.64.",
+  expl: "\\(c^2 = 15^2 + 20^2 - 2(15)(20)\\cos 115° = 625 - 600(-0.4226) \\approx 878.6\\), so \\(c \\approx 29.64\\). Note \\(\\cos 115°\\) is negative, which makes \\(c\\) larger."
+},
+{
+  id: 412, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(a = 10\\), \\(b = 14\\), \\(c = 18\\). Find angle \\(A\\) (nearest degree).",
+  choices: ["\\(33°\\)", "\\(50°\\)", "\\(97°\\)", "\\(45°\\)"],
+  answer: 0,
+  simple: "Law of Cosines solved for A: cos A = (14²+18²−10²)/(2·14·18) ≈ 0.833, A ≈ 33°.",
+  expl: "\\(\\cos A = \\frac{b^2 + c^2 - a^2}{2bc} = \\frac{196 + 324 - 100}{504} = \\frac{420}{504} \\approx 0.833\\), so \\(A \\approx 33°\\). Smallest angle faces the shortest side."
+},
+{
+  id: 413, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(B = 105°\\), \\(C = 40°\\), \\(b = 22\\). Find side \\(c\\) (round to 2 decimals).",
+  choices: ["\\(14.64\\)", "\\(18.20\\)", "\\(31.27\\)", "\\(9.85\\)"],
+  answer: 0,
+  simple: "Law of Sines: c/sin40° = 22/sin105°, so c = 22·sin40°/sin105° ≈ 14.64.",
+  expl: "\\(c = \\frac{b\\sin C}{\\sin B} = \\frac{22\\sin 40°}{\\sin 105°} = \\frac{22(0.6428)}{0.9659} \\approx 14.64\\)."
+},
+{
+  id: 414, topic: "triangles", calc: false, type: "mc",
+  q: "Which set of three sides forms a valid triangle?",
+  choices: ["\\(5, 7, 9\\)", "\\(2, 3, 8\\)", "\\(1, 1, 5\\)", "\\(4, 5, 12\\)"],
+  answer: 0,
+  simple: "Any two sides must add to more than the third. 5+7 = 12 > 9 works; the others fail.",
+  expl: "Triangle Inequality: the sum of any two sides must exceed the third. \\(5+7 = 12 > 9\\) ✓. But \\(2+3 = 5 < 8\\), \\(1+1 = 2 < 5\\), and \\(4+5 = 9 < 12\\) all fail."
+},
+{
+  id: 415, topic: "triangles", calc: true, type: "mc",
+  q: "A ship sails 30 mi on a bearing of N40°E, then 20 mi due east. How far is it from the start (round to 1 decimal)?",
+  choices: ["\\(45.5\\) mi", "\\(50.0\\) mi", "\\(36.1\\) mi", "\\(41.6\\) mi"],
+  answer: 0,
+  simple: "The turn makes a 130° angle between the legs; Law of Cosines: √(900+400−2·30·20·cos130°) ≈ 45.5.",
+  expl: "N40°E then due east makes an interior angle of \\(90° + 40° = 130°\\) between the two legs. \\(d^2 = 30^2 + 20^2 - 2(30)(20)\\cos 130° \\approx 2071\\), so \\(d \\approx 45.5\\) mi."
+},
+{
+  id: 416, topic: "triangles", calc: true, type: "input",
+  q: "A right triangle has legs 9 and 12. Find the length of the hypotenuse.",
+  answer: ["15"],
+  simple: "9-12-15 is a scaled 3-4-5 triangle: √(81+144) = 15.",
+  expl: "\\(c = \\sqrt{9^2 + 12^2} = \\sqrt{81 + 144} = \\sqrt{225} = 15\\)."
+},
+{
+  id: 417, topic: "triangles", calc: true, type: "mc",
+  q: "In a right triangle, the angle \\(\\theta\\) has opposite side 7 and adjacent side 24. Find \\(\\theta\\) (nearest degree).",
+  choices: ["\\(16°\\)", "\\(17°\\)", "\\(73°\\)", "\\(74°\\)"],
+  answer: 0,
+  simple: "tan θ = opposite/adjacent = 7/24, so θ = arctan(7/24) ≈ 16°.",
+  expl: "\\(\\tan\\theta = \\frac{7}{24}\\), so \\(\\theta = \\tan^{-1}\\left(\\frac{7}{24}\\right) \\approx 16°\\). (This is the 7-24-25 right triangle.)"
+},
+{
+  id: 418, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(a = 8\\), \\(A = 35°\\), \\(B = 65°\\). Find side \\(b\\) (round to 2 decimals).",
+  choices: ["\\(12.64\\)", "\\(10.45\\)", "\\(6.18\\)", "\\(14.30\\)"],
+  answer: 0,
+  simple: "Law of Sines: b = 8·sin65°/sin35° ≈ 12.64.",
+  expl: "\\(b = \\frac{a\\sin B}{\\sin A} = \\frac{8\\sin 65°}{\\sin 35°} = \\frac{8(0.9063)}{0.5736} \\approx 12.64\\)."
+},
+{
+  id: 419, topic: "triangles", calc: true, type: "mc",
+  q: "Find the area of a triangle with sides \\(a = 13\\), \\(b = 14\\), \\(c = 15\\) using Heron's formula.",
+  choices: ["\\(84\\)", "\\(90\\)", "\\(105\\)", "\\(78\\)"],
+  answer: 0,
+  simple: "Half-perimeter s = 21; area = √(21·8·7·6) = √7056 = 84.",
+  expl: "Heron's formula: \\(s = \\frac{13+14+15}{2} = 21\\), then \\(\\text{Area} = \\sqrt{s(s-a)(s-b)(s-c)} = \\sqrt{21(8)(7)(6)} = \\sqrt{7056} = 84\\)."
+},
+{
+  id: 420, topic: "triangles", calc: true, type: "mc",
+  q: "Two angles of elevation to the top of a building are taken 50 ft apart along level ground, measuring \\(30°\\) (farther) and \\(45°\\) (nearer). How tall is the building (round to 1 decimal)?",
+  choices: ["\\(68.3\\) ft", "\\(50.0\\) ft", "\\(85.4\\) ft", "\\(43.3\\) ft"],
+  answer: 0,
+  simple: "Set h/tan30° − h/tan45° = 50, solve: h ≈ 68.3 ft.",
+  expl: "If \\(h\\) is the height, the far distance is \\(\\frac{h}{\\tan 30°}\\) and near is \\(\\frac{h}{\\tan 45°}\\); their difference is 50: \\(h(\\sqrt3 - 1) = 50\\), so \\(h = \\frac{50}{\\sqrt3 - 1} \\approx 68.3\\) ft."
+},
+{
+  id: 421, topic: "triangles", calc: true, type: "mc",
+  q: "In triangle \\(ABC\\), \\(a = 6\\), \\(b = 7\\), \\(C = 60°\\). Find side \\(c\\) (round to 2 decimals).",
+  choices: ["\\(6.56\\)", "\\(7.81\\)", "\\(5.57\\)", "\\(9.22\\)"],
+  answer: 0,
+  simple: "Law of Cosines: c² = 36+49 − 2·6·7·(1/2) = 43, so c ≈ 6.56.",
+  expl: "\\(c^2 = 6^2 + 7^2 - 2(6)(7)\\cos 60° = 85 - 84(0.5) = 43\\), so \\(c = \\sqrt{43} \\approx 6.56\\)."
+},
+
+// ================= SEQUENCES & SERIES (ids 430-448) =================
+{
+  id: 430, topic: "seqser", calc: false, type: "input",
+  q: "An arithmetic sequence has \\(a_1 = 7\\) and common difference \\(d = 5\\). Find \\(a_{12}\\).",
+  answer: ["62"],
+  simple: "Start at 7, take 11 jumps of 5: 7 + 55 = 62.",
+  expl: "\\(a_n = a_1 + (n-1)d\\), so \\(a_{12} = 7 + 11(5) = 7 + 55 = 62\\). It's \\((n-1)\\) jumps, not \\(n\\)."
+},
+{
+  id: 431, topic: "seqser", calc: false, type: "input",
+  q: "A geometric sequence has \\(a_1 = 5\\) and common ratio \\(r = 2\\). Find \\(a_6\\).",
+  answer: ["160"],
+  simple: "Start at 5, double five times: 5·2⁵ = 5·32 = 160.",
+  expl: "\\(a_n = a_1 r^{n-1}\\), so \\(a_6 = 5 \\cdot 2^5 = 5 \\cdot 32 = 160\\)."
+},
+{
+  id: 432, topic: "seqser", calc: false, type: "input",
+  q: "Find the sum of the first 30 positive integers: \\(1 + 2 + 3 + \\cdots + 30\\).",
+  answer: ["465"],
+  simple: "Sum = n(n+1)/2 = 30·31/2 = 465.",
+  expl: "\\(S_n = \\frac{n(n+1)}{2} = \\frac{30(31)}{2} = 465\\). (Or use the arithmetic sum formula with first 1, last 30.)"
+},
+{
+  id: 433, topic: "seqser", calc: true, type: "mc",
+  q: "Find the sum of the first 15 terms of the arithmetic sequence \\(4, 10, 16, \\ldots\\)",
+  choices: ["\\(690\\)", "\\(660\\)", "\\(720\\)", "\\(645\\)"],
+  answer: 0,
+  simple: "Last term a₁₅ = 4 + 14·6 = 88; sum = 15·(4+88)/2 = 690.",
+  expl: "\\(d = 6\\), so \\(a_{15} = 4 + 14(6) = 88\\). Then \\(S_{15} = \\frac{15(4 + 88)}{2} = \\frac{15(92)}{2} = 690\\)."
+},
+{
+  id: 434, topic: "seqser", calc: true, type: "mc",
+  q: "Find the sum of the first 8 terms of the geometric sequence with \\(a_1 = 2\\) and \\(r = 3\\).",
+  choices: ["\\(6560\\)", "\\(13122\\)", "\\(2186\\)", "\\(4374\\)"],
+  answer: 0,
+  simple: "Sum = 2·(3⁸−1)/(3−1) = 2·6560/2 = 6560.",
+  expl: "\\(S_n = a_1\\frac{r^n - 1}{r - 1} = 2 \\cdot \\frac{3^8 - 1}{3 - 1} = 2 \\cdot \\frac{6560}{2} = 6560\\)."
+},
+{
+  id: 435, topic: "seqser", calc: false, type: "input",
+  q: "Find the sum of the infinite geometric series \\(12 + 4 + \\dfrac{4}{3} + \\cdots\\)",
+  answer: ["18"],
+  simple: "Ratio is 1/3. Sum = first ÷ (1 − ratio) = 12 ÷ (2/3) = 18.",
+  expl: "\\(r = \\frac{1}{3}\\) and \\(|r| < 1\\), so \\(S = \\frac{a_1}{1 - r} = \\frac{12}{1 - \\frac13} = \\frac{12}{2/3} = 18\\)."
+},
+{
+  id: 436, topic: "seqser", calc: false, type: "mc",
+  q: "Does the infinite series \\(3 + 6 + 12 + 24 + \\cdots\\) converge, and if so to what?",
+  choices: [
+    "It diverges (no sum)",
+    "Converges to \\(48\\)",
+    "Converges to \\(6\\)",
+    "Converges to \\(-3\\)"
+  ],
+  answer: 0,
+  simple: "The ratio is 2, and the terms keep growing — it never settles, so no sum.",
+  expl: "Here \\(r = 2\\). An infinite geometric series converges only when \\(|r| < 1\\); since \\(|2| \\ge 1\\), it diverges."
+},
+{
+  id: 437, topic: "seqser", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\sum_{k=1}^{4} (3k - 1)\\)",
+  answer: ["26"],
+  simple: "Plug in k = 1,2,3,4: 2 + 5 + 8 + 11 = 26.",
+  expl: "\\(\\sum_{k=1}^{4}(3k-1) = 2 + 5 + 8 + 11 = 26\\)."
+},
+{
+  id: 438, topic: "seqser", calc: false, type: "input",
+  q: "Evaluate: \\(\\displaystyle\\sum_{n=1}^{5} n^2\\)",
+  answer: ["55"],
+  simple: "Add the first five squares: 1 + 4 + 9 + 16 + 25 = 55.",
+  expl: "\\(\\sum_{n=1}^{5} n^2 = 1 + 4 + 9 + 16 + 25 = 55\\)."
+},
+{
+  id: 439, topic: "seqser", calc: false, type: "input",
+  q: "A sequence is defined by \\(a_1 = 4\\) and \\(a_n = 2a_{n-1} + 3\\). Find \\(a_3\\).",
+  answer: ["25"],
+  simple: "Build up: a₂ = 2·4+3 = 11, then a₃ = 2·11+3 = 25.",
+  expl: "\\(a_2 = 2(4) + 3 = 11\\), then \\(a_3 = 2(11) + 3 = 25\\)."
+},
+{
+  id: 440, topic: "seqser", calc: false, type: "mc",
+  q: "Which formula gives the \\(n\\)th term of the sequence \\(3, 7, 11, 15, \\ldots\\)?",
+  choices: ["\\(a_n = 4n - 1\\)", "\\(a_n = 3n\\)", "\\(a_n = 4n + 3\\)", "\\(a_n = 3 \\cdot 4^{n-1}\\)"],
+  answer: 0,
+  simple: "Jumps of 4 means it starts 4n; check n=1 gives 3, so it's 4n − 1.",
+  expl: "Common difference 4 → \\(a_n = 3 + (n-1)4 = 4n - 1\\). Check: \\(n=1\\) gives 3 ✓, \\(n=2\\) gives 7 ✓."
+},
+{
+  id: 441, topic: "seqser", calc: false, type: "input",
+  q: "In an arithmetic sequence, \\(a_3 = 11\\) and \\(a_7 = 27\\). Find the common difference \\(d\\).",
+  answer: ["4"],
+  simple: "From term 3 to term 7 is 4 jumps covering 27 − 11 = 16, so each jump is 4.",
+  expl: "\\(a_7 - a_3 = 4d\\), so \\(27 - 11 = 4d \\Rightarrow 16 = 4d \\Rightarrow d = 4\\)."
+},
+{
+  id: 442, topic: "seqser", calc: false, type: "mc",
+  q: "What is the coefficient of \\(x^2\\) in the expansion of \\((x + 3)^4\\)?",
+  choices: ["\\(54\\)", "\\(36\\)", "\\(18\\)", "\\(108\\)"],
+  answer: 0,
+  simple: "The x² term is C(4,2)·x²·3² = 6·9 = 54.",
+  expl: "Binomial theorem: the \\(x^2\\) term is \\(\\binom{4}{2}x^2 \\cdot 3^2 = 6 \\cdot 9 \\cdot x^2 = 54x^2\\). The exponents (2 and 2) add to 4."
+},
+{
+  id: 443, topic: "seqser", calc: false, type: "input",
+  q: "Evaluate \\(\\binom{6}{2}\\) (6 choose 2).",
+  answer: ["15"],
+  simple: "6·5 ÷ (2·1) = 30/2 = 15.",
+  expl: "\\(\\binom{6}{2} = \\frac{6!}{2!\\,4!} = \\frac{6 \\cdot 5}{2 \\cdot 1} = 15\\)."
+},
+{
+  id: 444, topic: "seqser", calc: true, type: "mc",
+  q: "A worker earns $40,000 the first year with a $2,500 raise each year. What is the total earned over 10 years?",
+  choices: ["\\(\\$512{,}500\\)", "\\(\\$525{,}000\\)", "\\(\\$425{,}000\\)", "\\(\\$487{,}500\\)"],
+  answer: 0,
+  simple: "Year 10 pay = 40000 + 9·2500 = 62500; total = 10·(40000+62500)/2 = 512,500.",
+  expl: "Arithmetic: \\(a_{10} = 40000 + 9(2500) = 62500\\). Total \\(S_{10} = \\frac{10(40000 + 62500)}{2} = 5(102500) = \\$512{,}500\\)."
+},
+{
+  id: 445, topic: "seqser", calc: true, type: "mc",
+  q: "A ball dropped from 16 ft rebounds to \\(\\frac{3}{4}\\) of its height each bounce. How high is the 4th rebound (round to 2 decimals)?",
+  choices: ["\\(5.06\\) ft", "\\(6.75\\) ft", "\\(3.80\\) ft", "\\(9.00\\) ft"],
+  answer: 0,
+  simple: "Multiply 16 by 3/4 four times: 12, 9, 6.75, 5.0625 ≈ 5.06.",
+  expl: "Each rebound multiplies by \\(\\frac{3}{4}\\): \\(16(\\frac34)^4 = 16 \\cdot \\frac{81}{256} = \\frac{81}{16} \\approx 5.06\\) ft."
+},
+{
+  id: 446, topic: "seqser", calc: false, type: "mc",
+  q: "For which value of \\(r\\) does the infinite geometric series with \\(a_1 = 6\\) converge to \\(8\\)?",
+  choices: ["\\(r = \\frac{1}{4}\\)", "\\(r = \\frac{3}{4}\\)", "\\(r = 2\\)", "\\(r = \\frac{4}{3}\\)"],
+  answer: 0,
+  simple: "Sum = first/(1−r): 8 = 6/(1−r), so 1−r = 3/4, meaning r = 1/4.",
+  expl: "\\(S = \\frac{a_1}{1-r}\\): \\(8 = \\frac{6}{1-r} \\Rightarrow 1 - r = \\frac{6}{8} = \\frac{3}{4} \\Rightarrow r = \\frac{1}{4}\\)."
+},
+{
+  id: 447, topic: "seqser", calc: false, type: "input",
+  q: "Write \\(0.\\overline{4}\\) (repeating) as a fraction. Enter it as a fraction.",
+  answer: ["4/9"],
+  simple: "It's the infinite series 0.4+0.04+... = (4/10)/(1−1/10) = 4/9.",
+  expl: "\\(0.\\overline{4} = \\frac{4}{10} + \\frac{4}{100} + \\cdots = \\frac{4/10}{1 - 1/10} = \\frac{4/10}{9/10} = \\frac{4}{9}\\)."
+},
+{
+  id: 448, topic: "seqser", calc: true, type: "mc",
+  q: "You deposit $100 at the end of each month into an account earning 6% annual interest compounded monthly. Using the future-value formula, about how much is in the account after 2 years?",
+  choices: ["\\(\\$2{,}543.20\\)", "\\(\\$2{,}400.00\\)", "\\(\\$2{,}635.00\\)", "\\(\\$2{,}472.00\\)"],
+  answer: 0,
+  simple: "Use FV = 100·((1.005²⁴ − 1)/0.005) ≈ 2543.20.",
+  expl: "Monthly rate \\(i = 0.005\\), \\(n = 24\\): \\(FV = 100 \\cdot \\frac{(1.005)^{24} - 1}{0.005} \\approx 100(25.432) \\approx \\$2{,}543.20\\)."
+},
+
 ];
 
 // ===== Super-simple one-line explanations (plain English, no jargon) =====
@@ -2799,7 +4625,8 @@ function checkPractice() {
   let html = `<div class="verdict">${correct ? praise[Math.floor(Math.random() * praise.length)] : encourage[Math.floor(Math.random() * encourage.length)]}</div>`;
   if (!correct && q.type === "mc") html += `<div><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
   if (!correct && q.type === "input") html += `<div><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
-  if (SIMPLE[q.id]) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[q.id]}</div>`;
+  const simpleLine = q.simple || SIMPLE[q.id];
+  if (simpleLine) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simpleLine}</div>`;
   html += `<div class="expl-detail">${q.expl}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
@@ -3006,7 +4833,7 @@ function renderResults(results, score, isTest, totalOverride) {
         <div class="ri-q">${r.q.q}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
-        ${SIMPLE[r.q.id] ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[r.q.id]}</div>` : ""}
+        ${(r.q.simple || SIMPLE[r.q.id]) ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${r.q.simple || SIMPLE[r.q.id]}</div>` : ""}
         <div class="ri-expl">${r.q.expl}</div>`;
       renderMath(div);
       detail.appendChild(div);

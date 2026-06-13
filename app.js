@@ -599,7 +599,7 @@ function renderResults(results, score, isTest, totalOverride) {
         <div class="ri-q">${r.q.q}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
-        ${SIMPLE[r.q.id] ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${SIMPLE[r.q.id]}</div>` : ""}
+        ${(r.q.simple || SIMPLE[r.q.id]) ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${r.q.simple || SIMPLE[r.q.id]}</div>` : ""}
         <div class="ri-expl">${r.q.expl}</div>`;
       renderMath(div);
       detail.appendChild(div);
