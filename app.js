@@ -118,12 +118,13 @@ function renderHome() {
     });
     const seenPct = Math.round((attempted / qs.length) * 100);
     const acc = attempted ? Math.round((right / attempted) * 100) : 0;
-    const row = document.createElement("div");
-    row.className = "topic-row";
+    const row = document.createElement("button");
+    row.className = "topic-row clickable";
     row.innerHTML = `
-      <span class="topic-name">${label}</span>
+      <span class="topic-name">${label} <span class="topic-go">Practice →</span></span>
       <span class="topic-stat">${attempted}/${qs.length} tried${attempted ? ` · ${acc}% solid` : ""}</span>
       <div class="bar"><div class="bar-fill ${attempted && acc >= 80 ? "good" : acc < 50 && attempted ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
+    row.addEventListener("click", () => startTopicPractice(key, label));
     tp.appendChild(row);
   });
 
@@ -140,6 +141,13 @@ function renderHome() {
       th.appendChild(row);
     });
   }
+}
+
+// Jump straight into practicing one topic from the home screen
+function startTopicPractice(key, label) {
+  const pool = QUESTIONS.filter((q) => q.topic === key);
+  if (!pool.length) { alert("No questions in this topic yet."); return; }
+  startSession({ mode: "practice", label: label, questions: shuffle(pool) });
 }
 
 $("btn-reset").addEventListener("click", () => {

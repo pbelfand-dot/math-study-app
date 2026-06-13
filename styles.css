@@ -137,6 +137,31 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .topic-row .topic-name { font-weight: 600; }
 .topic-row .topic-stat { color: var(--muted); font-size: 0.9rem; }
 
+/* Clickable topic rows (home screen) */
+.topic-row.clickable {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  transition: transform 0.08s ease, border-color 0.08s ease, box-shadow 0.08s ease;
+}
+.topic-row.clickable:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+.topic-row .topic-go {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.08s ease;
+}
+.topic-row.clickable:hover .topic-go { opacity: 1; }
+@media (hover: none) {
+  .topic-row .topic-go { opacity: 1; }
+}
+
 /* ===== Test history ===== */
 .test-history { display: flex; flex-direction: column; gap: 8px; }
 .history-row {

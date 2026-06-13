@@ -147,6 +147,31 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .topic-row .topic-name { font-weight: 600; }
 .topic-row .topic-stat { color: var(--muted); font-size: 0.9rem; }
 
+/* Clickable topic rows (home screen) */
+.topic-row.clickable {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  transition: transform 0.08s ease, border-color 0.08s ease, box-shadow 0.08s ease;
+}
+.topic-row.clickable:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+.topic-row .topic-go {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.08s ease;
+}
+.topic-row.clickable:hover .topic-go { opacity: 1; }
+@media (hover: none) {
+  .topic-row .topic-go { opacity: 1; }
+}
+
 /* ===== Test history ===== */
 .test-history { display: flex; flex-direction: column; gap: 8px; }
 .history-row {
@@ -530,7 +555,7 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
       </button>
     </div>
 
-    <h2 class="section-title">Your progress by topic</h2>
+    <h2 class="section-title">Practice by topic <span class="muted" style="font-weight:400;font-size:0.85rem">— tap any topic to drill just that one</span></h2>
     <div id="topic-progress" class="topic-progress"></div>
 
     <h2 class="section-title">Recent tests</h2>
@@ -4352,12 +4377,13 @@ function renderHome() {
     });
     const seenPct = Math.round((attempted / qs.length) * 100);
     const acc = attempted ? Math.round((right / attempted) * 100) : 0;
-    const row = document.createElement("div");
-    row.className = "topic-row";
+    const row = document.createElement("button");
+    row.className = "topic-row clickable";
     row.innerHTML = `
-      <span class="topic-name">${label}</span>
+      <span class="topic-name">${label} <span class="topic-go">Practice →</span></span>
       <span class="topic-stat">${attempted}/${qs.length} tried${attempted ? ` · ${acc}% solid` : ""}</span>
       <div class="bar"><div class="bar-fill ${attempted && acc >= 80 ? "good" : acc < 50 && attempted ? "bad" : ""}" style="width:${seenPct}%"></div></div>`;
+    row.addEventListener("click", () => startTopicPractice(key, label));
     tp.appendChild(row);
   });
 
@@ -4374,6 +4400,13 @@ function renderHome() {
       th.appendChild(row);
     });
   }
+}
+
+// Jump straight into practicing one topic from the home screen
+function startTopicPractice(key, label) {
+  const pool = QUESTIONS.filter((q) => q.topic === key);
+  if (!pool.length) { alert("No questions in this topic yet."); return; }
+  startSession({ mode: "practice", label: label, questions: shuffle(pool) });
 }
 
 $("btn-reset").addEventListener("click", () => {
