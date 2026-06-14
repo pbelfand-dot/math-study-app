@@ -426,6 +426,60 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .graph .gdot-closed { fill: var(--ink); }
 .graph .gdot-open { fill: #fff; }
 
+/* ===== Subject switcher ===== */
+.subject-switch { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.subj-btn {
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-weight: 800;
+  color: var(--muted);
+  min-height: 44px;
+}
+.subj-btn.on { border-color: var(--accent); background: var(--accent); color: #fff; box-shadow: var(--shadow); }
+
+/* ===== Document stimulus ===== */
+.doc {
+  background: #fbf7ef;
+  border: 1px solid #e6dcc6;
+  border-left: 4px solid #b88600;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 16px 0 4px;
+}
+.doc-quote { font-style: italic; line-height: 1.65; color: #4a3f1e; }
+.doc-quote::before { content: "\201C"; }
+.doc-quote::after { content: "\201D"; }
+.doc-source { margin-top: 8px; font-size: 0.85rem; font-weight: 700; color: #8a6d1f; text-align: right; }
+
+/* ===== History graphics (SVG diagrams + tables) ===== */
+.histgraphic {
+  display: block; width: 100%; max-width: 430px; height: auto;
+  margin: 16px auto 4px; background: #fff;
+  border: 1px solid var(--border); border-radius: 12px;
+}
+.histgraphic .hg-title { fill: #495057; font-size: 13px; font-weight: 700; }
+.histgraphic .hg-sea { fill: #74a9d8; font-size: 10px; font-style: italic; }
+.histgraphic .hg-region { fill: #f1f3f7; stroke: #cfd6e2; stroke-width: 1.5; }
+.histgraphic .hg-on { fill: #e7ecff; stroke: var(--accent); stroke-width: 2.5; }
+.histgraphic .hg-rname { fill: #3a4252; font-size: 12px; font-weight: 700; }
+.histgraphic .hg-onText { fill: var(--accent); }
+.histgraphic .hg-rnote { fill: #7a8395; font-size: 9.5px; }
+.histgraphic .hg-axis { stroke: #9aa3b2; stroke-width: 2; }
+.histgraphic .hg-dot { fill: #9aa3b2; }
+.histgraphic .hg-dot.hg-on { fill: var(--accent); stroke: none; }
+.histgraphic .hg-evlabel { fill: #3a4252; font-size: 9.5px; font-weight: 700; }
+.histgraphic .hg-evsub { fill: #8a93a3; font-size: 9px; }
+
+.hist-table {
+  width: 100%; max-width: 460px; border-collapse: collapse;
+  margin: 16px auto 4px; font-size: 0.9rem;
+}
+.hist-table th, .hist-table td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; }
+.hist-table thead th { background: #e7ecff; color: var(--accent); text-align: center; }
+.hist-table tbody th { background: #f4f6fb; font-weight: 700; }
+
 .choices { display: flex; flex-direction: column; gap: 10px; }
 .choice {
   display: flex;

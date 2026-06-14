@@ -80,6 +80,120 @@ const QBYID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 const DIFF_LABEL = { easy: "🟢 Easy", medium: "🟡 Medium", hard: "🔴 Hard" };
 const diffOf = (q) => q.diff || (typeof DIFFICULTY !== "undefined" && DIFFICULTY[q.id]) || "medium";
 
+// ---------- Subjects (Math / US History) ----------
+let curSubject = store.subject && SUBJECTS[store.subject] ? store.subject : "math";
+function setSubject(s) {
+  if (!SUBJECTS[s]) return;
+  curSubject = s; store.subject = s; saveStore();
+  selectedTopics = new Set(SUBJECTS[s].topics.filter((k) => !NON_FINAL_TOPICS.includes(k)));
+  exampleTopic = SUBJECTS[s].topics[0];
+}
+const inSubject = (q) => subjectOf(q) === curSubject;
+const subjectTopics = () => SUBJECTS[curSubject].topics;
+
+// ---------- Stimulus rendering (documents + history graphics) ----------
+function renderDoc(d) {
+  return `<div class="doc"><div class="doc-quote">${d.text}</div><div class="doc-source">— ${d.source}</div></div>`;
+}
+function questionStimulus(q) {
+  let s = "";
+  if (q.doc) s += renderDoc(q.doc);
+  if (q.graphic) s += renderHistGraphic(q.graphic);
+  if (q.graph) s += renderGraph(q.graph, { showShade: false });
+  return s;
+}
+function solutionVisual(q) {
+  let s = "";
+  if (q.graphic) s += renderHistGraphic(q.graphic);
+  if (q.graph) s += renderGraph(q.graph, { showShade: true });
+  return s;
+}
+
+// ---------- History graphics (SVG / diagrams) ----------
+function renderHistGraphic(g) {
+  if (g.type === "map_colonies") {
+    const regions = [
+      { key: "newengland", name: "New England Colonies", note: "fishing · shipbuilding · trade" },
+      { key: "middle", name: "Middle Colonies", note: "grain · trade · manufacturing" },
+      { key: "southern", name: "Southern Colonies", note: "cash-crop plantations" },
+    ];
+    let s = `<svg class="histgraphic" viewBox="0 0 380 250" role="img" aria-label="Map of the colonial regions">`;
+    s += `<text class="hg-title" x="14" y="18">The Thirteen Colonies</text>`;
+    s += `<text class="hg-sea" x="366" y="135" text-anchor="end">Atlantic Ocean →</text>`;
+    regions.forEach((r, i) => {
+      const y = 34 + i * 64, on = g.highlight === r.key;
+      s += `<rect class="hg-region ${on ? "hg-on" : ""}" x="40" y="${y}" width="250" height="56" rx="8"/>`;
+      s += `<text class="hg-rname ${on ? "hg-onText" : ""}" x="165" y="${y + 24}" text-anchor="middle">${r.name}</text>`;
+      s += `<text class="hg-rnote" x="165" y="${y + 42}" text-anchor="middle">${r.note}</text>`;
+    });
+    return s + `</svg>`;
+  }
+  if (g.type === "branches") {
+    const b = [
+      { key: "legislative", name: "Legislative", role: "Makes laws (Congress)" },
+      { key: "executive", name: "Executive", role: "Enforces laws (President)" },
+      { key: "judicial", name: "Judicial", role: "Interprets laws (Courts)" },
+    ];
+    let s = `<svg class="histgraphic" viewBox="0 0 380 170" role="img" aria-label="Three branches of government">`;
+    s += `<text class="hg-title" x="14" y="18">Three Branches of Government</text>`;
+    b.forEach((x, i) => {
+      const px = 14 + i * 122, on = g.highlight === x.key;
+      s += `<rect class="hg-region ${on ? "hg-on" : ""}" x="${px}" y="40" width="110" height="100" rx="8"/>`;
+      s += `<text class="hg-rname ${on ? "hg-onText" : ""}" x="${px + 55}" y="72" text-anchor="middle">${x.name}</text>`;
+      const words = x.role.split(" ");
+      s += `<text class="hg-rnote" x="${px + 55}" y="98" text-anchor="middle">${words.slice(0, 2).join(" ")}</text>`;
+      s += `<text class="hg-rnote" x="${px + 55}" y="114" text-anchor="middle">${words.slice(2).join(" ")}</text>`;
+    });
+    return s + `</svg>`;
+  }
+  if (g.type === "federalism") {
+    const c = [
+      { key: "delegated", name: "Delegated", who: "Federal only", ex: "coin money · war · treaties" },
+      { key: "concurrent", name: "Concurrent", who: "Shared", ex: "tax · courts · make laws" },
+      { key: "reserved", name: "Reserved", who: "States only", ex: "schools · licenses · voting" },
+    ];
+    let s = `<svg class="histgraphic" viewBox="0 0 380 180" role="img" aria-label="Division of powers in federalism">`;
+    s += `<text class="hg-title" x="14" y="18">Federalism: Division of Powers</text>`;
+    c.forEach((x, i) => {
+      const px = 14 + i * 122, on = g.highlight === x.key;
+      s += `<rect class="hg-region ${on ? "hg-on" : ""}" x="${px}" y="40" width="110" height="115" rx="8"/>`;
+      s += `<text class="hg-rname ${on ? "hg-onText" : ""}" x="${px + 55}" y="68" text-anchor="middle">${x.name}</text>`;
+      s += `<text class="hg-rnote" x="${px + 55}" y="86" text-anchor="middle">(${x.who})</text>`;
+      x.ex.split(" · ").forEach((e, j) => {
+        s += `<text class="hg-rnote" x="${px + 55}" y="${108 + j * 15}" text-anchor="middle">${e}</text>`;
+      });
+    });
+    return s + `</svg>`;
+  }
+  if (g.type === "timeline") {
+    const ev = g.events, n = ev.length, W = 380, x0 = 30, x1 = 350, y = 90;
+    let s = `<svg class="histgraphic" viewBox="0 0 380 175" role="img" aria-label="${g.title || "timeline"}">`;
+    s += `<text class="hg-title" x="14" y="18">${g.title || "Timeline"}</text>`;
+    s += `<line class="hg-axis" x1="${x0}" y1="${y}" x2="${x1}" y2="${y}"/>`;
+    ev.forEach((e, i) => {
+      const px = x0 + (i / (n - 1)) * (x1 - x0), on = e.mark;
+      s += `<circle class="hg-dot ${on ? "hg-on" : ""}" cx="${px}" cy="${y}" r="${on ? 7 : 5}"/>`;
+      const up = i % 2 === 0;
+      const ty = up ? y - 16 : y + 22, ty2 = up ? y - 30 : y + 36;
+      s += `<text class="hg-evlabel ${on ? "hg-onText" : ""}" x="${px}" y="${ty}" text-anchor="middle">${e.label}</text>`;
+      s += `<text class="hg-evsub" x="${px}" y="${ty2}" text-anchor="middle">${e.sub || ""}</text>`;
+    });
+    return s + `</svg>`;
+  }
+  if (g.type === "parties") {
+    const rows = [
+      ["Leader", "Thomas Jefferson", "Alexander Hamilton"],
+      ["Central govt", "Weak — power to states", "Strong national govt"],
+      ["Interpretation", "Strict", "Loose"],
+      ["National Bank", "Against", "For"],
+    ];
+    let h = `<table class="hist-table"><thead><tr><th></th><th>Democratic-Republicans</th><th>Federalists</th></tr></thead><tbody>`;
+    rows.forEach((r) => { h += `<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td></tr>`; });
+    return h + `</tbody></table>`;
+  }
+  return "";
+}
+
 // ---------- Graph rendering (SVG, for f / f′ questions) ----------
 function renderGraph(g, opts) {
   opts = opts || {};
@@ -147,6 +261,8 @@ function show(name) {
   window.scrollTo(0, 0);
   if (name === "home") renderHome();
   if (name === "examples") renderExamples();
+  if (name === "practice-setup") renderTopicChips();
+  if (name === "test-setup") renderTestSetup();
 }
 document.querySelectorAll("[data-nav]").forEach((b) =>
   b.addEventListener("click", () => {
@@ -168,9 +284,21 @@ function renderHome() {
     ? `Redo the ${n} question${n === 1 ? "" : "s"} you've missed`
     : "No missed questions yet — nice!";
 
-  // Readiness dashboard: aggregate across all questions
+  // Subject switcher
+  $("subject-switch").innerHTML = Object.entries(SUBJECTS).map(([k, s]) =>
+    `<button class="subj-btn ${k === curSubject ? "on" : ""}" data-subj="${k}">${s.emoji} ${s.label}</button>`
+  ).join("");
+  $("subject-switch").querySelectorAll(".subj-btn").forEach((b) =>
+    b.addEventListener("click", () => { setSubject(b.dataset.subj); renderHome(); }));
+
+  // Subject-aware hero
+  $("home-title").textContent = curSubject === "history" ? "Let's ace that US History test. 📜" : "Let's crush that Math 4H final. 💪";
+
+  const subjQs = QUESTIONS.filter(inSubject);
+
+  // Readiness dashboard: aggregate across the current subject
   let totAtt = 0, totRight = 0, totWrong = 0, solid = 0;
-  QUESTIONS.forEach((q) => {
+  subjQs.forEach((q) => {
     const s = store.perQuestion[q.id];
     if (s && s.right + s.wrong > 0) {
       totAtt++;
@@ -179,8 +307,7 @@ function renderHome() {
     }
   });
   const acc = (totRight + totWrong) ? Math.round((100 * totRight) / (totRight + totWrong)) : 0;
-  const coverage = Math.round((100 * totAtt) / QUESTIONS.length);
-  const readiness = Math.round((100 * solid) / QUESTIONS.length);
+  const readiness = Math.round((100 * solid) / subjQs.length);
   const rColor = readiness >= 70 ? "good" : readiness >= 40 ? "mid" : "low";
   $("dashboard").innerHTML = `
     <div class="dash-ring dash-${rColor}" style="--p:${readiness}%">
@@ -188,14 +315,15 @@ function renderHome() {
       <div class="dash-ring-lbl">ready</div>
     </div>
     <div class="dash-stats">
-      <div class="dash-stat"><span class="dash-val">${totAtt}</span><span class="dash-lbl">of ${QUESTIONS.length} tried</span></div>
+      <div class="dash-stat"><span class="dash-val">${totAtt}</span><span class="dash-lbl">of ${subjQs.length} tried</span></div>
       <div class="dash-stat"><span class="dash-val">${acc}%</span><span class="dash-lbl">accuracy</span></div>
       <div class="dash-stat"><span class="dash-val">${solid}</span><span class="dash-lbl">solid</span></div>
       <div class="dash-stat"><span class="dash-val">🔥 ${store.bestStreak || 0}</span><span class="dash-lbl">best streak</span></div>
     </div>`;
 
   // Per-topic stats (used for both the weak-spots picker and the topic list)
-  const topicStats = Object.entries(TOPICS).map(([key, label]) => {
+  const topicStats = subjectTopics().map((key) => {
+    const label = TOPICS[key];
     const qs = QUESTIONS.filter((q) => q.topic === key);
     let right = 0, wrong = 0, attempted = 0, solid = 0;
     const dc = { easy: 0, medium: 0, hard: 0 };
@@ -285,19 +413,20 @@ function startTopicPractice(key, label) {
 }
 
 // ---------- Worked Examples screen ----------
-let exampleTopic = Object.keys(TOPICS)[0];
+let exampleTopic = SUBJECTS[curSubject].topics[0];
 function exampleQuestionFor(key) {
   // a representative, well-explained question for the topic
   return QUESTIONS.find((q) => q.topic === key && q.expl && q.expl.length > 30) ||
          QUESTIONS.find((q) => q.topic === key);
 }
 function renderExamples() {
+  if (subjectTopics().indexOf(exampleTopic) === -1) exampleTopic = subjectTopics()[0];
   const chips = $("example-topics");
   chips.innerHTML = "";
-  Object.entries(TOPICS).forEach(([key, label]) => {
+  subjectTopics().forEach((key) => {
     const b = document.createElement("button");
     b.className = "chip" + (key === exampleTopic ? " selected" : "");
-    b.textContent = label;
+    b.textContent = TOPICS[key];
     b.addEventListener("click", () => { exampleTopic = key; renderExamples(); });
     chips.appendChild(b);
   });
@@ -309,10 +438,10 @@ function renderExamples() {
   const html = `
     <div class="ex-card">
       <div class="ex-tag">Example · ${TOPICS[q.topic]}</div>
-      <div class="ex-q">${q.q}${q.graph ? renderGraph(q.graph, { showShade: false }) : ""}</div>
+      <div class="ex-q">${q.q}${questionStimulus(q)}</div>
       <div class="fb-answer"><strong>Answer:</strong> ${ans}</div>
       ${simple ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simple}</div>` : ""}
-      <div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${q.graph ? renderGraph(q.graph, { showShade: true }) : ""}</div>
+      <div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${solutionVisual(q)}</div>
     </div>`;
   setMath(body, html);
   $("btn-example-practice").textContent = `Practice ${TOPICS[exampleTopic]} →`;
@@ -334,18 +463,19 @@ $("btn-review-missed").addEventListener("click", () => {
 });
 
 $("btn-warmup").addEventListener("click", () => {
-  // 5 mixed questions from final topics, spread across difficulties
-  const pool = QUESTIONS.filter((q) => !NON_FINAL_TOPICS.includes(q.topic));
+  // 5 mixed questions from the current subject
+  const pool = QUESTIONS.filter((q) => inSubject(q) && !NON_FINAL_TOPICS.includes(q.topic));
   const qs = shuffle(pool).slice(0, 5);
   startSession({ mode: "practice", label: "⚡ Warm-up", questions: qs });
 });
 
 // ---------- Practice setup ----------
-const selectedTopics = new Set(Object.keys(TOPICS).filter((k) => !NON_FINAL_TOPICS.includes(k)));
+let selectedTopics = new Set(SUBJECTS.math.topics.filter((k) => !NON_FINAL_TOPICS.includes(k)));
 function renderTopicChips() {
   const wrap = $("topic-chips");
   wrap.innerHTML = "";
-  Object.entries(TOPICS).forEach(([key, label]) => {
+  subjectTopics().forEach((key) => {
+    const label = TOPICS[key];
     const b = document.createElement("button");
     b.className = "chip" + (selectedTopics.has(key) ? " selected" : "");
     b.textContent = NON_FINAL_TOPICS.includes(key) ? label + " (not on your final)" : label;
@@ -357,7 +487,7 @@ function renderTopicChips() {
   });
 }
 renderTopicChips();
-$("chips-all").addEventListener("click", () => { Object.keys(TOPICS).forEach((k) => selectedTopics.add(k)); renderTopicChips(); });
+$("chips-all").addEventListener("click", () => { subjectTopics().forEach((k) => selectedTopics.add(k)); renderTopicChips(); });
 $("chips-none").addEventListener("click", () => { selectedTopics.clear(); renderTopicChips(); });
 
 function singleSelect(containerId, attr) {
@@ -377,7 +507,7 @@ $("btn-start-practice").addEventListener("click", () => {
   const calcMode = $("calc-chips").querySelector(".selected").dataset.calc;
   const countSel = $("count-chips").querySelector(".selected").dataset.count;
   const diffMode = $("diff-chips").querySelector(".selected").dataset.diff;
-  let pool = QUESTIONS.filter((q) => selectedTopics.has(q.topic));
+  let pool = QUESTIONS.filter((q) => inSubject(q) && selectedTopics.has(q.topic));
   if (calcMode === "no") pool = pool.filter((q) => !q.calc);
   if (calcMode === "yes") pool = pool.filter((q) => q.calc);
   if (diffMode !== "all") pool = pool.filter((q) => diffOf(q) === diffMode);
@@ -390,31 +520,40 @@ $("btn-start-practice").addEventListener("click", () => {
 
 // ---------- Test setup ----------
 const TEST_CONFIG = {
-  no: { label: "No-Calculator Section", count: 20, minutes: 35 },
-  yes: { label: "Calculator Section", count: 15, minutes: 35 },
+  no:  { subject: "math", emoji: "🚫🧮", label: "No-Calculator Section", sub: "20 questions · 35 min · exact values, derivatives, limits & conics", count: 20, minutes: 35 },
+  yes: { subject: "math", emoji: "🧮", label: "Calculator Section", sub: "15 questions · 35 min · tangent lines, motion, polar & rounding", count: 15, minutes: 35 },
+  full: { subject: "history", emoji: "📜", label: "US History Practice Test", sub: "25 questions · 30 min · documents, maps & key terms from all 4 units", count: 25, minutes: 30 },
 };
-document.querySelectorAll("[data-test]").forEach((b) =>
-  b.addEventListener("click", () => startTest(b.dataset.test))
-);
+function renderTestSetup() {
+  const wrap = $("test-cards");
+  wrap.innerHTML = "";
+  const kinds = curSubject === "history" ? ["full"] : ["no", "yes"];
+  kinds.forEach((k) => {
+    const c = TEST_CONFIG[k];
+    const b = document.createElement("button");
+    b.className = "big-card";
+    b.innerHTML = `<span class="big-card-emoji">${c.emoji}</span><span class="big-card-title">${c.label}</span><span class="big-card-sub">${c.sub}</span>`;
+    b.addEventListener("click", () => startTest(k));
+    wrap.appendChild(b);
+  });
+  $("test-setup-sub").textContent = curSubject === "history"
+    ? "A mixed practice test drawn from all four US History units — documents, maps, and key terms, with a timer and a review screen before you submit."
+    : "Sectioned like your actual Math 4H final (and only its topics): a timer, question palette, flagging, and a review screen before you submit.";
+}
 function startTest(kind) {
   const cfg = TEST_CONFIG[kind];
-  // Tests mirror the real Math 4H final: only topics from the review packets.
-  const finalPool = QUESTIONS.filter((q) => !NON_FINAL_TOPICS.includes(q.topic));
-  // Calculator section: prefer calc questions, top up with no-calc ones
-  // (the real calculator section also includes problems doable by hand).
-  let pool, extra;
-  if (kind === "yes") {
-    pool = shuffle(finalPool.filter((q) => q.calc));
-    extra = shuffle(finalPool.filter((q) => !q.calc));
+  let qs;
+  if (cfg.subject === "history") {
+    qs = shuffle(QUESTIONS.filter((q) => subjectOf(q) === "history")).slice(0, cfg.count);
   } else {
-    pool = shuffle(finalPool.filter((q) => !q.calc));
-    extra = [];
+    // Math: mirror the real final — only topics from the review packets.
+    const finalPool = QUESTIONS.filter((q) => subjectOf(q) === "math" && !NON_FINAL_TOPICS.includes(q.topic));
+    let pool, extra;
+    if (kind === "yes") { pool = shuffle(finalPool.filter((q) => q.calc)); extra = shuffle(finalPool.filter((q) => !q.calc)); }
+    else { pool = shuffle(finalPool.filter((q) => !q.calc)); extra = []; }
+    qs = pool.concat(extra).slice(0, cfg.count);
   }
-  const qs = pool.concat(extra).slice(0, cfg.count);
-  startSession({
-    mode: "test", kind, label: cfg.label, questions: qs,
-    secondsLeft: cfg.minutes * 60,
-  });
+  startSession({ mode: "test", kind, label: cfg.label, questions: qs, secondsLeft: cfg.minutes * 60 });
 }
 
 // ---------- Session engine ----------
@@ -486,7 +625,7 @@ function renderQuestion() {
   dpill.textContent = DIFF_LABEL[dlevel];
   dpill.className = "pill diff-pill diff-" + dlevel;
   $("q-calc").textContent = q.calc ? "🧮 Calculator OK" : "🚫 No calculator";
-  setMath($("q-text"), q.q + (q.graph ? renderGraph(q.graph, { showShade: false }) : ""));
+  setMath($("q-text"), q.q + questionStimulus(q));
 
   const choicesEl = $("choices");
   const inputArea = $("input-area");
@@ -585,7 +724,7 @@ function checkPractice() {
   if (!correct && q.type === "input") html += `<div class="fb-answer"><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
   const simpleLine = q.simple || SIMPLE[q.id];
   if (simpleLine) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simpleLine}</div>`;
-  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${q.graph ? renderGraph(q.graph, { showShade: true }) : ""}</div>`;
+  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${solutionVisual(q)}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
   fb.classList.remove("hidden");
@@ -788,11 +927,11 @@ function renderResults(results, score, isTest, totalOverride) {
       const rightAns = r.q.type === "mc" ? `${LETTERS[r.q.answer]}. ${r.q.choices[r.q.answer]}` : r.q.answer[0];
       div.innerHTML = `
         <div class="ri-head">${r.correct ? "✅" : "❌"} Question ${i + 1} · ${TOPICS[r.q.topic]} · ${DIFF_LABEL[diffOf(r.q)]}</div>
-        <div class="ri-q">${r.q.q}${r.q.graph ? renderGraph(r.q.graph, { showShade: false }) : ""}</div>
+        <div class="ri-q">${r.q.q}${questionStimulus(r.q)}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
         ${(r.q.simple || SIMPLE[r.q.id]) ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${r.q.simple || SIMPLE[r.q.id]}</div>` : ""}
-        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}${r.q.graph ? renderGraph(r.q.graph, { showShade: true }) : ""}</div>`;
+        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}${solutionVisual(r.q)}</div>`;
       renderMath(div);
       detail.appendChild(div);
     });

@@ -25,7 +25,25 @@ const TOPICS = {
   vectors:   "Vectors, Polar & Parametric",
   triangles: "Triangles & Applications",
   seqser:    "Sequences & Series",
+  // ----- US History -----
+  h_colonial:     "Colonial America",
+  h_revolution:   "Road to Revolution",
+  h_constitution: "The Constitution",
+  h_republic:     "The New Republic",
 };
+
+// Subjects group topics into separate study sections.
+const SUBJECTS = {
+  math: {
+    label: "Math 4H", emoji: "📐",
+    topics: ["deriv", "derivapp", "graphs", "limits", "integ", "trig", "trigid", "explog", "poly", "functions", "conics", "vectors", "triangles", "seqser"],
+  },
+  history: {
+    label: "US History", emoji: "📜",
+    topics: ["h_colonial", "h_revolution", "h_constitution", "h_republic"],
+  },
+};
+const subjectOf = (q) => q.subject || "math";
 
 // Topics that did NOT appear on the Math 4H final review packets.
 // Still available in Practice mode, but excluded from Test mode draws.
@@ -3797,6 +3815,265 @@ const QUESTIONS = [
   answer: 0,
   simple: "f′ > 0 means f is climbing. On the far left, the graph climbs from x = −9 up to the peak at x = −3.",
   expl: "\\(f'(x) > 0\\) means \\(f\\) is <strong>increasing</strong> (going uphill).<br><br>On the left side, the graph of \\(f\\) climbs steadily from \\(x = -9\\) up to its peak at \\(x = -3\\).<br><br>So \\(f' > 0\\) on \\((-9, -3)\\)." },
+// ===================================================================
+// US HISTORY — stimulus-based questions (documents, texts, graphics)
+// Early America: Colonial era → Revolution → Constitution → New Republic
+// ===================================================================
+
+// ----- Colonial America -----
+{
+  id: 700, subject: "history", topic: "h_colonial", type: "mc", diff: "medium",
+  q: "Based on the highlighted region in the map, the economy of these colonies was based mainly on…",
+  graphic: { type: "map_colonies", highlight: "southern" },
+  choices: ["plantation agriculture and cash crops", "shipbuilding and fishing", "fur trapping and mining", "banking and insurance"],
+  answer: 0,
+  simple: "The shaded Southern colonies had warm weather and rich soil, so they grew cash crops like tobacco and cotton on big plantations.",
+  expl: "The highlighted <strong>Southern Colonies</strong> had a warm climate and fertile soil, which made them ideal for <strong>plantation agriculture</strong> growing cash crops (tobacco, rice, indigo, and later cotton).<br><br>This is why slavery grew most in the South — plantations needed large amounts of labor." },
+{
+  id: 701, subject: "history", topic: "h_colonial", type: "mc", diff: "medium",
+  q: "The highlighted region relied most heavily on which type of economy?",
+  graphic: { type: "map_colonies", highlight: "newengland" },
+  choices: ["maritime industries — shipping, fishing, and trade", "large cash-crop plantations", "cotton and tobacco farming", "gold and silver mining"],
+  answer: 0,
+  simple: "New England had rocky soil and lots of coastline, so people fished, built ships, and traded by sea instead of farming big crops.",
+  expl: "The <strong>New England Colonies</strong> had thin, rocky soil and a cold climate — bad for large farms. With a long coastline and many harbors, they turned to <strong>maritime industries</strong>: fishing, whaling, shipbuilding, and trade." },
+{
+  id: 702, subject: "history", topic: "h_colonial", type: "mc", diff: "medium",
+  q: "Which idea of democracy does this document most directly support?",
+  doc: { source: "The Mayflower Compact, 1620", text: "We … covenant and combine ourselves together into a civil Body Politick … and by Virtue hereof do enact … such just and equal Laws … as shall be thought most meet and convenient for the general Good of the Colony; unto which we promise all due Submission and Obedience." },
+  choices: ["self-government by the consent of the people", "rule by a king with absolute power", "government controlled only by the wealthy", "complete separation of church and state"],
+  answer: 0,
+  simple: "The Pilgrims agreed to make their own fair laws and follow them — that's people governing themselves by agreement.",
+  expl: "In the <strong>Mayflower Compact</strong>, the colonists agree to form a government and follow laws they make for the common good.<br><br>This is an early example of <strong>self-government</strong> and majority rule — government by the consent of the governed." },
+{
+  id: 703, subject: "history", topic: "h_colonial", type: "mc", diff: "easy",
+  q: "Under <strong>mercantilism</strong>, the main purpose of a colony was to…",
+  choices: ["supply raw materials to the mother country and buy its goods", "become fully independent as quickly as possible", "trade freely with any nation it wished", "form its own separate government"],
+  answer: 0,
+  simple: "Mercantilism meant the colonies existed to make the mother country rich — give it resources and buy its products.",
+  expl: "<strong>Mercantilism</strong> is an economic system where colonies exist to benefit the mother country: they provide cheap <strong>raw materials</strong> and serve as a guaranteed <strong>market</strong> for the mother country's finished goods." },
+{
+  id: 704, subject: "history", topic: "h_colonial", type: "mc", diff: "easy",
+  q: "The British policy of <strong>salutary neglect</strong> meant that…",
+  choices: ["Britain loosely enforced laws as long as colonies stayed loyal", "Britain taxed every colonial transaction heavily", "colonies were forbidden to trade at all", "the colonies governed Britain"],
+  answer: 0,
+  simple: "Britain mostly left the colonies alone to run themselves, as long as they stayed loyal and profitable.",
+  expl: "<strong>Salutary neglect</strong> was Britain's relaxed approach: it didn't strictly enforce trade laws, letting the colonies largely govern themselves — as long as they remained loyal. Ending this policy after the French &amp; Indian War angered the colonists." },
+{
+  id: 705, subject: "history", topic: "h_colonial", type: "mc", diff: "easy",
+  q: "New Amsterdam, an early Dutch colony, later became which modern city — and shared what trait with it?",
+  choices: ["New York City — diversity and a focus on trade", "Boston — shipbuilding and fishing", "Philadelphia — Quaker religious rule", "Charleston — rice plantations"],
+  answer: 0,
+  simple: "New Amsterdam became New York City, and like NYC today it was diverse and all about trade.",
+  expl: "The Dutch colony of <strong>New Amsterdam</strong> became <strong>New York City</strong> after the English took it over. Even then it was known for its <strong>diversity</strong> and its role as a center of <strong>trade</strong> — just like NYC today." },
+{
+  id: 706, subject: "history", topic: "h_colonial", type: "mc", diff: "medium",
+  q: "During the colonial period, which geographic feature was the greatest barrier to the westward migration of settlers?",
+  choices: ["the Appalachian Mountains", "the Great Plains", "the Ohio River", "the Rocky Mountains"],
+  answer: 0,
+  simple: "The Appalachian Mountains ran north-to-south along the east, blocking settlers from easily moving west.",
+  expl: "The <strong>Appalachian Mountains</strong> formed a natural wall along the eastern colonies, making westward travel difficult. (The Proclamation of 1763 also legally banned settlement west of them.) The Rockies and Great Plains were far west and not yet reached." },
+{
+  id: 707, subject: "history", topic: "h_colonial", type: "mc", diff: "medium",
+  q: "What best explains why the three colonial regions developed different economies?",
+  choices: ["differences in geography and climate", "orders from the colonial governors", "the religion of each colony's founders", "the size of each colony's population"],
+  answer: 0,
+  simple: "Land and weather decided it: cold rocky North → fishing/trade; warm fertile South → plantations.",
+  expl: "<strong>Geography and climate</strong> shaped each region's economy. New England's rocky soil and coast led to maritime industry; the Middle Colonies' good soil to grain and trade; the South's warm climate and fertile land to cash-crop plantations." },
+
+// ----- Road to Revolution -----
+{
+  id: 708, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "What was the main cause of the French and Indian War?",
+  choices: ["competition between Britain and France over land and the fur trade in North America", "a dispute over taxes on tea", "the colonists' demand for independence", "a disagreement about slavery"],
+  answer: 0,
+  simple: "Britain and France both wanted the same land and fur trade in North America, so they fought over it.",
+  expl: "The <strong>French and Indian War</strong> grew out of <strong>competition between Britain and France</strong> for territory and resources (especially the fur trade) in the Ohio River Valley. Britain won, but the war's cost led it to start taxing the colonies." },
+{
+  id: 709, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "What did the Proclamation of 1763 do?",
+  choices: ["banned colonists from settling west of the Appalachian Mountains", "taxed all printed paper in the colonies", "closed the port of Boston", "required colonists to house British soldiers"],
+  answer: 0,
+  simple: "After the war, Britain drew a line at the Appalachians and told colonists they couldn't settle past it.",
+  expl: "The <strong>Proclamation of 1763</strong> forbade colonists from settling <strong>west of the Appalachian Mountains</strong>, to avoid costly conflict with Native Americans. Colonists resented being told where they could live." },
+{
+  id: 710, subject: "history", topic: "h_revolution", type: "mc", diff: "hard",
+  q: "Use the timeline. Which set of laws did Britain pass to <strong>punish</strong> Massachusetts after the Boston Tea Party?",
+  graphic: { type: "timeline", title: "British Acts on the Colonies", events: [
+    { label: "Stamp Act", sub: "1765" }, { label: "Townshend Acts", sub: "1767" },
+    { label: "Boston Tea Party", sub: "1773" }, { label: "Intolerable Acts", sub: "1774", mark: true } ] },
+  choices: ["the Intolerable Acts", "the Stamp Act", "the Townshend Acts", "the Proclamation of 1763"],
+  answer: 0,
+  simple: "Right after the Boston Tea Party (1773), Britain hit back in 1774 with the Intolerable Acts.",
+  expl: "The <strong>Intolerable Acts</strong> (1774) were Britain's punishment for the Boston Tea Party. They closed Boston Harbor, ended Massachusetts self-government, and allowed trials to be moved to England. The colonists' anger led to the First Continental Congress." },
+{
+  id: 711, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "What message was Thomas Paine sending in this pamphlet?",
+  doc: { source: "Thomas Paine, Common Sense, 1776", text: "Everything that is right or reasonable pleads for separation. The blood of the slain, the weeping voice of nature cries, 'TIS TIME TO PART.' … there is something absurd in supposing a continent to be perpetually governed by an island." },
+  choices: ["the colonies should declare independence from Britain", "the colonies should remain loyal to the king", "the colonies should pay the new taxes", "the colonies should rejoin France"],
+  answer: 0,
+  simple: "Paine says it's just plain common sense for America to break away from Britain.",
+  expl: "In <strong>Common Sense</strong>, Thomas Paine argued in plain language that it was absurd for a huge continent to be ruled by a small island, and that the colonies should <strong>declare independence</strong>. It convinced many ordinary colonists to support the Revolution." },
+{
+  id: 712, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "What was the main purpose of Thomas Paine's pamphlet The Crisis?",
+  doc: { source: "Thomas Paine, The Crisis, 1776", text: "These are the times that try men's souls. The summer soldier and the sunshine patriot will, in this crisis, shrink from the service of their country; but he that stands it now, deserves the love and thanks of man and woman." },
+  choices: ["to motivate colonists to keep supporting the Revolution during hard times", "to convince colonists to surrender to Britain", "to argue against forming a new government", "to demand higher taxes for the war"],
+  answer: 0,
+  simple: "Things were going badly in the war, so Paine wrote this to keep people fighting and not give up.",
+  expl: "<strong>The Crisis</strong> was written when the Revolution was going poorly. Paine's goal was to <strong>inspire the colonists to keep fighting</strong> — mocking the 'summer soldier' who quits when things get hard." },
+{
+  id: 713, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "Which idea from philosopher John Locke is reflected in this excerpt?",
+  doc: { source: "Declaration of Independence, 1776", text: "That whenever any Form of Government becomes destructive of these ends, it is the Right of the People to alter or to abolish it, and to institute new Government…" },
+  choices: ["people may overthrow a government that fails to protect their rights", "kings rule by the will of God alone", "only landowners may vote", "government should control the economy"],
+  answer: 0,
+  simple: "Locke said if a government doesn't protect your rights, the people can get rid of it — exactly what this line says.",
+  expl: "<strong>John Locke</strong> taught that people have natural rights and that government exists to protect them — and if it doesn't, the people have the <strong>right to overthrow it</strong>. Jefferson wrote this Lockean idea directly into the Declaration of Independence." },
+{
+  id: 714, subject: "history", topic: "h_revolution", type: "mc", diff: "easy",
+  q: "The Enlightenment thinker Montesquieu most influenced the U.S. government with his idea of…",
+  choices: ["separation of powers into branches", "freedom of speech", "the divine right of kings", "direct democracy for all decisions"],
+  answer: 0,
+  simple: "Montesquieu's big idea was splitting government into separate branches so no one part gets too powerful.",
+  expl: "<strong>Montesquieu</strong> argued for dividing government into separate branches — the <strong>separation of powers</strong> — to prevent tyranny. This became the three-branch structure of the U.S. Constitution. (Voltaire → free speech; Rousseau → will of the majority.)" },
+{
+  id: 715, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "Which principle of government is expressed in this excerpt?",
+  doc: { source: "Declaration of Independence, 1776", text: "We hold these truths to be self-evident, that all men are created equal, that they are endowed by their Creator with certain unalienable Rights, that among these are Life, Liberty and the pursuit of Happiness." },
+  choices: ["people have natural rights that government cannot take away", "the king owns all property in the colony", "only Congress may declare rights", "rights are granted by the wealthy"],
+  answer: 0,
+  simple: "It says everyone is born with rights nobody can take away — life, liberty, and the pursuit of happiness.",
+  expl: "This famous line states that people are born with <strong>unalienable (natural) rights</strong> — rights government cannot take away. It reflects Locke's philosophy and became the moral foundation of American democracy." },
+
+// ----- The Constitution -----
+{
+  id: 716, subject: "history", topic: "h_constitution", type: "mc", diff: "easy",
+  q: "Which was a major weakness of the Articles of Confederation?",
+  choices: ["the national government could not tax or raise an army", "the president had too much power", "states had no power at all", "there were too many national courts"],
+  answer: 0,
+  simple: "The first government was too weak — it couldn't collect taxes, raise an army, or even have a president.",
+  expl: "Under the <strong>Articles of Confederation</strong>, the national government was deliberately weak: <strong>no power to tax</strong>, no national army, no executive (president), and no national currency. These flaws led to the Constitutional Convention." },
+{
+  id: 717, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "What did Shays' Rebellion reveal about the Articles of Confederation?",
+  choices: ["the national government was too weak to keep order", "the states had too little power", "the army was too large", "taxes were far too high"],
+  answer: 0,
+  simple: "The government couldn't stop a small farmers' uprising, which proved it was too weak.",
+  expl: "<strong>Shays' Rebellion</strong> (an uprising of debt-ridden farmers) showed that the national government under the Articles was <strong>too weak to maintain order</strong> — it couldn't raise troops to stop it. This pushed leaders to write a stronger Constitution." },
+{
+  id: 718, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "The Great Compromise settled representation in Congress by…",
+  choices: ["creating a two-house Congress: equal votes in the Senate, population-based in the House", "giving every state exactly one vote", "counting only free citizens", "letting the president choose representatives"],
+  answer: 0,
+  simple: "Big states wanted representation by population; small states wanted equal votes — so they did both, one in each house.",
+  expl: "The <strong>Great Compromise</strong> created a <strong>bicameral (two-house) Congress</strong>: the <strong>Senate</strong> gives every state equal representation (2 each), while the <strong>House</strong> is based on population. This satisfied both large and small states." },
+{
+  id: 719, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "The Three-Fifths Compromise determined how to…",
+  choices: ["count enslaved people for representation and taxation", "divide power between Congress and the president", "elect the first president", "tax imported goods"],
+  answer: 0,
+  simple: "It decided that 3 out of every 5 enslaved people would be counted when figuring a state's population.",
+  expl: "The <strong>Three-Fifths Compromise</strong> settled how enslaved people would be counted toward a state's <strong>population</strong> (for both representation in the House and taxation): three out of every five were counted." },
+{
+  id: 720, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "Coining money and declaring war belong to which category shown in the diagram?",
+  graphic: { type: "federalism", highlight: "delegated" },
+  choices: ["Delegated powers (Federal government only)", "Reserved powers (States only)", "Concurrent powers (shared)", "Denied powers (neither)"],
+  answer: 0,
+  simple: "Only the national government can print money or declare war — those are delegated (federal) powers.",
+  expl: "<strong>Delegated powers</strong> belong only to the federal government — such as coining money, declaring war, and signing treaties.<br><br>Reserved powers go to the states (e.g., schools); concurrent powers are shared (e.g., taxing)." },
+{
+  id: 721, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "Which branch of government, shown in the diagram, interprets laws and can declare them unconstitutional?",
+  graphic: { type: "branches", highlight: "judicial" },
+  choices: ["the Judicial Branch", "the Legislative Branch", "the Executive Branch", "the Cabinet"],
+  answer: 0,
+  simple: "Courts (the Judicial Branch) interpret laws and can strike them down — that power is called judicial review.",
+  expl: "The <strong>Judicial Branch</strong> (the courts) interprets the laws and, through <strong>judicial review</strong>, can declare laws or actions <strong>unconstitutional</strong>. The Legislative branch makes laws; the Executive enforces them." },
+{
+  id: 722, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "The power of <strong>judicial review</strong> is an example of which constitutional principle?",
+  choices: ["checks and balances", "federalism", "salutary neglect", "mercantilism"],
+  answer: 0,
+  simple: "Courts striking down a law is one branch checking another — that's checks and balances.",
+  expl: "<strong>Judicial review</strong> lets the courts check the other branches by declaring their laws or actions unconstitutional. This is a key part of <strong>checks and balances</strong>, where each branch can limit the others." },
+{
+  id: 723, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "According to this document, one goal of the Constitution was to…",
+  doc: { source: "Preamble to the U.S. Constitution, 1787", text: "We the People of the United States, in Order to form a more perfect Union, establish Justice, insure domestic Tranquility, provide for the common defence, promote the general Welfare, and secure the Blessings of Liberty…" },
+  choices: ["establish justice and provide for the common defense", "create a king for the nation", "give all power to the individual states", "end all taxation"],
+  answer: 0,
+  simple: "The Preamble lists the goals: unity, justice, peace at home, defense, and protecting liberty.",
+  expl: "The <strong>Preamble</strong> states the goals of the Constitution: a more perfect union, <strong>justice</strong>, domestic tranquility (peace at home), the <strong>common defense</strong>, the general welfare, and the blessings of liberty." },
+
+// ----- The New Republic -----
+{
+  id: 724, subject: "history", topic: "h_republic", type: "mc", diff: "easy",
+  q: "Which was a precedent (tradition) set by President George Washington?",
+  choices: ["serving only two terms and creating a Cabinet of advisors", "declaring himself king", "joining a permanent alliance with France", "abolishing the Supreme Court"],
+  answer: 0,
+  simple: "Washington started traditions: only two terms, a cabinet of advisors, and staying neutral in foreign wars.",
+  expl: "<strong>Washington's precedents</strong> included serving only <strong>two terms</strong>, forming a <strong>Cabinet</strong> of department heads to advise him, and a foreign policy of <strong>neutrality</strong>. The two-term tradition lasted until it became the 22nd Amendment." },
+{
+  id: 725, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "What caused the Whiskey Rebellion?",
+  choices: ["an excise tax on whiskey that hurt western farmers", "a ban on growing corn", "the closing of Boston Harbor", "a new tax on tea"],
+  answer: 0,
+  simple: "Hamilton put a tax on whiskey, which angered frontier farmers who made and sold it.",
+  expl: "The <strong>Whiskey Rebellion</strong> was caused by Hamilton's <strong>excise tax on whiskey</strong>, which hit western Pennsylvania farmers hard. Washington's firm response (leading troops) showed the new federal government was strong enough to enforce its laws." },
+{
+  id: 726, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "Based on the chart, which party would most likely support a strong national government and a national bank?",
+  graphic: { type: "parties" },
+  choices: ["the Federalists (led by Hamilton)", "the Democratic-Republicans (led by Jefferson)", "the Loyalists", "the Anti-Federalists only"],
+  answer: 0,
+  simple: "The Federalists (Hamilton) wanted a strong national government and backed the national bank.",
+  expl: "The <strong>Federalists</strong>, led by <strong>Alexander Hamilton</strong>, favored a <strong>strong central government</strong>, a <strong>loose interpretation</strong> of the Constitution, and a national bank. The Democratic-Republicans (Jefferson) wanted more state power and strict interpretation." },
+{
+  id: 727, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "What attitude does this slogan show about America during the XYZ Affair?",
+  doc: { source: "American slogan during the XYZ Affair, 1798", text: "Millions for Defense, but not one cent for Tribute!" },
+  choices: ["America would fight rather than pay a bribe", "America was eager to surrender to France", "America wanted to rejoin the British Empire", "America refused to spend any money on its military"],
+  answer: 0,
+  simple: "America was saying: we'll spend a fortune to defend ourselves, but we won't pay France a bribe.",
+  expl: "During the <strong>XYZ Affair</strong>, French officials demanded a bribe before negotiating. The slogan '<strong>Millions for Defense, but not one cent for Tribute</strong>' shows America would rather fight (the Quasi-War) than pay — defending its national honor." },
+{
+  id: 728, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "The Alien and Sedition Acts were criticized because they appeared to violate which part of the Bill of Rights?",
+  choices: ["the 1st Amendment's freedom of speech and press", "the 2nd Amendment's right to bear arms", "the 5th Amendment's protection against double jeopardy", "the 10th Amendment's reserved powers"],
+  answer: 0,
+  simple: "The Sedition Act made it a crime to criticize the government — but the 1st Amendment protects free speech and press.",
+  expl: "The <strong>Sedition Act</strong> made it illegal to publish criticism of the government, which seemed to violate the <strong>1st Amendment</strong> guarantees of <strong>freedom of speech and the press</strong>. Jefferson and Madison protested with the Virginia and Kentucky Resolutions." },
+{
+  id: 729, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "Which idea is expressed in this document?",
+  doc: { source: "The Monroe Doctrine, 1823", text: "The American continents … are henceforth not to be considered as subjects for future colonization by any European powers. … we should consider any attempt on their part to extend their system to any portion of this hemisphere as dangerous to our peace and safety." },
+  choices: ["European nations should stay out of the Western Hemisphere", "the U.S. would colonize Europe", "the U.S. would join European wars", "America would return to British rule"],
+  answer: 0,
+  simple: "Monroe warned Europe: no new colonies in the Americas, and don't mess with the newly independent nations here.",
+  expl: "The <strong>Monroe Doctrine</strong> warned <strong>European powers not to colonize or interfere</strong> in the Western Hemisphere, and pledged the U.S. would defend the newly independent nations of the Americas. It expanded America's foreign policy beyond simple neutrality." },
+{
+  id: 730, subject: "history", topic: "h_republic", type: "mc", diff: "hard",
+  q: "Why did the Louisiana Purchase create a problem for Jefferson's belief in <strong>strict interpretation</strong> of the Constitution?",
+  choices: ["the Constitution does not specifically give the president power to buy land", "the purchase made the country smaller", "it required raising an army", "it violated the 1st Amendment"],
+  answer: 0,
+  simple: "Jefferson believed in only doing what the Constitution literally says — but it never says the president can buy land.",
+  expl: "Jefferson favored <strong>strict interpretation</strong> (the government can only do what the Constitution specifically lists). The Constitution <strong>never mentions buying land</strong>, so the purchase forced him to act more loosely. He did it anyway — gaining New Orleans and control of the Mississippi River." },
+{
+  id: 731, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "The Supreme Court case Marbury v. Madison is most important for establishing…",
+  choices: ["judicial review — the Court's power to declare laws unconstitutional", "the national bank", "the two-term limit for presidents", "freedom of religion"],
+  answer: 0,
+  simple: "Marbury v. Madison gave the Supreme Court the power to strike down laws that violate the Constitution.",
+  expl: "<strong>Marbury v. Madison</strong> (1803) established <strong>judicial review</strong> — the power of the Supreme Court to declare laws or actions <strong>unconstitutional</strong>. It made the judicial branch a true equal to the other two." },
+{
+  id: 732, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "Which was a major cause of the War of 1812?",
+  choices: ["British impressment of American sailors", "the purchase of Louisiana", "the Whiskey Rebellion", "the writing of the Monroe Doctrine"],
+  answer: 0,
+  simple: "Britain was kidnapping American sailors and forcing them into its navy — that's called impressment.",
+  expl: "A major cause of the <strong>War of 1812</strong> was British <strong>impressment</strong> — seizing American sailors and forcing them into the British navy. Other causes: seizing U.S. ships and arming Native Americans on the frontier." },
 ];
 
 // ===== Super-simple one-line explanations (plain English, no jargon) =====
