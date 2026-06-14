@@ -4074,6 +4074,135 @@ const QUESTIONS = [
   answer: 0,
   simple: "Britain was kidnapping American sailors and forcing them into its navy — that's called impressment.",
   expl: "A major cause of the <strong>War of 1812</strong> was British <strong>impressment</strong> — seizing American sailors and forcing them into the British navy. Other causes: seizing U.S. ships and arming Native Americans on the frontier." },
+
+// ===== More document-based questions (primary sources) =====
+// --- Colonial America ---
+{
+  id: 733, subject: "history", topic: "h_colonial", type: "mc", diff: "medium",
+  q: "This document is often called the first written constitution in America. What democratic idea does it establish?",
+  doc: { source: "Fundamental Orders of Connecticut, 1639", text: "…there should be an orderly and decent Government established according to God … to maintain and preserve the liberty and purity of the gospel … as also in our Civil Affairs to be guided and governed according to such Laws, Rules, Orders and Decrees as shall be made…" },
+  choices: ["a written plan of government with established laws", "rule by the king of England alone", "an economy based on slavery", "a ban on all religion"],
+  answer: 0,
+  simple: "The Fundamental Orders of Connecticut was the first written plan of government (constitution) in the colonies.",
+  expl: "The <strong>Fundamental Orders of Connecticut</strong> are considered the <strong>first written constitution</strong> in the Americas — a written plan that set up a government and the laws it would follow. This idea of a written framework of government later shaped the U.S. Constitution." },
+{
+  id: 734, subject: "history", topic: "h_colonial", type: "mc", diff: "medium",
+  q: "Which principle of democracy does this colonial assembly best illustrate?",
+  doc: { source: "On the Virginia House of Burgesses, established 1619", text: "The Governor … determined to have called the most worthy and discreet men, elected by the inhabitants, to make and ordain whatsoever laws and orders should by them be thought good and profitable for the colony." },
+  choices: ["representative government — the people elect leaders to make laws", "absolute monarchy", "direct democracy where everyone votes on every law", "military rule"],
+  answer: 0,
+  simple: "Colonists elected representatives to make their laws — that's representative democracy.",
+  expl: "The <strong>Virginia House of Burgesses</strong> (1619) was the first elected lawmaking body in the colonies. Because the colonists <strong>elected representatives</strong> to make laws for them, it models <strong>representative government</strong>." },
+{
+  id: 735, subject: "history", topic: "h_colonial", type: "mc", diff: "hard",
+  q: "These laws are an example of which British economic policy?",
+  doc: { source: "The Navigation Acts (1650s–1660s)", text: "No goods shall be imported into or exported out of the colonies … but in English ships … and certain enumerated goods, such as tobacco and sugar, shall be shipped only to England or to other English colonies." },
+  choices: ["mercantilism", "salutary neglect", "free trade", "laissez-faire capitalism"],
+  answer: 0,
+  simple: "Forcing colonies to trade only with England, to enrich England, is the heart of mercantilism.",
+  expl: "The <strong>Navigation Acts</strong> forced the colonies to trade only through England and ship key goods only to England. This is <strong>mercantilism</strong> — the colonies exist to enrich the mother country by supplying it and buying from it." },
+
+// --- Road to Revolution ---
+{
+  id: 736, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "What attitude toward Britain does this speech express?",
+  doc: { source: "Patrick Henry, speech to the Virginia Convention, 1775", text: "Is life so dear, or peace so sweet, as to be purchased at the price of chains and slavery? Forbid it, Almighty God! … give me liberty, or give me death!" },
+  choices: ["a willingness to fight Britain for freedom", "a desire to remain a loyal British colony", "support for paying the new taxes", "a wish to avoid conflict at all costs"],
+  answer: 0,
+  simple: "Patrick Henry says he'd rather die than live without liberty — he's ready to fight Britain.",
+  expl: "Patrick Henry's famous line '<strong>give me liberty, or give me death</strong>' shows a fierce <strong>willingness to fight</strong> Britain rather than submit. It rallied colonists toward armed revolution." },
+{
+  id: 737, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "What colonial complaint is expressed in this resolution?",
+  doc: { source: "Declaration of Rights, Stamp Act Congress, 1765", text: "That no taxes should be imposed on them, but with their own consent, given personally, or by their representatives." },
+  choices: ["taxation without representation is unjust", "the colonies want to leave Britain immediately", "colonists should not have to obey any laws", "Britain should send more soldiers"],
+  answer: 0,
+  simple: "Colonists argued Britain shouldn't tax them unless they had representatives voting on those taxes — 'no taxation without representation.'",
+  expl: "The Stamp Act Congress argued that colonists could only be taxed <strong>with their consent</strong>, through their own representatives. Since they had no representatives in Parliament, this is the famous protest: <strong>'no taxation without representation.'</strong>" },
+{
+  id: 738, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "Which British action is the colonists protesting in this grievance?",
+  doc: { source: "Declaration of Independence, list of grievances, 1776", text: "He has kept among us, in times of peace, Standing Armies without the Consent of our legislatures … For quartering large bodies of armed troops among us." },
+  choices: ["forcing colonists to house and support British soldiers", "closing all the colonial schools", "banning the colonists from fishing", "taxing only the wealthy"],
+  answer: 0,
+  simple: "They're angry about the Quartering Act — being forced to keep British troops in their towns and homes.",
+  expl: "This grievance protests Britain keeping <strong>standing armies</strong> in peacetime and <strong>quartering troops</strong> among the colonists (the Quartering Act). The Declaration listed such abuses to justify independence." },
+{
+  id: 739, subject: "history", topic: "h_revolution", type: "mc", diff: "medium",
+  q: "According to this excerpt, where does a government get its authority?",
+  doc: { source: "Declaration of Independence, 1776", text: "That to secure these rights, Governments are instituted among Men, deriving their just powers from the consent of the governed." },
+  choices: ["from the consent of the people", "from the king's divine right", "from the wealthiest landowners", "from the British Parliament"],
+  answer: 0,
+  simple: "Government only has power because the people agree to give it — 'consent of the governed.'",
+  expl: "This line states that governments get their '<strong>just powers from the consent of the governed</strong>' — authority comes from the <strong>people</strong>, not a king. It reflects John Locke's social-contract philosophy." },
+
+// --- The Constitution ---
+{
+  id: 740, subject: "history", topic: "h_constitution", type: "mc", diff: "hard",
+  q: "Which constitutional principle is this Federalist essay defending?",
+  doc: { source: "James Madison, Federalist No. 51, 1788", text: "Ambition must be made to counteract ambition. … the great security against a gradual concentration of the several powers in the same department consists in giving to those who administer each department the necessary constitutional means … to resist encroachments of the others." },
+  choices: ["checks and balances / separation of powers", "mercantilism", "salutary neglect", "judicial review only"],
+  answer: 0,
+  simple: "Madison says each branch should be able to limit the others so no one branch grabs all the power — checks and balances.",
+  expl: "In <strong>Federalist No. 51</strong>, Madison argues each branch must have the means to '<strong>resist encroachments of the others</strong>' — '<strong>ambition must counteract ambition</strong>.' This defends <strong>separation of powers and checks and balances</strong>." },
+{
+  id: 741, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "This amendment is the constitutional basis for which type of power?",
+  doc: { source: "Tenth Amendment, U.S. Constitution, 1791", text: "The powers not delegated to the United States by the Constitution, nor prohibited by it to the States, are reserved to the States respectively, or to the people." },
+  choices: ["reserved powers — powers kept by the states", "delegated powers — powers of the federal government only", "the power to declare war", "the power to coin money"],
+  answer: 0,
+  simple: "Anything the Constitution doesn't give the federal government is left to the states — those are reserved powers.",
+  expl: "The <strong>10th Amendment</strong> says powers not given to the federal government are '<strong>reserved to the States</strong>.' These are <strong>reserved powers</strong> (like running schools, licensing, and elections)." },
+{
+  id: 742, subject: "history", topic: "h_constitution", type: "mc", diff: "medium",
+  q: "Which freedoms are protected by this amendment?",
+  doc: { source: "First Amendment, U.S. Constitution, 1791", text: "Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech, or of the press; or the right of the people peaceably to assemble…" },
+  choices: ["religion, speech, press, and assembly", "the right to bear arms", "protection from unreasonable searches", "the right to a jury trial"],
+  answer: 0,
+  simple: "The 1st Amendment protects religion, speech, press, and the right to assemble (and petition).",
+  expl: "The <strong>First Amendment</strong> protects <strong>freedom of religion, speech, press, and assembly</strong> (plus petition). The Alien and Sedition Acts were criticized for violating its free-speech and free-press protections." },
+{
+  id: 743, subject: "history", topic: "h_constitution", type: "mc", diff: "hard",
+  q: "This clause is the basis for which idea?",
+  doc: { source: "Article I, Section 8 (the 'Elastic Clause'), U.S. Constitution", text: "[Congress shall have Power] To make all Laws which shall be necessary and proper for carrying into Execution the foregoing Powers…" },
+  choices: ["implied powers / loose interpretation of the Constitution", "states' rights to ignore federal law", "the two-term limit for presidents", "freedom of the seas"],
+  answer: 0,
+  simple: "The 'necessary and proper' clause lets Congress stretch its powers to get the job done — that's implied powers / loose interpretation.",
+  expl: "The <strong>Elastic Clause</strong> ('necessary and proper') lets Congress stretch beyond its listed powers to do its job. This is the basis for <strong>implied powers</strong> and a <strong>loose interpretation</strong> of the Constitution — Hamilton used it to justify the national bank." },
+
+// --- The New Republic ---
+{
+  id: 744, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "What foreign-policy advice is Washington giving in this address?",
+  doc: { source: "George Washington, Farewell Address, 1796", text: "It is our true policy to steer clear of permanent alliances with any portion of the foreign world … Why forego the advantages of so peculiar a situation? … 'Tis our true policy to … take an impartial position." },
+  choices: ["avoid permanent alliances and stay neutral", "form a permanent alliance with France", "immediately go to war with Britain", "rejoin the British Empire"],
+  answer: 0,
+  simple: "Washington warned America to stay neutral and not get tangled in permanent alliances with foreign countries.",
+  expl: "In his <strong>Farewell Address</strong>, Washington urged the nation to '<strong>steer clear of permanent alliances</strong>' and stay <strong>neutral</strong> in foreign affairs — setting a precedent of neutrality that lasted for over a century." },
+{
+  id: 745, subject: "history", topic: "h_republic", type: "mc", diff: "hard",
+  q: "What idea about state and federal power does this resolution promote?",
+  doc: { source: "Kentucky Resolution (Thomas Jefferson), 1798", text: "…that whensoever the general [federal] government assumes undelegated powers, its acts are unauthoritative, void, and of no force … the several states … have the right to judge for themselves." },
+  choices: ["states may nullify federal laws they consider unconstitutional", "the federal government is always supreme over the states", "only the president can decide what is constitutional", "states have no rights at all"],
+  answer: 0,
+  simple: "Jefferson argued states could refuse to obey (nullify) federal laws they believed were unconstitutional — states' rights.",
+  expl: "The <strong>Virginia and Kentucky Resolutions</strong> argued that states could <strong>nullify</strong> (refuse to enforce) federal laws they judged unconstitutional — a strong <strong>states' rights</strong> position, written to protest the Alien and Sedition Acts." },
+{
+  id: 746, subject: "history", topic: "h_republic", type: "mc", diff: "medium",
+  q: "What does this line from Jefferson's inaugural address suggest about the nation after the election of 1800?",
+  doc: { source: "Thomas Jefferson, First Inaugural Address, 1801", text: "Every difference of opinion is not a difference of principle. … We are all Republicans, we are all Federalists." },
+  choices: ["a call for unity and a peaceful transfer of power between parties", "a demand to outlaw the Federalist party", "a plan to start a war", "a rejection of the Constitution"],
+  answer: 0,
+  simple: "After a bitter election, Jefferson called for everyone to come together — and power passed peacefully between rival parties.",
+  expl: "Jefferson's line '<strong>We are all Republicans, we are all Federalists</strong>' was a call for <strong>unity</strong> after the heated election of 1800. That election is famous as the first <strong>peaceful transfer of power</strong> between opposing parties in U.S. history." },
+{
+  id: 747, subject: "history", topic: "h_republic", type: "mc", diff: "hard",
+  q: "Which power of the courts is Chief Justice Marshall describing here?",
+  doc: { source: "Chief Justice John Marshall, Marbury v. Madison, 1803", text: "It is emphatically the province and duty of the judicial department to say what the law is. … a law repugnant to the constitution is void." },
+  choices: ["judicial review — the power to strike down unconstitutional laws", "the power to declare war", "the power to collect taxes", "the power to veto bills"],
+  answer: 0,
+  simple: "Marshall says it's the courts' job to interpret the law, and any law that violates the Constitution is void — that's judicial review.",
+  expl: "In <strong>Marbury v. Madison</strong>, Marshall declared it the courts' duty 'to say what the law is' and that '<strong>a law repugnant to the constitution is void</strong>.' This established <strong>judicial review</strong> — the power to declare laws unconstitutional." },
 ];
 
 // ===== Super-simple one-line explanations (plain English, no jargon) =====
