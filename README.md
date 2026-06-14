@@ -23,7 +23,7 @@ and open it in Safari.)
 
 ## What's inside
 
-- **455 questions** across 13 topics (35 per topic), each rated Easy/Medium/Hard, weighted toward what's actually on the
+- **463 questions** across 14 topics, each rated Easy/Medium/Hard, including graph-reading questions for f & f′, weighted toward what's actually on the
   final: derivative rules (product/quotient/chain), tangent lines & particle
   motion, limits & continuity (incl. IVT), integrals & Riemann sums, unit
   circle & trig graphs, trig identities & equations, exponentials & logs,

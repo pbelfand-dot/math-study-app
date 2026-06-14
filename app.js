@@ -80,12 +80,73 @@ const QBYID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 const DIFF_LABEL = { easy: "🟢 Easy", medium: "🟡 Medium", hard: "🔴 Hard" };
 const diffOf = (q) => q.diff || (typeof DIFFICULTY !== "undefined" && DIFFICULTY[q.id]) || "medium";
 
+// ---------- Graph rendering (SVG, for f / f′ questions) ----------
+function renderGraph(g, opts) {
+  opts = opts || {};
+  const W = 380, H = 310, pad = 26;
+  const sx = (x) => pad + ((x - g.xmin) / (g.xmax - g.xmin)) * (W - 2 * pad);
+  const sy = (y) => (H - pad) - ((y - g.ymin) / (g.ymax - g.ymin)) * (H - 2 * pad);
+  const xstep = Math.max(1, Math.ceil((g.xmax - g.xmin) / 12));
+  const ystep = Math.max(1, Math.ceil((g.ymax - g.ymin) / 8));
+  let s = `<svg class="graph" viewBox="0 0 ${W} ${H}" role="img" aria-label="${g.title || "graph"}">`;
+  // gridlines
+  for (let x = Math.ceil(g.xmin); x <= g.xmax; x++)
+    s += `<line class="grid" x1="${sx(x)}" y1="${sy(g.ymin)}" x2="${sx(x)}" y2="${sy(g.ymax)}"/>`;
+  for (let y = Math.ceil(g.ymin); y <= g.ymax; y++)
+    s += `<line class="grid" x1="${sx(g.xmin)}" y1="${sy(y)}" x2="${sx(g.xmax)}" y2="${sy(y)}"/>`;
+  // shaded x-bands (only when showing the solution)
+  if (opts.showShade && g.shade) {
+    g.shade.forEach((b) => {
+      s += `<rect class="gshade" x="${sx(b[0])}" y="${sy(g.ymax)}" width="${sx(b[1]) - sx(b[0])}" height="${sy(g.ymin) - sy(g.ymax)}"/>`;
+    });
+    if (g.shadeLabel) s += `<text class="glabel" x="${W - pad}" y="${sy(g.ymax) + 12}" text-anchor="end">${g.shadeLabel}</text>`;
+  }
+  // vertical marker lines
+  if (g.vlines) g.vlines.forEach((v) => {
+    s += `<line class="gvline" x1="${sx(v.x)}" y1="${sy(g.ymin)}" x2="${sx(v.x)}" y2="${sy(g.ymax)}"/>`;
+    if (v.label) s += `<text class="gvlabel" x="${sx(v.x)}" y="${sy(g.ymax) - 4}" text-anchor="middle">${v.label}</text>`;
+  });
+  // axes
+  s += `<line class="axis" x1="${sx(g.xmin)}" y1="${sy(0)}" x2="${sx(g.xmax)}" y2="${sy(0)}"/>`;
+  s += `<line class="axis" x1="${sx(0)}" y1="${sy(g.ymin)}" x2="${sx(0)}" y2="${sy(g.ymax)}"/>`;
+  // axis number labels
+  for (let x = Math.ceil(g.xmin); x <= g.xmax; x++) {
+    if (x === 0 || x % xstep !== 0) continue;
+    s += `<text class="gtick" x="${sx(x)}" y="${sy(0) + 12}" text-anchor="middle">${x}</text>`;
+  }
+  for (let y = Math.ceil(g.ymin); y <= g.ymax; y++) {
+    if (y === 0 || y % ystep !== 0) continue;
+    s += `<text class="gtick" x="${sx(0) - 5}" y="${sy(y) + 3}" text-anchor="end">${y}</text>`;
+  }
+  // smooth curve through points (Catmull-Rom → Bézier)
+  if (g.curve && g.curve.length) {
+    const P = g.curve.map((p) => [sx(p[0]), sy(p[1])]);
+    let d = `M ${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;
+    for (let i = 0; i < P.length - 1; i++) {
+      const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+      const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    s += `<path class="gcurve" d="${d}"/>`;
+  }
+  // endpoint dots
+  if (g.ends) g.ends.forEach((e) => {
+    s += `<circle class="gdot ${e[2] ? "gdot-closed" : "gdot-open"}" cx="${sx(e[0])}" cy="${sy(e[1])}" r="4"/>`;
+  });
+  // title
+  if (g.title) s += `<text class="gtitle" x="${W - pad}" y="${pad - 8}" text-anchor="end">${g.title}</text>`;
+  s += `</svg>`;
+  return s;
+}
+
 // ---------- Navigation ----------
-const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "reference"];
+const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "examples", "reference"];
 function show(name) {
   SCREENS.forEach((s) => $("screen-" + s).classList.toggle("hidden", s !== name));
   window.scrollTo(0, 0);
   if (name === "home") renderHome();
+  if (name === "examples") renderExamples();
 }
 document.querySelectorAll("[data-nav]").forEach((b) =>
   b.addEventListener("click", () => {
@@ -222,6 +283,41 @@ function startTopicPractice(key, label) {
   if (!pool.length) { alert("No questions in this topic yet."); return; }
   startSession({ mode: "practice", label: label, questions: shuffle(pool) });
 }
+
+// ---------- Worked Examples screen ----------
+let exampleTopic = Object.keys(TOPICS)[0];
+function exampleQuestionFor(key) {
+  // a representative, well-explained question for the topic
+  return QUESTIONS.find((q) => q.topic === key && q.expl && q.expl.length > 30) ||
+         QUESTIONS.find((q) => q.topic === key);
+}
+function renderExamples() {
+  const chips = $("example-topics");
+  chips.innerHTML = "";
+  Object.entries(TOPICS).forEach(([key, label]) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (key === exampleTopic ? " selected" : "");
+    b.textContent = label;
+    b.addEventListener("click", () => { exampleTopic = key; renderExamples(); });
+    chips.appendChild(b);
+  });
+  const q = exampleQuestionFor(exampleTopic);
+  const body = $("example-body");
+  if (!q) { body.innerHTML = "<p class='muted'>No example yet for this topic.</p>"; return; }
+  const ans = q.type === "mc" ? `${LETTERS[q.answer]}. ${q.choices[q.answer]}` : q.answer[0];
+  const simple = q.simple || SIMPLE[q.id];
+  const html = `
+    <div class="ex-card">
+      <div class="ex-tag">Example · ${TOPICS[q.topic]}</div>
+      <div class="ex-q">${q.q}${q.graph ? renderGraph(q.graph, { showShade: false }) : ""}</div>
+      <div class="fb-answer"><strong>Answer:</strong> ${ans}</div>
+      ${simple ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simple}</div>` : ""}
+      <div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${q.graph ? renderGraph(q.graph, { showShade: true }) : ""}</div>
+    </div>`;
+  setMath(body, html);
+  $("btn-example-practice").textContent = `Practice ${TOPICS[exampleTopic]} →`;
+}
+$("btn-example-practice").addEventListener("click", () => startTopicPractice(exampleTopic, TOPICS[exampleTopic]));
 
 $("btn-reset").addEventListener("click", () => {
   if (confirm("Really wipe ALL progress (stats, streaks, test history)?")) {
@@ -390,7 +486,7 @@ function renderQuestion() {
   dpill.textContent = DIFF_LABEL[dlevel];
   dpill.className = "pill diff-pill diff-" + dlevel;
   $("q-calc").textContent = q.calc ? "🧮 Calculator OK" : "🚫 No calculator";
-  setMath($("q-text"), q.q);
+  setMath($("q-text"), q.q + (q.graph ? renderGraph(q.graph, { showShade: false }) : ""));
 
   const choicesEl = $("choices");
   const inputArea = $("input-area");
@@ -489,7 +585,7 @@ function checkPractice() {
   if (!correct && q.type === "input") html += `<div class="fb-answer"><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
   const simpleLine = q.simple || SIMPLE[q.id];
   if (simpleLine) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simpleLine}</div>`;
-  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}</div>`;
+  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${q.graph ? renderGraph(q.graph, { showShade: true }) : ""}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
   fb.classList.remove("hidden");
@@ -692,11 +788,11 @@ function renderResults(results, score, isTest, totalOverride) {
       const rightAns = r.q.type === "mc" ? `${LETTERS[r.q.answer]}. ${r.q.choices[r.q.answer]}` : r.q.answer[0];
       div.innerHTML = `
         <div class="ri-head">${r.correct ? "✅" : "❌"} Question ${i + 1} · ${TOPICS[r.q.topic]} · ${DIFF_LABEL[diffOf(r.q)]}</div>
-        <div class="ri-q">${r.q.q}</div>
+        <div class="ri-q">${r.q.q}${r.q.graph ? renderGraph(r.q.graph, { showShade: false }) : ""}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
         ${(r.q.simple || SIMPLE[r.q.id]) ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${r.q.simple || SIMPLE[r.q.id]}</div>` : ""}
-        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}</div>`;
+        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}${r.q.graph ? renderGraph(r.q.graph, { showShade: true }) : ""}</div>`;
       renderMath(div);
       detail.appendChild(div);
     });

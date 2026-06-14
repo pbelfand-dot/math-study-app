@@ -418,6 +418,30 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 }
 .q-text .katex { font-size: 1.12em; }
 
+/* ===== Graphs (SVG for f / f′ questions) ===== */
+.graph {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 16px auto 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.graph .grid { stroke: #eef1f6; stroke-width: 1; }
+.graph .axis { stroke: #9aa3b2; stroke-width: 1.5; }
+.graph .gcurve { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.graph .gshade { fill: rgba(201, 42, 42, 0.10); }
+.graph .gvline { stroke: #69707d; stroke-width: 1.2; stroke-dasharray: 4 3; }
+.graph .gtick { fill: #8a93a3; font-size: 9px; }
+.graph .glabel { fill: var(--bad); font-size: 11px; font-weight: 700; }
+.graph .gvlabel { fill: #495057; font-size: 10px; font-weight: 700; }
+.graph .gtitle { fill: #868e96; font-size: 11px; font-style: italic; }
+.graph .gdot { stroke: var(--ink); stroke-width: 2; }
+.graph .gdot-closed { fill: var(--ink); }
+.graph .gdot-open { fill: #fff; }
+
 .choices { display: flex; flex-direction: column; gap: 10px; }
 .choice {
   display: flex;
@@ -635,6 +659,30 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .result-item .ri-q { margin-bottom: 12px; line-height: 1.6; }
 .result-item .ri-ans { font-size: 0.97rem; margin-bottom: 8px; line-height: 1.55; }
 
+/* ===== Worked Examples ===== */
+.ex-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  margin-top: 16px;
+}
+.ex-tag {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 3px 12px;
+  margin-bottom: 12px;
+}
+.ex-q { font-size: 1.15rem; line-height: 1.6; margin-bottom: 4px; }
+#example-topics { margin-bottom: 4px; }
+
 /* ===== Reference ===== */
 .ref-card {
   background: var(--card);
@@ -724,6 +772,7 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
     <button class="brand" data-nav="home">∫ PreCalc&nbsp;Prep</button>
     <nav class="topnav">
       <button data-nav="home">Home</button>
+      <button data-nav="examples">Examples</button>
       <button data-nav="practice-setup">Practice</button>
       <button data-nav="test-setup">Take a Test</button>
       <button data-nav="reference">Cheat Sheet</button>
@@ -767,6 +816,11 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
         <span class="big-card-emoji">🩹</span>
         <span class="big-card-title">Fix My Mistakes</span>
         <span class="big-card-sub" id="missed-count-sub">Redo every question you've missed</span>
+      </button>
+      <button class="big-card" data-nav="examples">
+        <span class="big-card-emoji">📖</span>
+        <span class="big-card-title">Worked Examples</span>
+        <span class="big-card-sub">See one fully solved problem for each topic before you drill</span>
       </button>
       <button class="big-card" data-nav="reference">
         <span class="big-card-emoji">📜</span>
@@ -915,6 +969,15 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
     </div>
   </section>
 
+  <!-- ============ WORKED EXAMPLES ============ -->
+  <section id="screen-examples" class="screen hidden">
+    <h1>Worked Examples 📖</h1>
+    <p class="muted">Pick a topic to see one problem fully solved, step by step — then go practice the same kind.</p>
+    <div id="example-topics" class="chips"></div>
+    <div id="example-body"></div>
+    <button id="btn-example-practice" class="primary-btn">Practice this topic →</button>
+  </section>
+
   <!-- ============ REFERENCE ============ -->
   <section id="screen-reference" class="screen hidden">
     <h1>Cheat Sheet 📜</h1>
@@ -940,6 +1003,7 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 const TOPICS = {
   deriv:     "Derivatives: Rules",
   derivapp:  "Derivatives: Tangent Lines & Motion",
+  graphs:    "Reading Graphs of f & f′",
   limits:    "Limits & Continuity",
   integ:     "Integrals & Riemann Sums",
   trig:      "Trig: Unit Circle & Graphs",
@@ -4642,6 +4706,87 @@ const QUESTIONS = [
   answer:["20"],
   simple:"2 + 4 + 6 + 8 = 20.",
   expl:"\\(\\sum_{k=1}^{4} 2k = 2 + 4 + 6 + 8 = 20\\)." },
+// ===== batch: graph reasoning (f & f′), DeltaMath-style =====
+{
+  id: 600, topic: "graphs", calc: false, type: "mc", diff: "medium",
+  q: "The graph of \\(f'\\), the derivative of \\(f\\), is shown below. On which interval is \\(f\\) <strong>decreasing</strong> over \\([-9, 9]\\)?",
+  graph: { title: "Graph of f′", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,6],[-8,4],[-7,2.5],[-6,1.8],[-5,1.5],[-4,1.8],[-3,2],[-2,1.5],[-1,0],[0,-2.5],[1,-4],[2,-4.8],[3,-5],[4,-4],[5,0],[6,2.5],[7,3.8],[8,4.5],[9,5]],
+    ends: [[-9,6,true],[9,5,true]], shade: [[-1,5]], shadeLabel: "f′ negative" },
+  choices: ["\\((-1, 5)\\)", "\\((-9, -1) \\cup (5, 9)\\)", "\\((-5, 1)\\)", "\\((-9, 9)\\)"],
+  answer: 0,
+  simple: "f goes downhill exactly where f′ is below the x-axis. That's between x = −1 and x = 5.",
+  expl: "<strong>f is decreasing exactly where f′ is negative</strong> (below the x-axis).<br><br>On the graph of \\(f'\\), the curve dips below the x-axis between \\(x = -1\\) and \\(x = 5\\).<br><br>So \\(f\\) is decreasing on \\((-1, 5)\\)." },
+{
+  id: 601, topic: "graphs", calc: false, type: "mc", diff: "medium",
+  q: "The graph of \\(f'\\), the derivative of \\(f\\), is shown below. On which interval(s) is \\(f\\) <strong>increasing</strong> over \\([-9, 9]\\)?",
+  graph: { title: "Graph of f′", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,6],[-8,4],[-7,2.5],[-6,1.8],[-5,1.5],[-4,1.8],[-3,2],[-2,1.5],[-1,0],[0,-2.5],[1,-4],[2,-4.8],[3,-5],[4,-4],[5,0],[6,2.5],[7,3.8],[8,4.5],[9,5]],
+    ends: [[-9,6,true],[9,5,true]], shade: [[-9,-1],[5,9]], shadeLabel: "f′ positive" },
+  choices: ["\\((-9, -1) \\cup (5, 9)\\)", "\\((-1, 5)\\)", "\\((0, 9)\\)", "\\((-9, 9)\\)"],
+  answer: 0,
+  simple: "f goes uphill where f′ is above the x-axis — on the left of −1 and to the right of 5.",
+  expl: "<strong>f is increasing exactly where f′ is positive</strong> (above the x-axis).<br><br>The graph of \\(f'\\) is above the x-axis for \\(x < -1\\) and for \\(x > 5\\).<br><br>So \\(f\\) is increasing on \\((-9, -1) \\cup (5, 9)\\)." },
+{
+  id: 602, topic: "graphs", calc: false, type: "mc", diff: "medium",
+  q: "The graph of \\(f'\\) is shown. At which \\(x\\)-value does \\(f\\) have a <strong>relative minimum</strong>?",
+  graph: { title: "Graph of f′", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,6],[-8,4],[-7,2.5],[-6,1.8],[-5,1.5],[-4,1.8],[-3,2],[-2,1.5],[-1,0],[0,-2.5],[1,-4],[2,-4.8],[3,-5],[4,-4],[5,0],[6,2.5],[7,3.8],[8,4.5],[9,5]],
+    ends: [[-9,6,true],[9,5,true]], vlines: [{x:5,label:"min"}] },
+  choices: ["\\(x = 5\\)", "\\(x = -1\\)", "\\(x = 3\\)", "\\(x = 0\\)"],
+  answer: 0,
+  simple: "A valley in f happens where f′ switches from negative to positive — that's at x = 5.",
+  expl: "A <strong>relative minimum</strong> of \\(f\\) occurs where \\(f'\\) changes from <strong>negative to positive</strong>.<br><br>On the graph, \\(f'\\) crosses up through zero at \\(x = 5\\) (it was below the axis, then goes above).<br><br>So \\(f\\) has a relative minimum at \\(x = 5\\). (At \\(x = -1\\), \\(f'\\) goes positive→negative, which is a relative <em>maximum</em>.)" },
+{
+  id: 603, topic: "graphs", calc: false, type: "mc", diff: "hard",
+  q: "The graph of \\(f'\\) is shown. At which \\(x\\)-value does \\(f\\) have a <strong>relative maximum</strong>?",
+  graph: { title: "Graph of f′", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,6],[-8,4],[-7,2.5],[-6,1.8],[-5,1.5],[-4,1.8],[-3,2],[-2,1.5],[-1,0],[0,-2.5],[1,-4],[2,-4.8],[3,-5],[4,-4],[5,0],[6,2.5],[7,3.8],[8,4.5],[9,5]],
+    ends: [[-9,6,true],[9,5,true]], vlines: [{x:-1,label:"max"}] },
+  choices: ["\\(x = -1\\)", "\\(x = 5\\)", "\\(x = -5\\)", "\\(x = 2\\)"],
+  answer: 0,
+  simple: "A peak in f happens where f′ switches from positive to negative — that's at x = −1.",
+  expl: "A <strong>relative maximum</strong> of \\(f\\) occurs where \\(f'\\) changes from <strong>positive to negative</strong>.<br><br>On the graph, \\(f'\\) crosses down through zero at \\(x = -1\\).<br><br>So \\(f\\) has a relative maximum at \\(x = -1\\)." },
+{
+  id: 604, topic: "graphs", calc: false, type: "mc", diff: "medium",
+  q: "The differentiable function \\(f\\) is shown below. On which interval is \\(f\\) <strong>decreasing</strong>?",
+  graph: { title: "Graph of f", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,-3],[-8,-1.5],[-7,0],[-6,1.8],[-5,3.2],[-4,4.3],[-3,4.8],[-2,4.5],[-1,3.5],[0,2],[1,0],[2,-1.8],[3,-2.9],[4,-3.2],[5,-2.8],[6,-1.5],[7,0.5],[8,2.5],[9,4.5]],
+    ends: [[-9,-3,true],[9,4.5,true]], shade: [[-3,4]], shadeLabel: "going down" },
+  choices: ["\\((-3, 4)\\)", "\\((-9, -3)\\)", "\\((4, 9)\\)", "\\((-3, 9)\\)"],
+  answer: 0,
+  simple: "Just look at where the f graph itself heads downhill — from its peak at x = −3 to its valley at x = 4.",
+  expl: "Read the graph of \\(f\\) directly: it rises to a peak at \\(x = -3\\), falls to a valley at \\(x = 4\\), then rises again.<br><br>The curve is going <strong>downhill</strong> between the peak and the valley.<br><br>So \\(f\\) is decreasing on \\((-3, 4)\\)." },
+{
+  id: 605, topic: "graphs", calc: false, type: "mc", diff: "hard",
+  q: "The graph of \\(f\\) is shown. Which statement correctly orders \\(f'(-6)\\), \\(f'(-3)\\), and \\(f'(0)\\)?",
+  graph: { title: "Graph of f", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,-3],[-8,-1.5],[-7,0],[-6,1.8],[-5,3.2],[-4,4.3],[-3,4.8],[-2,4.5],[-1,3.5],[0,2],[1,0],[2,-1.8],[3,-2.9],[4,-3.2],[5,-2.8],[6,-1.5],[7,0.5],[8,2.5],[9,4.5]],
+    ends: [[-9,-3,true],[9,4.5,true]], vlines: [{x:-6,label:"−6"},{x:-3,label:"−3"},{x:0,label:"0"}] },
+  choices: ["\\(f'(0) < f'(-3) < f'(-6)\\)", "\\(f'(-6) < f'(-3) < f'(0)\\)", "\\(f'(-3) < f'(0) < f'(-6)\\)", "\\(f'(0) < f'(-6) < f'(-3)\\)"],
+  answer: 0,
+  simple: "At x = −6 the graph climbs (slope +), at x = −3 it's a flat peak (slope 0), at x = 0 it falls (slope −). So negative < zero < positive.",
+  expl: "Read the slope of \\(f\\) at each point:<br><br>• At \\(x = -6\\), \\(f\\) is <strong>increasing</strong> → \\(f'(-6) > 0\\) (positive).<br>• At \\(x = -3\\), \\(f\\) has a <strong>horizontal tangent</strong> at its peak → \\(f'(-3) = 0\\).<br>• At \\(x = 0\\), \\(f\\) is <strong>decreasing</strong> → \\(f'(0) < 0\\) (negative).<br><br>Since negative < zero < positive: \\(f'(0) < f'(-3) < f'(-6)\\)." },
+{
+  id: 606, topic: "graphs", calc: false, type: "mc", diff: "medium",
+  q: "The graph of \\(f\\) is shown. At which \\(x\\)-values does \\(f\\) have a <strong>horizontal tangent line</strong> (\\(f'(x) = 0\\))?",
+  graph: { title: "Graph of f", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,-3],[-8,-1.5],[-7,0],[-6,1.8],[-5,3.2],[-4,4.3],[-3,4.8],[-2,4.5],[-1,3.5],[0,2],[1,0],[2,-1.8],[3,-2.9],[4,-3.2],[5,-2.8],[6,-1.5],[7,0.5],[8,2.5],[9,4.5]],
+    ends: [[-9,-3,true],[9,4.5,true]], vlines: [{x:-3,label:"−3"},{x:4,label:"4"}] },
+  choices: ["\\(x = -3\\) and \\(x = 4\\)", "\\(x = 0\\) only", "\\(x = -3\\) only", "\\(x = -6\\) and \\(x = 0\\)"],
+  answer: 0,
+  simple: "Horizontal tangent = flat spot. The graph flattens at its peak (x = −3) and its valley (x = 4).",
+  expl: "A <strong>horizontal tangent</strong> happens where the graph momentarily flattens — at its peaks and valleys.<br><br>The graph of \\(f\\) has a peak at \\(x = -3\\) and a valley at \\(x = 4\\).<br><br>So \\(f'(x) = 0\\) at \\(x = -3\\) and \\(x = 4\\)." },
+{
+  id: 607, topic: "graphs", calc: false, type: "mc", diff: "medium",
+  q: "The graph of \\(f\\) is shown. On which interval is \\(f'(x) > 0\\) (i.e. \\(f\\) increasing) closest to the left side?",
+  graph: { title: "Graph of f", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+    curve: [[-9,-3],[-8,-1.5],[-7,0],[-6,1.8],[-5,3.2],[-4,4.3],[-3,4.8],[-2,4.5],[-1,3.5],[0,2],[1,0],[2,-1.8],[3,-2.9],[4,-3.2],[5,-2.8],[6,-1.5],[7,0.5],[8,2.5],[9,4.5]],
+    ends: [[-9,-3,true],[9,4.5,true]], shade: [[-9,-3]], shadeLabel: "going up" },
+  choices: ["\\((-9, -3)\\)", "\\((-3, 4)\\)", "\\((4, 9)\\)", "\\((-9, 9)\\)"],
+  answer: 0,
+  simple: "f′ > 0 means f is climbing. On the far left, the graph climbs from x = −9 up to the peak at x = −3.",
+  expl: "\\(f'(x) > 0\\) means \\(f\\) is <strong>increasing</strong> (going uphill).<br><br>On the left side, the graph of \\(f\\) climbs steadily from \\(x = -9\\) up to its peak at \\(x = -3\\).<br><br>So \\(f' > 0\\) on \\((-9, -3)\\)." },
 ];
 
 // ===== Super-simple one-line explanations (plain English, no jargon) =====
@@ -4983,12 +5128,73 @@ const QBYID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 const DIFF_LABEL = { easy: "🟢 Easy", medium: "🟡 Medium", hard: "🔴 Hard" };
 const diffOf = (q) => q.diff || (typeof DIFFICULTY !== "undefined" && DIFFICULTY[q.id]) || "medium";
 
+// ---------- Graph rendering (SVG, for f / f′ questions) ----------
+function renderGraph(g, opts) {
+  opts = opts || {};
+  const W = 380, H = 310, pad = 26;
+  const sx = (x) => pad + ((x - g.xmin) / (g.xmax - g.xmin)) * (W - 2 * pad);
+  const sy = (y) => (H - pad) - ((y - g.ymin) / (g.ymax - g.ymin)) * (H - 2 * pad);
+  const xstep = Math.max(1, Math.ceil((g.xmax - g.xmin) / 12));
+  const ystep = Math.max(1, Math.ceil((g.ymax - g.ymin) / 8));
+  let s = `<svg class="graph" viewBox="0 0 ${W} ${H}" role="img" aria-label="${g.title || "graph"}">`;
+  // gridlines
+  for (let x = Math.ceil(g.xmin); x <= g.xmax; x++)
+    s += `<line class="grid" x1="${sx(x)}" y1="${sy(g.ymin)}" x2="${sx(x)}" y2="${sy(g.ymax)}"/>`;
+  for (let y = Math.ceil(g.ymin); y <= g.ymax; y++)
+    s += `<line class="grid" x1="${sx(g.xmin)}" y1="${sy(y)}" x2="${sx(g.xmax)}" y2="${sy(y)}"/>`;
+  // shaded x-bands (only when showing the solution)
+  if (opts.showShade && g.shade) {
+    g.shade.forEach((b) => {
+      s += `<rect class="gshade" x="${sx(b[0])}" y="${sy(g.ymax)}" width="${sx(b[1]) - sx(b[0])}" height="${sy(g.ymin) - sy(g.ymax)}"/>`;
+    });
+    if (g.shadeLabel) s += `<text class="glabel" x="${W - pad}" y="${sy(g.ymax) + 12}" text-anchor="end">${g.shadeLabel}</text>`;
+  }
+  // vertical marker lines
+  if (g.vlines) g.vlines.forEach((v) => {
+    s += `<line class="gvline" x1="${sx(v.x)}" y1="${sy(g.ymin)}" x2="${sx(v.x)}" y2="${sy(g.ymax)}"/>`;
+    if (v.label) s += `<text class="gvlabel" x="${sx(v.x)}" y="${sy(g.ymax) - 4}" text-anchor="middle">${v.label}</text>`;
+  });
+  // axes
+  s += `<line class="axis" x1="${sx(g.xmin)}" y1="${sy(0)}" x2="${sx(g.xmax)}" y2="${sy(0)}"/>`;
+  s += `<line class="axis" x1="${sx(0)}" y1="${sy(g.ymin)}" x2="${sx(0)}" y2="${sy(g.ymax)}"/>`;
+  // axis number labels
+  for (let x = Math.ceil(g.xmin); x <= g.xmax; x++) {
+    if (x === 0 || x % xstep !== 0) continue;
+    s += `<text class="gtick" x="${sx(x)}" y="${sy(0) + 12}" text-anchor="middle">${x}</text>`;
+  }
+  for (let y = Math.ceil(g.ymin); y <= g.ymax; y++) {
+    if (y === 0 || y % ystep !== 0) continue;
+    s += `<text class="gtick" x="${sx(0) - 5}" y="${sy(y) + 3}" text-anchor="end">${y}</text>`;
+  }
+  // smooth curve through points (Catmull-Rom → Bézier)
+  if (g.curve && g.curve.length) {
+    const P = g.curve.map((p) => [sx(p[0]), sy(p[1])]);
+    let d = `M ${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;
+    for (let i = 0; i < P.length - 1; i++) {
+      const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+      const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    s += `<path class="gcurve" d="${d}"/>`;
+  }
+  // endpoint dots
+  if (g.ends) g.ends.forEach((e) => {
+    s += `<circle class="gdot ${e[2] ? "gdot-closed" : "gdot-open"}" cx="${sx(e[0])}" cy="${sy(e[1])}" r="4"/>`;
+  });
+  // title
+  if (g.title) s += `<text class="gtitle" x="${W - pad}" y="${pad - 8}" text-anchor="end">${g.title}</text>`;
+  s += `</svg>`;
+  return s;
+}
+
 // ---------- Navigation ----------
-const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "reference"];
+const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "examples", "reference"];
 function show(name) {
   SCREENS.forEach((s) => $("screen-" + s).classList.toggle("hidden", s !== name));
   window.scrollTo(0, 0);
   if (name === "home") renderHome();
+  if (name === "examples") renderExamples();
 }
 document.querySelectorAll("[data-nav]").forEach((b) =>
   b.addEventListener("click", () => {
@@ -5125,6 +5331,41 @@ function startTopicPractice(key, label) {
   if (!pool.length) { alert("No questions in this topic yet."); return; }
   startSession({ mode: "practice", label: label, questions: shuffle(pool) });
 }
+
+// ---------- Worked Examples screen ----------
+let exampleTopic = Object.keys(TOPICS)[0];
+function exampleQuestionFor(key) {
+  // a representative, well-explained question for the topic
+  return QUESTIONS.find((q) => q.topic === key && q.expl && q.expl.length > 30) ||
+         QUESTIONS.find((q) => q.topic === key);
+}
+function renderExamples() {
+  const chips = $("example-topics");
+  chips.innerHTML = "";
+  Object.entries(TOPICS).forEach(([key, label]) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (key === exampleTopic ? " selected" : "");
+    b.textContent = label;
+    b.addEventListener("click", () => { exampleTopic = key; renderExamples(); });
+    chips.appendChild(b);
+  });
+  const q = exampleQuestionFor(exampleTopic);
+  const body = $("example-body");
+  if (!q) { body.innerHTML = "<p class='muted'>No example yet for this topic.</p>"; return; }
+  const ans = q.type === "mc" ? `${LETTERS[q.answer]}. ${q.choices[q.answer]}` : q.answer[0];
+  const simple = q.simple || SIMPLE[q.id];
+  const html = `
+    <div class="ex-card">
+      <div class="ex-tag">Example · ${TOPICS[q.topic]}</div>
+      <div class="ex-q">${q.q}${q.graph ? renderGraph(q.graph, { showShade: false }) : ""}</div>
+      <div class="fb-answer"><strong>Answer:</strong> ${ans}</div>
+      ${simple ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simple}</div>` : ""}
+      <div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${q.graph ? renderGraph(q.graph, { showShade: true }) : ""}</div>
+    </div>`;
+  setMath(body, html);
+  $("btn-example-practice").textContent = `Practice ${TOPICS[exampleTopic]} →`;
+}
+$("btn-example-practice").addEventListener("click", () => startTopicPractice(exampleTopic, TOPICS[exampleTopic]));
 
 $("btn-reset").addEventListener("click", () => {
   if (confirm("Really wipe ALL progress (stats, streaks, test history)?")) {
@@ -5293,7 +5534,7 @@ function renderQuestion() {
   dpill.textContent = DIFF_LABEL[dlevel];
   dpill.className = "pill diff-pill diff-" + dlevel;
   $("q-calc").textContent = q.calc ? "🧮 Calculator OK" : "🚫 No calculator";
-  setMath($("q-text"), q.q);
+  setMath($("q-text"), q.q + (q.graph ? renderGraph(q.graph, { showShade: false }) : ""));
 
   const choicesEl = $("choices");
   const inputArea = $("input-area");
@@ -5392,7 +5633,7 @@ function checkPractice() {
   if (!correct && q.type === "input") html += `<div class="fb-answer"><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
   const simpleLine = q.simple || SIMPLE[q.id];
   if (simpleLine) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simpleLine}</div>`;
-  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}</div>`;
+  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}${q.graph ? renderGraph(q.graph, { showShade: true }) : ""}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
   fb.classList.remove("hidden");
@@ -5595,11 +5836,11 @@ function renderResults(results, score, isTest, totalOverride) {
       const rightAns = r.q.type === "mc" ? `${LETTERS[r.q.answer]}. ${r.q.choices[r.q.answer]}` : r.q.answer[0];
       div.innerHTML = `
         <div class="ri-head">${r.correct ? "✅" : "❌"} Question ${i + 1} · ${TOPICS[r.q.topic]} · ${DIFF_LABEL[diffOf(r.q)]}</div>
-        <div class="ri-q">${r.q.q}</div>
+        <div class="ri-q">${r.q.q}${r.q.graph ? renderGraph(r.q.graph, { showShade: false }) : ""}</div>
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
         ${(r.q.simple || SIMPLE[r.q.id]) ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${r.q.simple || SIMPLE[r.q.id]}</div>` : ""}
-        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}</div>`;
+        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}${r.q.graph ? renderGraph(r.q.graph, { showShade: true }) : ""}</div>`;
       renderMath(div);
       detail.appendChild(div);
     });

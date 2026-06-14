@@ -402,6 +402,30 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 }
 .q-text .katex { font-size: 1.12em; }
 
+/* ===== Graphs (SVG for f / f′ questions) ===== */
+.graph {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  margin: 16px auto 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.graph .grid { stroke: #eef1f6; stroke-width: 1; }
+.graph .axis { stroke: #9aa3b2; stroke-width: 1.5; }
+.graph .gcurve { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.graph .gshade { fill: rgba(201, 42, 42, 0.10); }
+.graph .gvline { stroke: #69707d; stroke-width: 1.2; stroke-dasharray: 4 3; }
+.graph .gtick { fill: #8a93a3; font-size: 9px; }
+.graph .glabel { fill: var(--bad); font-size: 11px; font-weight: 700; }
+.graph .gvlabel { fill: #495057; font-size: 10px; font-weight: 700; }
+.graph .gtitle { fill: #868e96; font-size: 11px; font-style: italic; }
+.graph .gdot { stroke: var(--ink); stroke-width: 2; }
+.graph .gdot-closed { fill: var(--ink); }
+.graph .gdot-open { fill: #fff; }
+
 .choices { display: flex; flex-direction: column; gap: 10px; }
 .choice {
   display: flex;
@@ -618,6 +642,30 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .result-item .ri-head { font-weight: 700; margin-bottom: 12px; }
 .result-item .ri-q { margin-bottom: 12px; line-height: 1.6; }
 .result-item .ri-ans { font-size: 0.97rem; margin-bottom: 8px; line-height: 1.55; }
+
+/* ===== Worked Examples ===== */
+.ex-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  margin-top: 16px;
+}
+.ex-tag {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 3px 12px;
+  margin-bottom: 12px;
+}
+.ex-q { font-size: 1.15rem; line-height: 1.6; margin-bottom: 4px; }
+#example-topics { margin-bottom: 4px; }
 
 /* ===== Reference ===== */
 .ref-card {

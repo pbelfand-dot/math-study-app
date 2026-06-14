@@ -22,6 +22,7 @@
     <button class="brand" data-nav="home">∫ PreCalc&nbsp;Prep</button>
     <nav class="topnav">
       <button data-nav="home">Home</button>
+      <button data-nav="examples">Examples</button>
       <button data-nav="practice-setup">Practice</button>
       <button data-nav="test-setup">Take a Test</button>
       <button data-nav="reference">Cheat Sheet</button>
@@ -65,6 +66,11 @@
         <span class="big-card-emoji">🩹</span>
         <span class="big-card-title">Fix My Mistakes</span>
         <span class="big-card-sub" id="missed-count-sub">Redo every question you've missed</span>
+      </button>
+      <button class="big-card" data-nav="examples">
+        <span class="big-card-emoji">📖</span>
+        <span class="big-card-title">Worked Examples</span>
+        <span class="big-card-sub">See one fully solved problem for each topic before you drill</span>
       </button>
       <button class="big-card" data-nav="reference">
         <span class="big-card-emoji">📜</span>
@@ -211,6 +217,15 @@
       <button class="primary-btn" data-nav="home">Back to home</button>
       <button id="btn-retake" class="ghost-btn">Take another like this</button>
     </div>
+  </section>
+
+  <!-- ============ WORKED EXAMPLES ============ -->
+  <section id="screen-examples" class="screen hidden">
+    <h1>Worked Examples 📖</h1>
+    <p class="muted">Pick a topic to see one problem fully solved, step by step — then go practice the same kind.</p>
+    <div id="example-topics" class="chips"></div>
+    <div id="example-body"></div>
+    <button id="btn-example-practice" class="primary-btn">Practice this topic →</button>
   </section>
 
   <!-- ============ REFERENCE ============ -->
