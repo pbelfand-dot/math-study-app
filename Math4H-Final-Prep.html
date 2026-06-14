@@ -490,43 +490,73 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 .feedback {
   margin-top: 18px;
   border-radius: var(--radius);
-  padding: 16px 20px;
+  padding: 18px 20px;
   font-size: 1.02rem;
+  line-height: 1.65;
 }
 .feedback.good { background: var(--good-soft); border: 1.5px solid var(--good); }
 .feedback.bad { background: var(--bad-soft); border: 1.5px solid var(--bad); }
-.feedback .verdict { font-weight: 800; margin-bottom: 6px; }
+.feedback .verdict { font-weight: 800; font-size: 1.15rem; margin-bottom: 14px; }
 .feedback.good .verdict { color: var(--good); }
 .feedback.bad .verdict { color: var(--bad); }
+
+/* Correct-answer callout */
+.fb-answer {
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
 
 /* Plain-English "super simple" box */
 .simple-box {
   background: #fffbea;
   border: 1.5px solid #ffe066;
   border-radius: 12px;
-  padding: 12px 16px;
-  margin-top: 12px;
+  padding: 16px 18px;
+  margin-top: 16px;
   font-size: 1.06rem;
-  line-height: 1.5;
+  line-height: 1.7;
   color: #5c4a00;
 }
-.simple-label {
+.simple-label,
+.expl-label {
   display: block;
   font-weight: 800;
   font-size: 0.82rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #b88600;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
+.simple-label { color: #b88600; }
+.expl-label { color: var(--accent); }
+
+/* Step-by-step solution box */
 .expl-detail {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-  font-size: 0.95rem;
-  color: var(--muted);
+  margin-top: 16px;
+  padding: 16px 18px;
+  background: #f4f6fb;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: var(--ink);
 }
+/* give wrapped math a little vertical room so lines don't collide */
+.simple-box .katex, .expl-detail .katex, .fb-answer .katex { padding: 1px 0; }
+
 .result-item .simple-box { font-size: 1rem; }
+.result-item .ri-expl {
+  margin-top: 14px;
+  padding: 16px 18px;
+  background: #f4f6fb;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
 
 .quiz-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
@@ -601,10 +631,9 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
 }
 .result-item.right { border-left-color: var(--good); }
 .result-item.wrong { border-left-color: var(--bad); }
-.result-item .ri-head { font-weight: 700; margin-bottom: 8px; }
-.result-item .ri-q { margin-bottom: 8px; }
-.result-item .ri-ans { font-size: 0.97rem; margin-bottom: 6px; }
-.result-item .ri-expl { color: var(--muted); font-size: 0.95rem; border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; }
+.result-item .ri-head { font-weight: 700; margin-bottom: 12px; }
+.result-item .ri-q { margin-bottom: 12px; line-height: 1.6; }
+.result-item .ri-ans { font-size: 0.97rem; margin-bottom: 8px; line-height: 1.55; }
 
 /* ===== Reference ===== */
 .ref-card {
@@ -5359,11 +5388,11 @@ function checkPractice() {
   const praise = ["Nailed it! 🎯", "Correct! 💪", "Yes! Keep it rolling 🔥", "That's it! ✅", "Boom. 🚀"];
   const encourage = ["Not quite — but now you'll never miss it again.", "Close! Read the explanation, it's a classic trap.", "This one's tricky. Here's the idea:"];
   let html = `<div class="verdict">${correct ? praise[Math.floor(Math.random() * praise.length)] : encourage[Math.floor(Math.random() * encourage.length)]}</div>`;
-  if (!correct && q.type === "mc") html += `<div><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
-  if (!correct && q.type === "input") html += `<div><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
+  if (!correct && q.type === "mc") html += `<div class="fb-answer"><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
+  if (!correct && q.type === "input") html += `<div class="fb-answer"><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
   const simpleLine = q.simple || SIMPLE[q.id];
   if (simpleLine) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simpleLine}</div>`;
-  html += `<div class="expl-detail">${q.expl}</div>`;
+  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
   fb.classList.remove("hidden");
@@ -5570,7 +5599,7 @@ function renderResults(results, score, isTest, totalOverride) {
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
         ${(r.q.simple || SIMPLE[r.q.id]) ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${r.q.simple || SIMPLE[r.q.id]}</div>` : ""}
-        <div class="ri-expl">${r.q.expl}</div>`;
+        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}</div>`;
       renderMath(div);
       detail.appendChild(div);
     });

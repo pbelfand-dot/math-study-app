@@ -485,11 +485,11 @@ function checkPractice() {
   const praise = ["Nailed it! 🎯", "Correct! 💪", "Yes! Keep it rolling 🔥", "That's it! ✅", "Boom. 🚀"];
   const encourage = ["Not quite — but now you'll never miss it again.", "Close! Read the explanation, it's a classic trap.", "This one's tricky. Here's the idea:"];
   let html = `<div class="verdict">${correct ? praise[Math.floor(Math.random() * praise.length)] : encourage[Math.floor(Math.random() * encourage.length)]}</div>`;
-  if (!correct && q.type === "mc") html += `<div><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
-  if (!correct && q.type === "input") html += `<div><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
+  if (!correct && q.type === "mc") html += `<div class="fb-answer"><strong>Correct answer: ${LETTERS[q.answer]}.</strong> ${q.choices[q.answer]}</div>`;
+  if (!correct && q.type === "input") html += `<div class="fb-answer"><strong>Correct answer:</strong> ${q.answer[0]}</div>`;
   const simpleLine = q.simple || SIMPLE[q.id];
   if (simpleLine) html += `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${simpleLine}</div>`;
-  html += `<div class="expl-detail">${q.expl}</div>`;
+  html += `<div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${q.expl}</div>`;
   fb.className = "feedback " + (correct ? "good" : "bad");
   setMath(fb, html);
   fb.classList.remove("hidden");
@@ -696,7 +696,7 @@ function renderResults(results, score, isTest, totalOverride) {
         <div class="ri-ans"><strong>Your answer:</strong> ${yourAns}</div>
         ${r.correct ? "" : `<div class="ri-ans"><strong>Correct answer:</strong> ${rightAns}</div>`}
         ${(r.q.simple || SIMPLE[r.q.id]) ? `<div class="simple-box"><span class="simple-label">💡 In plain English</span>${r.q.simple || SIMPLE[r.q.id]}</div>` : ""}
-        <div class="ri-expl">${r.q.expl}</div>`;
+        <div class="ri-expl"><span class="expl-label">📝 Step-by-step</span>${r.q.expl}</div>`;
       renderMath(div);
       detail.appendChild(div);
     });
