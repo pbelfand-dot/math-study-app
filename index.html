@@ -25,6 +25,7 @@
       <button data-nav="examples">Examples</button>
       <button data-nav="practice-setup">Practice</button>
       <button data-nav="test-setup">Take a Test</button>
+      <button data-nav="exam">Exam Paper</button>
       <button data-nav="reference">Cheat Sheet</button>
     </nav>
     <div class="topbar-right">
@@ -61,6 +62,11 @@
         <span class="big-card-emoji">⏱️</span>
         <span class="big-card-title">Full Test Mode</span>
         <span class="big-card-sub">Timed sections, Blue Book style — flag, review, submit</span>
+      </button>
+      <button class="big-card" id="card-exam" data-nav="exam">
+        <span class="big-card-emoji">📝</span>
+        <span class="big-card-title">Practice Exam Paper</span>
+        <span class="big-card-sub">A full test as one long document — multi-part &amp; multiple choice, graded at the end</span>
       </button>
       <button class="big-card" id="btn-review-missed">
         <span class="big-card-emoji">🩹</span>
@@ -206,6 +212,11 @@
       <button class="primary-btn" data-nav="home">Back to home</button>
       <button id="btn-retake" class="ghost-btn">Take another like this</button>
     </div>
+  </section>
+
+  <!-- ============ EXAM PAPER ============ -->
+  <section id="screen-exam" class="screen hidden">
+    <div id="exam-body"></div>
   </section>
 
   <!-- ============ WORKED EXAMPLES ============ -->

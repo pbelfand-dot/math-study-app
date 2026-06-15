@@ -817,6 +817,63 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
   .card-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* ===== Exam Paper (one long test document) ===== */
+.exam-paper { max-width: 760px; margin: 0 auto; }
+.exam-head h1 { margin-bottom: 8px; }
+.exam-instr { color: var(--muted); background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; padding: 12px 16px; line-height: 1.55; }
+.exam-scorebanner { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; text-align: center; margin: 18px 0; }
+.exam-scorebanner .score-big { font-size: 2.6rem; font-weight: 900; }
+.exam-scorebanner .score-msg { font-size: 1.1rem; margin-top: 4px; }
+
+.exam-section-head { margin: 30px 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+.exam-section-title { font-size: 1.2rem; font-weight: 800; color: var(--accent); }
+.exam-section-note { color: var(--muted); font-size: 0.9rem; margin-top: 3px; }
+
+.exam-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; margin-bottom: 16px; }
+.exam-stem { display: flex; gap: 10px; }
+.exam-num { font-weight: 800; color: var(--accent); flex: none; }
+.exam-stem-body { min-width: 0; flex: 1; }
+.exam-q { font-size: 1.08rem; line-height: 1.6; margin-bottom: 10px; overflow-x: auto; }
+
+.exam-part { display: flex; gap: 10px; margin: 14px 0 0; padding-left: 24px; }
+.exam-part-label { font-weight: 700; color: var(--ink); flex: none; }
+.exam-part-body { min-width: 0; flex: 1; }
+
+.exam-choices { display: flex; flex-direction: column; gap: 8px; }
+.exam-choice { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 1.02rem; }
+.exam-choice:hover { border-color: var(--accent); }
+.exam-choice-num { font-weight: 800; color: var(--muted); flex: none; }
+.exam-choice-body { min-width: 0; overflow-x: auto; }
+.exam-choice.selected { border-color: var(--accent); background: var(--accent-soft); }
+.exam-choice.selected .exam-choice-num { color: var(--accent); }
+.exam-choice.correct { border-color: var(--good); background: var(--good-soft); }
+.exam-choice.correct .exam-choice-num { color: var(--good); }
+.exam-choice.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.exam-choice.wrong .exam-choice-num { color: var(--bad); }
+.exam-choice:disabled { cursor: default; }
+
+.exam-inputwrap { margin-top: 4px; }
+.exam-input { font-size: 1.1rem; padding: 10px 14px; border: 2px solid var(--border); border-radius: 10px; max-width: 280px; width: 100%; background: var(--card); color: var(--ink); }
+.exam-input:focus { outline: none; border-color: var(--accent); }
+.exam-input.correct { border-color: var(--good); background: var(--good-soft); }
+.exam-input.wrong { border-color: var(--bad); background: var(--bad-soft); }
+
+.exam-expl { margin-top: 12px; border-radius: 10px; padding: 12px 14px; }
+.exam-expl.ok { background: var(--good-soft); border: 1px solid var(--good); }
+.exam-expl.no { background: var(--bad-soft); border: 1px solid var(--bad); }
+.exam-verdict { font-weight: 800; margin-bottom: 8px; }
+.exam-expl.ok .exam-verdict { color: var(--good); }
+.exam-expl.no .exam-verdict { color: var(--bad); }
+.exam-expl .expl-detail { margin-top: 0; }
+
+.exam-actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0 10px; }
+
+@media (max-width: 640px) {
+  .exam-item { padding: 14px; }
+  .exam-part { padding-left: 12px; }
+  .exam-actions button { width: 100%; }
+}
+
 </style>
 </head>
 <body>
@@ -829,6 +886,7 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
       <button data-nav="examples">Examples</button>
       <button data-nav="practice-setup">Practice</button>
       <button data-nav="test-setup">Take a Test</button>
+      <button data-nav="exam">Exam Paper</button>
       <button data-nav="reference">Cheat Sheet</button>
     </nav>
     <div class="topbar-right">
@@ -865,6 +923,11 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
         <span class="big-card-emoji">⏱️</span>
         <span class="big-card-title">Full Test Mode</span>
         <span class="big-card-sub">Timed sections, Blue Book style — flag, review, submit</span>
+      </button>
+      <button class="big-card" id="card-exam" data-nav="exam">
+        <span class="big-card-emoji">📝</span>
+        <span class="big-card-title">Practice Exam Paper</span>
+        <span class="big-card-sub">A full test as one long document — multi-part &amp; multiple choice, graded at the end</span>
       </button>
       <button class="big-card" id="btn-review-missed">
         <span class="big-card-emoji">🩹</span>
@@ -1010,6 +1073,11 @@ h1 { font-size: 1.7rem; margin: 0 0 8px; }
       <button class="primary-btn" data-nav="home">Back to home</button>
       <button id="btn-retake" class="ghost-btn">Take another like this</button>
     </div>
+  </section>
+
+  <!-- ============ EXAM PAPER ============ -->
+  <section id="screen-exam" class="screen hidden">
+    <div id="exam-body"></div>
   </section>
 
   <!-- ============ WORKED EXAMPLES ============ -->
@@ -5493,6 +5561,161 @@ const DIFFICULTY = {
   564:"medium"
 };
 
+// ===================================================================
+// EXAM PAPERS — full-length, test-formatted practice (one long document)
+// Modeled on the Math 4H review packets. Items are either single
+// questions or multi-part questions; type "mc" or "input" per part.
+// ===================================================================
+const EXAMS = [{
+  id: "math-A",
+  subject: "math",
+  title: "Math 4H — Practice Final (Form A)",
+  instructions: "Answer every part. For multiple choice, choose the best answer. For type-in answers, enter a number or a simple fraction such as 3/4. When you're done, press Submit at the bottom to grade the whole exam.",
+  sections: [
+    {
+      title: "Part I — No Calculator",
+      note: "Calculators are NOT permitted on this part. Give exact values.",
+      items: [
+        { kind: "single", type: "mc",
+          q: "If \\(f(x) = e^x(5 - 6x^2)\\), find \\(f'(x)\\).",
+          choices: ["\\(e^x(-12x)\\)", "\\(e^x(-6x^2 - 12x + 5)\\)", "\\(e^x(5 - 6x^2) - 12x\\)", "\\(e^x(6x^2 + 12x + 5)\\)"],
+          answer: 1,
+          expl: "Product rule: \\(f' = e^x(5-6x^2) + e^x(-12x) = e^x(-6x^2 - 12x + 5)\\). Factor out \\(e^x\\) at the end." },
+        { kind: "single", type: "input",
+          q: "Find the exact value of \\(\\sec\\dfrac{5\\pi}{3} - \\cot\\dfrac{7\\pi}{4}\\).",
+          answer: ["3"],
+          expl: "\\(\\sec\\frac{5\\pi}{3} = \\frac{1}{\\cos(5\\pi/3)} = 2\\) and \\(\\cot\\frac{7\\pi}{4} = -1\\), so \\(2 - (-1) = 3\\)." },
+        { kind: "single", type: "mc",
+          q: "What is the instantaneous rate of change at \\(x = 2\\) of \\(f(x) = \\dfrac{e^{3x}}{4 - x}\\)?",
+          choices: ["\\(\\dfrac{7e^6}{4}\\)", "\\(\\dfrac{3e^6}{2}\\)", "\\(\\dfrac{5e^6}{4}\\)", "\\(7e^6\\)"],
+          answer: 0,
+          expl: "Quotient rule: \\(\\frac{(4-x)3e^{3x} - e^{3x}(-1)}{(4-x)^2}\\). At \\(x=2\\): \\(\\frac{e^6(6+1)}{4} = \\frac{7e^6}{4}\\)." },
+        { kind: "single", type: "mc",
+          q: "Determine the domain of \\(y = \\sqrt{7 - 4x}\\), in interval notation.",
+          choices: ["\\(\\left(-\\infty, \\frac{7}{4}\\right]\\)", "\\(\\left[\\frac{7}{4}, \\infty\\right)\\)", "\\(\\left(-\\infty, \\frac{7}{4}\\right)\\)", "\\(\\left[-\\frac{7}{4}, \\infty\\right)\\)"],
+          answer: 0,
+          expl: "Need \\(7 - 4x \\ge 0 \\Rightarrow x \\le \\frac{7}{4}\\). Dividing by \\(-4\\) flips the inequality." },
+        { kind: "single", type: "input",
+          q: "Solve for \\(x\\): \\(\\dfrac{1}{2}e^{\\ln 5x} = 40\\).",
+          answer: ["16"],
+          expl: "\\(e^{\\ln 5x} = 80\\); since \\(e\\) and \\(\\ln\\) cancel, \\(5x = 80\\), so \\(x = 16\\)." },
+        { kind: "single", type: "mc",
+          q: "Simplify \\(\\dfrac{\\csc^2 x}{\\cot^2 x - 1}\\).",
+          choices: ["\\(\\dfrac{1}{\\cos^2 x - \\sin^2 x}\\) (i.e. \\(\\sec 2x\\))", "\\(\\csc 2x\\)", "\\(1\\)", "\\(\\tan^2 x\\)"],
+          answer: 0,
+          expl: "Multiply top and bottom by \\(\\sin^2 x\\): numerator \\(\\to 1\\), denominator \\(\\to \\cos^2x - \\sin^2x = \\cos 2x\\). So it equals \\(\\sec 2x\\)." },
+        { kind: "multi",
+          stem: "Evaluate each limit.",
+          parts: [
+            { label: "a", type: "input", q: "\\(\\displaystyle\\lim_{x \\to 3}\\frac{x^2 - 9}{x - 3}\\)", answer: ["6"],
+              expl: "\\(0/0\\) → factor \\(\\frac{(x-3)(x+3)}{x-3} = x+3 \\to 6\\)." },
+            { label: "b", type: "input", q: "\\(\\displaystyle\\lim_{x \\to \\infty}\\frac{3x^2 + 1}{x^2 - 5}\\)", answer: ["3"],
+              expl: "Equal degrees → ratio of leading coefficients \\(= 3\\)." },
+            { label: "c", type: "input", q: "\\(\\displaystyle\\lim_{x \\to 0}\\frac{\\sin 5x}{2x}\\)", answer: ["5/2", "2.5"],
+              expl: "\\(\\frac{\\sin 5x}{2x} = \\frac{5}{2}\\cdot\\frac{\\sin 5x}{5x} \\to \\frac{5}{2}\\)." },
+          ] },
+        { kind: "single", type: "mc",
+          q: "Given \\(f'(x) = (x+3)^2(x-1)\\), the derivative of \\(f\\), find the \\(x\\)-coordinate of any relative extrema.",
+          choices: ["\\(x = -3\\) and \\(x = 1\\)", "\\(x = 1\\) only", "\\(x = -3\\) only", "none"],
+          answer: 1,
+          expl: "Extrema need \\(f'\\) to change sign. \\((x+3)^2\\) never changes sign, so nothing at \\(-3\\). At \\(x=1\\), \\(f'\\) goes \\(-\\) to \\(+\\): relative minimum." },
+        { kind: "multi",
+          stem: "Consider the ellipse \\(4x^2 + 16y^2 - 32x - 192y + 576 = 0\\).",
+          parts: [
+            { label: "a", type: "mc", q: "Write it in standard form.",
+              choices: ["\\(\\frac{(x-4)^2}{16} + \\frac{(y-6)^2}{4} = 1\\)", "\\(\\frac{(x-4)^2}{4} + \\frac{(y-6)^2}{16} = 1\\)", "\\(\\frac{(x+4)^2}{16} + \\frac{(y+6)^2}{4} = 1\\)", "\\(\\frac{(x-4)^2}{64} + \\frac{(y-6)^2}{16} = 1\\)"],
+              answer: 0,
+              expl: "Complete the square: \\(4(x-4)^2 + 16(y-6)^2 = 64\\); divide by 64." },
+            { label: "b", type: "input", q: "What is the length of the major axis?", answer: ["8"],
+              expl: "\\(a^2 = 16 \\Rightarrow a = 4\\); major axis \\(= 2a = 8\\)." },
+            { label: "c", type: "mc", q: "Find the foci.",
+              choices: ["\\((4 \\pm 2\\sqrt{3},\\ 6)\\)", "\\((4,\\ 6 \\pm 2\\sqrt{3})\\)", "\\((4 \\pm \\sqrt{20},\\ 6)\\)", "\\((\\pm 2\\sqrt{3},\\ 0)\\)"],
+              answer: 0,
+              expl: "\\(c^2 = 16 - 4 = 12\\), \\(c = 2\\sqrt3\\); major axis horizontal, so foci \\((4 \\pm 2\\sqrt3, 6)\\)." },
+          ] },
+        { kind: "single", type: "input",
+          q: "Evaluate \\(\\displaystyle\\int_2^3 \\frac{1}{x^2}\\,dx\\).",
+          answer: ["1/6"],
+          expl: "\\(\\int x^{-2}dx = -x^{-1}\\big|_2^3 = -\\frac13 + \\frac12 = \\frac16\\)." },
+      ],
+    },
+    {
+      title: "Part II — Calculator Permitted",
+      note: "A calculator is allowed. Round to the indicated place; keep your calculator in radian mode.",
+      items: [
+        { kind: "single", type: "mc",
+          q: "Write the equation of the line tangent to \\(f(x) = 6\\sqrt{x} + x^2 - x + 2\\) at \\(x = 1\\).",
+          choices: ["\\(y - 8 = 4(x - 1)\\)", "\\(y - 8 = 5(x - 1)\\)", "\\(y - 4 = 8(x - 1)\\)", "\\(y = 4x\\)"],
+          answer: 0,
+          expl: "Point \\(f(1)=8\\); slope \\(f'(x)=\\frac{3}{\\sqrt x}+2x-1\\), \\(f'(1)=4\\). Tangent: \\(y-8=4(x-1)\\)." },
+        { kind: "multi",
+          stem: "A particle moves along the \\(x\\)-axis with position \\(g(t) = \\dfrac{t^3}{3} + 2t^2 - 12t + 1\\).",
+          parts: [
+            { label: "a", type: "input", q: "Find the velocity at \\(t = 3\\).", answer: ["9"],
+              expl: "\\(v(t)=g'(t)=t^2+4t-12\\); \\(v(3)=9+12-12=9\\)." },
+            { label: "b", type: "input", q: "Find the acceleration at \\(t = 3\\).", answer: ["10"],
+              expl: "\\(a(t)=g''(t)=2t+4\\); \\(a(3)=10\\)." },
+            { label: "c", type: "mc", q: "Is the speed increasing, decreasing, or neither at \\(t = 3\\)?",
+              choices: ["increasing — velocity and acceleration have the same sign", "decreasing — opposite signs", "neither — velocity is not zero", "cannot be determined"],
+              answer: 0,
+              expl: "\\(v(3)=9>0\\) and \\(a(3)=10>0\\): same sign → speed increasing." },
+          ] },
+        { kind: "single", type: "input",
+          q: "The continuous function \\(f\\) has values \\(f(3)=11,\\ f(6)=29,\\ f(8)=41,\\ f(9)=19\\). Using subintervals \\([3,6],[6,8],[8,9]\\), find the LEFT Riemann sum approximation of \\(\\displaystyle\\int_3^9 f(x)\\,dx\\).",
+          answer: ["132"],
+          expl: "Left endpoints × widths: \\(3(11)+2(29)+1(41)=33+58+41=132\\)." },
+        { kind: "single", type: "mc",
+          q: "Two sides of a triangle are 5 and 7 with an included angle of \\(60°\\). Find the third side (round to 2 decimals).",
+          choices: ["\\(6.24\\)", "\\(8.60\\)", "\\(5.57\\)", "\\(7.81\\)"],
+          answer: 0,
+          expl: "Law of Cosines: \\(c^2 = 25+49-70\\cos60° = 39\\), \\(c=\\sqrt{39}\\approx 6.24\\)." },
+        { kind: "multi",
+          stem: "A particle moves along the polar curve \\(r = 8 - \\cos\\theta\\).",
+          parts: [
+            { label: "a", type: "mc", q: "Find the average rate of change of \\(r\\) with respect to \\(\\theta\\) on \\(\\left[\\frac{\\pi}{2}, \\pi\\right]\\).",
+              choices: ["\\(\\dfrac{2}{\\pi}\\)", "\\(\\dfrac{1}{\\pi}\\)", "\\(\\dfrac{\\pi}{2}\\)", "\\(-\\dfrac{2}{\\pi}\\)"],
+              answer: 0,
+              expl: "\\(\\frac{r(\\pi)-r(\\pi/2)}{\\pi-\\pi/2} = \\frac{9-8}{\\pi/2} = \\frac{2}{\\pi}\\)." },
+            { label: "b", type: "mc", q: "On this interval, the distance between the graph and the origin is…",
+              choices: ["increasing", "decreasing", "constant", "zero"],
+              answer: 0,
+              expl: "The average rate \\(\\frac{2}{\\pi}>0\\), so \\(r\\) (the distance) is increasing." },
+          ] },
+        { kind: "single", type: "mc",
+          q: "Solve on \\([0, 2\\pi)\\), rounding to the nearest thousandth: \\(e^x\\tan^2 x - e^x\\tan x - 12e^x = 0\\).",
+          choices: ["\\(\\{1.326,\\ 1.893,\\ 4.467,\\ 5.034\\}\\)", "\\(\\{1.326,\\ 4.467\\}\\) only", "\\(\\{0,\\ 1.326,\\ 1.893\\}\\)", "no solution"],
+          answer: 0,
+          expl: "Factor \\(e^x\\) (never 0): \\((\\tan x-4)(\\tan x+3)=0\\). \\(\\tan x=4\\): 1.326, 4.467. \\(\\tan x=-3\\): 1.893, 5.034." },
+        { kind: "graphmulti",
+          stem: "The graph of \\(f'\\), the derivative of \\(f\\), is shown below. Use it to answer both parts.",
+          graph: { title: "Graph of f′", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
+            curve: [[-9,6],[-8,4],[-7,2.5],[-6,1.8],[-5,1.5],[-4,1.8],[-3,2],[-2,1.5],[-1,0],[0,-2.5],[1,-4],[2,-4.8],[3,-5],[4,-4],[5,0],[6,2.5],[7,3.8],[8,4.5],[9,5]],
+            ends: [[-9,6,true],[9,5,true]] },
+          parts: [
+            { label: "a", type: "mc", q: "On which interval is \\(f\\) decreasing?",
+              choices: ["\\((-1, 5)\\)", "\\((-9, -1) \\cup (5, 9)\\)", "\\((-5, 1)\\)", "\\((-9, 9)\\)"],
+              answer: 0,
+              expl: "\\(f\\) decreases where \\(f' < 0\\): the curve is below the axis on \\((-1, 5)\\)." },
+            { label: "b", type: "mc", q: "At which \\(x\\) does \\(f\\) have a relative maximum?",
+              choices: ["\\(x = -1\\)", "\\(x = 5\\)", "\\(x = -5\\)", "\\(x = 2\\)"],
+              answer: 0,
+              expl: "Relative max where \\(f'\\) changes \\(+\\) to \\(-\\): that's \\(x = -1\\)." },
+          ] },
+        { kind: "multi",
+          stem: "A particle moves along a curve given by \\(x(t) = 2t^2 - 1\\) and \\(y(t) = t + 8\\).",
+          parts: [
+            { label: "a", type: "mc", q: "Eliminate the parameter to write a rectangular equation.",
+              choices: ["\\(x = 2(y - 8)^2 - 1\\)", "\\(y = 2(x - 8)^2 - 1\\)", "\\(x = 2y^2 - 17\\)", "\\(y = \\sqrt{2x} + 8\\)"],
+              answer: 0,
+              expl: "From \\(y = t + 8\\), \\(t = y - 8\\); substitute: \\(x = 2(y-8)^2 - 1\\)." },
+            { label: "b", type: "input", q: "The curve crosses the \\(x\\)-axis where \\(y = 0\\). Find that \\(x\\)-coordinate.", answer: ["127"],
+              expl: "\\(y=0 \\Rightarrow t=-8\\); \\(x(-8) = 2(64) - 1 = 127\\)." },
+          ] },
+      ],
+    },
+  ],
+}];
+
 </script>
 <script>
 // ===== Pre-Calc Final Prep — App =====
@@ -5752,7 +5975,7 @@ function renderGraph(g, opts) {
 }
 
 // ---------- Navigation ----------
-const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "examples", "reference"];
+const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "examples", "exam", "reference"];
 function show(name) {
   SCREENS.forEach((s) => $("screen-" + s).classList.toggle("hidden", s !== name));
   window.scrollTo(0, 0);
@@ -5760,6 +5983,7 @@ function show(name) {
   if (name === "examples") renderExamples();
   if (name === "practice-setup") renderTopicChips();
   if (name === "test-setup") renderTestSetup();
+  if (name === "exam") renderExam();
 }
 document.querySelectorAll("[data-nav]").forEach((b) =>
   b.addEventListener("click", () => {
@@ -5944,6 +6168,135 @@ function renderExamples() {
   $("btn-example-practice").textContent = `Practice ${TOPICS[exampleTopic]} →`;
 }
 $("btn-example-practice").addEventListener("click", () => startTopicPractice(exampleTopic, TOPICS[exampleTopic]));
+
+// ---------- Exam Paper (full test as one long document) ----------
+let examState = { responses: {}, graded: false, exam: null, score: null };
+
+function examUnitKey(si, ii, pi) { return pi == null ? `s${si}i${ii}` : `s${si}i${ii}p${pi}`; }
+
+function examUnitHTML(u, key) {
+  const resp = examState.responses[key];
+  let h = `<div class="exam-q">${u.q}</div>`;
+  if (u.type === "mc") {
+    h += `<div class="exam-choices" data-key="${key}">`;
+    u.choices.forEach((c, ci) => {
+      let cls = "exam-choice";
+      const sel = resp === ci;
+      if (examState.graded) {
+        if (ci === u.answer) cls += " correct";
+        else if (sel) cls += " wrong";
+      } else if (sel) cls += " selected";
+      h += `<button class="${cls}" data-key="${key}" data-ci="${ci}" ${examState.graded ? "disabled" : ""}><span class="exam-choice-num">(${ci + 1})</span><span class="exam-choice-body">${c}</span></button>`;
+    });
+    h += `</div>`;
+    if (examState.graded) h += examExplHTML(u, resp === u.answer);
+  } else {
+    const val = resp != null ? String(resp) : "";
+    let cls = "exam-input";
+    let ok = false;
+    if (examState.graded) { ok = checkInputAnswer(val, u.answer); cls += ok ? " correct" : " wrong"; }
+    h += `<div class="exam-inputwrap"><input class="${cls}" data-key="${key}" type="text" autocomplete="off" spellcheck="false" value="${val.replace(/"/g, "&quot;")}" ${examState.graded ? "disabled" : ""} placeholder="your answer (e.g. 3/4)"></div>`;
+    if (examState.graded) h += examExplHTML(u, ok);
+  }
+  return h;
+}
+
+function examExplHTML(u, correct) {
+  const ans = u.type === "mc" ? `(${u.answer + 1}) ${u.choices[u.answer]}` : u.answer[0];
+  return `<div class="exam-expl ${correct ? "ok" : "no"}">
+    <div class="exam-verdict">${correct ? "✅ Correct" : "❌ Correct answer: " + ans}</div>
+    <div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${u.expl}</div>
+  </div>`;
+}
+
+function renderExam() {
+  const ex = EXAMS.find((e) => e.subject === curSubject);
+  const body = $("exam-body");
+  if (!ex) {
+    body.innerHTML = `<h1>Exam Paper 📝</h1><p class="muted">A full practice exam paper is available for <strong>Math 4H</strong>. Switch to Math 4H on the Home screen to take it.</p><button class="ghost-btn" data-nav="home">← Home</button>`;
+    body.querySelector("[data-nav]").addEventListener("click", () => show("home"));
+    return;
+  }
+  if (examState.exam !== ex.id) examState = { responses: {}, graded: false, exam: ex.id, score: null };
+
+  let html = `<div class="exam-paper">`;
+  html += `<div class="exam-head"><h1>${ex.title}</h1><p class="exam-instr">${ex.instructions}</p></div>`;
+  if (examState.graded) html += `<div id="exam-scorebanner" class="exam-scorebanner"></div>`;
+  let qnum = 0;
+  ex.sections.forEach((sec, si) => {
+    html += `<div class="exam-section-head"><div class="exam-section-title">${sec.title}</div>${sec.note ? `<div class="exam-section-note">${sec.note}</div>` : ""}</div>`;
+    sec.items.forEach((it, ii) => {
+      qnum++;
+      html += `<div class="exam-item">`;
+      if (it.kind === "single") {
+        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body">${examUnitHTML(it, examUnitKey(si, ii))}</div></div>`;
+      } else {
+        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body"><div class="exam-q">${it.stem}</div>${it.graph ? renderGraph(it.graph, { showShade: examState.graded }) : ""}</div></div>`;
+        it.parts.forEach((p, pi) => {
+          html += `<div class="exam-part"><span class="exam-part-label">(${p.label})</span><div class="exam-part-body">${examUnitHTML(p, examUnitKey(si, ii, pi))}</div></div>`;
+        });
+      }
+      html += `</div>`;
+    });
+  });
+  html += `<div class="exam-actions">`;
+  if (!examState.graded) html += `<button id="btn-exam-submit" class="primary-btn">Submit exam &amp; grade</button>`;
+  else html += `<button id="btn-exam-retake" class="ghost-btn">↻ Retake (clear answers)</button><button id="btn-exam-home" class="primary-btn">Back to home</button>`;
+  html += `</div></div>`;
+  setMath(body, html);
+  wireExam(ex);
+  if (examState.graded) showExamScore();
+}
+
+function wireExam(ex) {
+  const body = $("exam-body");
+  if (!examState.graded) {
+    body.querySelectorAll(".exam-choice").forEach((b) => b.addEventListener("click", () => {
+      const key = b.dataset.key;
+      examState.responses[key] = parseInt(b.dataset.ci, 10);
+      body.querySelectorAll(`.exam-choices[data-key="${key}"] .exam-choice`).forEach((x) => x.classList.remove("selected"));
+      b.classList.add("selected");
+    }));
+    body.querySelectorAll(".exam-input").forEach((inp) => inp.addEventListener("input", () => {
+      examState.responses[inp.dataset.key] = inp.value;
+    }));
+    const sub = $("btn-exam-submit");
+    if (sub) sub.addEventListener("click", () => gradeExam(ex));
+  } else {
+    const rt = $("btn-exam-retake");
+    if (rt) rt.addEventListener("click", () => { examState = { responses: {}, graded: false, exam: ex.id, score: null }; renderExam(); });
+    const hm = $("btn-exam-home");
+    if (hm) hm.addEventListener("click", () => show("home"));
+  }
+}
+
+function gradeExam(ex) {
+  let total = 0, correct = 0, blank = 0;
+  ex.sections.forEach((sec, si) => sec.items.forEach((it, ii) => {
+    const units = it.kind === "single" ? [[it, examUnitKey(si, ii)]] : it.parts.map((p, pi) => [p, examUnitKey(si, ii, pi)]);
+    units.forEach(([u, key]) => {
+      total++;
+      const resp = examState.responses[key];
+      if (resp == null || resp === "") blank++;
+      const ok = u.type === "mc" ? resp === u.answer : (resp != null && checkInputAnswer(String(resp), u.answer));
+      if (ok) correct++;
+    });
+  }));
+  if (blank && !confirm(`You left ${blank} answer${blank === 1 ? "" : "s"} blank. Submit and grade anyway?`)) return;
+  examState.graded = true;
+  examState.score = { correct, total };
+  store.tests.push({ label: ex.title, score: correct, total, date: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) });
+  saveStore();
+  renderExam();
+  window.scrollTo(0, 0);
+}
+
+function showExamScore() {
+  const el = $("exam-scorebanner");
+  if (!el || !examState.score) return;
+  const { correct, total } = examState.score, pct = Math.round((100 * correct) / total);
+  el.innerHTML = `<div class="score-big">${correct}/${total}</div><div class="muted">${pct}%</div><div class="score-msg">${scoreMessage(pct)}</div>`;
+}
 
 $("btn-reset").addEventListener("click", () => {
   if (confirm("Really wipe ALL progress (stats, streaks, test history)?")) {

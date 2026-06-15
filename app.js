@@ -255,7 +255,7 @@ function renderGraph(g, opts) {
 }
 
 // ---------- Navigation ----------
-const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "examples", "reference"];
+const SCREENS = ["home", "practice-setup", "test-setup", "quiz", "test-review", "results", "examples", "exam", "reference"];
 function show(name) {
   SCREENS.forEach((s) => $("screen-" + s).classList.toggle("hidden", s !== name));
   window.scrollTo(0, 0);
@@ -263,6 +263,7 @@ function show(name) {
   if (name === "examples") renderExamples();
   if (name === "practice-setup") renderTopicChips();
   if (name === "test-setup") renderTestSetup();
+  if (name === "exam") renderExam();
 }
 document.querySelectorAll("[data-nav]").forEach((b) =>
   b.addEventListener("click", () => {
@@ -447,6 +448,135 @@ function renderExamples() {
   $("btn-example-practice").textContent = `Practice ${TOPICS[exampleTopic]} →`;
 }
 $("btn-example-practice").addEventListener("click", () => startTopicPractice(exampleTopic, TOPICS[exampleTopic]));
+
+// ---------- Exam Paper (full test as one long document) ----------
+let examState = { responses: {}, graded: false, exam: null, score: null };
+
+function examUnitKey(si, ii, pi) { return pi == null ? `s${si}i${ii}` : `s${si}i${ii}p${pi}`; }
+
+function examUnitHTML(u, key) {
+  const resp = examState.responses[key];
+  let h = `<div class="exam-q">${u.q}</div>`;
+  if (u.type === "mc") {
+    h += `<div class="exam-choices" data-key="${key}">`;
+    u.choices.forEach((c, ci) => {
+      let cls = "exam-choice";
+      const sel = resp === ci;
+      if (examState.graded) {
+        if (ci === u.answer) cls += " correct";
+        else if (sel) cls += " wrong";
+      } else if (sel) cls += " selected";
+      h += `<button class="${cls}" data-key="${key}" data-ci="${ci}" ${examState.graded ? "disabled" : ""}><span class="exam-choice-num">(${ci + 1})</span><span class="exam-choice-body">${c}</span></button>`;
+    });
+    h += `</div>`;
+    if (examState.graded) h += examExplHTML(u, resp === u.answer);
+  } else {
+    const val = resp != null ? String(resp) : "";
+    let cls = "exam-input";
+    let ok = false;
+    if (examState.graded) { ok = checkInputAnswer(val, u.answer); cls += ok ? " correct" : " wrong"; }
+    h += `<div class="exam-inputwrap"><input class="${cls}" data-key="${key}" type="text" autocomplete="off" spellcheck="false" value="${val.replace(/"/g, "&quot;")}" ${examState.graded ? "disabled" : ""} placeholder="your answer (e.g. 3/4)"></div>`;
+    if (examState.graded) h += examExplHTML(u, ok);
+  }
+  return h;
+}
+
+function examExplHTML(u, correct) {
+  const ans = u.type === "mc" ? `(${u.answer + 1}) ${u.choices[u.answer]}` : u.answer[0];
+  return `<div class="exam-expl ${correct ? "ok" : "no"}">
+    <div class="exam-verdict">${correct ? "✅ Correct" : "❌ Correct answer: " + ans}</div>
+    <div class="expl-detail"><span class="expl-label">📝 Step-by-step</span>${u.expl}</div>
+  </div>`;
+}
+
+function renderExam() {
+  const ex = EXAMS.find((e) => e.subject === curSubject);
+  const body = $("exam-body");
+  if (!ex) {
+    body.innerHTML = `<h1>Exam Paper 📝</h1><p class="muted">A full practice exam paper is available for <strong>Math 4H</strong>. Switch to Math 4H on the Home screen to take it.</p><button class="ghost-btn" data-nav="home">← Home</button>`;
+    body.querySelector("[data-nav]").addEventListener("click", () => show("home"));
+    return;
+  }
+  if (examState.exam !== ex.id) examState = { responses: {}, graded: false, exam: ex.id, score: null };
+
+  let html = `<div class="exam-paper">`;
+  html += `<div class="exam-head"><h1>${ex.title}</h1><p class="exam-instr">${ex.instructions}</p></div>`;
+  if (examState.graded) html += `<div id="exam-scorebanner" class="exam-scorebanner"></div>`;
+  let qnum = 0;
+  ex.sections.forEach((sec, si) => {
+    html += `<div class="exam-section-head"><div class="exam-section-title">${sec.title}</div>${sec.note ? `<div class="exam-section-note">${sec.note}</div>` : ""}</div>`;
+    sec.items.forEach((it, ii) => {
+      qnum++;
+      html += `<div class="exam-item">`;
+      if (it.kind === "single") {
+        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body">${examUnitHTML(it, examUnitKey(si, ii))}</div></div>`;
+      } else {
+        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body"><div class="exam-q">${it.stem}</div>${it.graph ? renderGraph(it.graph, { showShade: examState.graded }) : ""}</div></div>`;
+        it.parts.forEach((p, pi) => {
+          html += `<div class="exam-part"><span class="exam-part-label">(${p.label})</span><div class="exam-part-body">${examUnitHTML(p, examUnitKey(si, ii, pi))}</div></div>`;
+        });
+      }
+      html += `</div>`;
+    });
+  });
+  html += `<div class="exam-actions">`;
+  if (!examState.graded) html += `<button id="btn-exam-submit" class="primary-btn">Submit exam &amp; grade</button>`;
+  else html += `<button id="btn-exam-retake" class="ghost-btn">↻ Retake (clear answers)</button><button id="btn-exam-home" class="primary-btn">Back to home</button>`;
+  html += `</div></div>`;
+  setMath(body, html);
+  wireExam(ex);
+  if (examState.graded) showExamScore();
+}
+
+function wireExam(ex) {
+  const body = $("exam-body");
+  if (!examState.graded) {
+    body.querySelectorAll(".exam-choice").forEach((b) => b.addEventListener("click", () => {
+      const key = b.dataset.key;
+      examState.responses[key] = parseInt(b.dataset.ci, 10);
+      body.querySelectorAll(`.exam-choices[data-key="${key}"] .exam-choice`).forEach((x) => x.classList.remove("selected"));
+      b.classList.add("selected");
+    }));
+    body.querySelectorAll(".exam-input").forEach((inp) => inp.addEventListener("input", () => {
+      examState.responses[inp.dataset.key] = inp.value;
+    }));
+    const sub = $("btn-exam-submit");
+    if (sub) sub.addEventListener("click", () => gradeExam(ex));
+  } else {
+    const rt = $("btn-exam-retake");
+    if (rt) rt.addEventListener("click", () => { examState = { responses: {}, graded: false, exam: ex.id, score: null }; renderExam(); });
+    const hm = $("btn-exam-home");
+    if (hm) hm.addEventListener("click", () => show("home"));
+  }
+}
+
+function gradeExam(ex) {
+  let total = 0, correct = 0, blank = 0;
+  ex.sections.forEach((sec, si) => sec.items.forEach((it, ii) => {
+    const units = it.kind === "single" ? [[it, examUnitKey(si, ii)]] : it.parts.map((p, pi) => [p, examUnitKey(si, ii, pi)]);
+    units.forEach(([u, key]) => {
+      total++;
+      const resp = examState.responses[key];
+      if (resp == null || resp === "") blank++;
+      const ok = u.type === "mc" ? resp === u.answer : (resp != null && checkInputAnswer(String(resp), u.answer));
+      if (ok) correct++;
+    });
+  }));
+  if (blank && !confirm(`You left ${blank} answer${blank === 1 ? "" : "s"} blank. Submit and grade anyway?`)) return;
+  examState.graded = true;
+  examState.score = { correct, total };
+  store.tests.push({ label: ex.title, score: correct, total, date: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) });
+  saveStore();
+  renderExam();
+  window.scrollTo(0, 0);
+}
+
+function showExamScore() {
+  const el = $("exam-scorebanner");
+  if (!el || !examState.score) return;
+  const { correct, total } = examState.score, pct = Math.round((100 * correct) / total);
+  el.innerHTML = `<div class="score-big">${correct}/${total}</div><div class="muted">${pct}%</div><div class="score-msg">${scoreMessage(pct)}</div>`;
+}
 
 $("btn-reset").addEventListener("click", () => {
   if (confirm("Really wipe ALL progress (stats, streaks, test history)?")) {
