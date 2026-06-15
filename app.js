@@ -734,7 +734,6 @@ function checkPractice() {
   next.classList.remove("hidden");
   next.textContent = session.idx === session.questions.length - 1 ? "See my results →" : "Next →";
   practiceSelection = null;
-  next.focus();
 }
 
 $("btn-next").addEventListener("click", () => {
@@ -777,11 +776,23 @@ function saveInputResponse() {
   }
 }
 
-// Enter key handling
-$("input-answer").addEventListener("keydown", (e) => {
+// Enter key: in practice it submits/checks the answer (it never skips ahead);
+// in a timed test there's nothing to check, so it moves to the next question.
+document.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
-  if (session.mode === "practice" && !session.checked) checkPractice();
-  else $("btn-next").click();
+  if (!session || session.finished) return;
+  if ($("screen-quiz").classList.contains("hidden")) return; // only while answering
+  if (session.mode === "practice") {
+    if (session.checked) { e.preventDefault(); return; } // already answered — don't advance
+    const q = currentQ();
+    if (q.type === "mc" && practiceSelection == null) return;         // pick a choice first
+    if (q.type === "input" && !$("input-answer").value.trim()) return; // type something first
+    e.preventDefault();
+    checkPractice();
+  } else {
+    e.preventDefault();
+    $("btn-next").click();
+  }
 });
 
 // Fraction / quick-input keypad: insert symbols at the cursor
