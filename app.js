@@ -456,7 +456,7 @@ function examUnitKey(si, ii, pi) { return pi == null ? `s${si}i${ii}` : `s${si}i
 
 function examUnitHTML(u, key) {
   const resp = examState.responses[key];
-  let h = `<div class="exam-q">${u.q}</div>`;
+  let h = `<div class="exam-q">${u.q}</div>` + ((u.graph || u.doc || u.graphic) ? questionStimulus(u) : "");
   if (u.type === "mc") {
     h += `<div class="exam-choices" data-key="${key}">`;
     u.choices.forEach((c, ci) => {
@@ -502,16 +502,19 @@ function renderExam() {
   let html = `<div class="exam-paper">`;
   html += `<div class="exam-head"><h1>${ex.title}</h1><p class="exam-instr">${ex.instructions}</p></div>`;
   if (examState.graded) html += `<div id="exam-scorebanner" class="exam-scorebanner"></div>`;
-  let qnum = 0;
+  let qnum = 0, frqn = 0;
   ex.sections.forEach((sec, si) => {
     html += `<div class="exam-section-head"><div class="exam-section-title">${sec.title}</div>${sec.note ? `<div class="exam-section-note">${sec.note}</div>` : ""}</div>`;
     sec.items.forEach((it, ii) => {
-      qnum++;
-      html += `<div class="exam-item">`;
-      if (it.kind === "single") {
-        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body">${examUnitHTML(it, examUnitKey(si, ii))}</div></div>`;
+      const key = examUnitKey(si, ii);
+      let numLabel;
+      if (sec.frq) { frqn++; numLabel = "FRQ " + frqn; } else { qnum++; numLabel = qnum + "."; }
+      html += `<div class="exam-item${sec.frq ? " exam-frq" : ""}">`;
+      if (it.kind === "single" || it.kind === "ref") {
+        const u = it.kind === "ref" ? QBYID[it.id] : it;
+        html += `<div class="exam-stem"><span class="exam-num">${numLabel}</span><div class="exam-stem-body">${examUnitHTML(u, key)}</div></div>`;
       } else {
-        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body"><div class="exam-q">${it.stem}</div>${it.graph ? renderGraph(it.graph, { showShade: examState.graded }) : ""}</div></div>`;
+        html += `<div class="exam-stem"><span class="exam-num">${numLabel}</span><div class="exam-stem-body">${it.title ? `<div class="exam-frq-title">${it.title}</div>` : ""}<div class="exam-q">${it.stem}</div>${it.graph ? renderGraph(it.graph, { showShade: examState.graded }) : ""}</div></div>`;
         it.parts.forEach((p, pi) => {
           html += `<div class="exam-part"><span class="exam-part-label">(${p.label})</span><div class="exam-part-body">${examUnitHTML(p, examUnitKey(si, ii, pi))}</div></div>`;
         });
@@ -553,7 +556,9 @@ function wireExam(ex) {
 function gradeExam(ex) {
   let total = 0, correct = 0, blank = 0;
   ex.sections.forEach((sec, si) => sec.items.forEach((it, ii) => {
-    const units = it.kind === "single" ? [[it, examUnitKey(si, ii)]] : it.parts.map((p, pi) => [p, examUnitKey(si, ii, pi)]);
+    const units = (it.kind === "single" || it.kind === "ref")
+      ? [[it.kind === "ref" ? QBYID[it.id] : it, examUnitKey(si, ii)]]
+      : it.parts.map((p, pi) => [p, examUnitKey(si, ii, pi)]);
     units.forEach(([u, key]) => {
       total++;
       const resp = examState.responses[key];

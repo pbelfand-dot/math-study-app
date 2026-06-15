@@ -5562,196 +5562,93 @@ const DIFFICULTY = {
 };
 
 // ===================================================================
-// EXAM PAPERS — full-length, test-formatted practice (one long document)
-// Modeled on the Math 4H review packets (Rev 7 = no-calc, Rev 6 = calc).
-// 15 numbered questions per part; a mix of free-response (type-in) and
-// multiple choice, plus multi-part questions — like the real test.
+// EXAM PAPERS — full practice exam in the official AP Precalculus format
+// Section I: 40 multiple choice (Part A 28 no-calc, Part B 12 calculator)
+// Section II: 4 free-response (Part A calculator: Function Concepts &
+//   Modeling Non-Periodic; Part B no-calc: Modeling Periodic & Symbolic
+//   Manipulations). MC questions are pulled by id from the verified bank
+//   (AP Precalc Units 1-3 topics only). FRQs are authored in AP style.
 // ===================================================================
 const EXAMS = [{
-  id: "math-A",
+  id: "appc-A",
   subject: "math",
-  title: "Math 4H — Practice Final (Form A)",
-  instructions: "Answer every question and part. For multiple choice, choose the best answer (1)–(4). For free-response, type a number or simple fraction such as 3/4. On Part II a calculator is allowed (radian mode). Press Submit at the bottom to grade the whole exam.",
+  title: "AP Precalculus — Practice Exam (Form A)",
+  instructions: "This practice exam follows the official AP Precalculus format. Section I is 40 multiple-choice questions (Part A: no calculator; Part B: graphing calculator). Section II is 4 free-response questions, each with parts. Answer every part, then press Submit at the bottom to grade the whole exam. Type-in answers accept a number or simple fraction such as 3/4.",
   sections: [
     {
-      title: "Part I — No Calculator",
-      note: "15 questions. Calculators are NOT permitted. Give exact values.",
+      title: "Section I, Part A — Multiple Choice (No Calculator)",
+      note: "28 questions. A calculator is NOT permitted. (On the real exam: 80 minutes.)",
+      items: [1,2,4,5,6,15,16,18,19,20,21,35,36,41,45,51,52,53,56,58,68,69,70,71,72,97,99,113].map(function(id){return {kind:"ref", id:id};}),
+    },
+    {
+      title: "Section I, Part B — Multiple Choice (Graphing Calculator)",
+      note: "12 questions. A graphing calculator is required. (On the real exam: 40 minutes.)",
+      items: [39,40,46,128,171,93,98,132,188,127,169,131].map(function(id){return {kind:"ref", id:id};}),
+    },
+    {
+      title: "Section II, Part A — Free Response (Graphing Calculator)",
+      note: "2 questions. A graphing calculator is required.",
+      frq: true,
       items: [
-        { kind: "single", type: "mc",
-          q: "If \\(f(x) = e^x(5 - 6x^2)\\), find \\(f'(x)\\).",
-          choices: ["\\(e^x(-12x)\\)", "\\(e^x(-6x^2 - 12x + 5)\\)", "\\(e^x(5 - 6x^2) - 12x\\)", "\\(e^x(6x^2 + 12x + 5)\\)"],
-          answer: 1,
-          expl: "Product rule: \\(f' = e^x(5-6x^2) + e^x(-12x) = e^x(-6x^2 - 12x + 5)\\)." },
-        { kind: "single", type: "input",
-          q: "Find the exact value of \\(\\sec\\dfrac{5\\pi}{3} - \\cot\\dfrac{7\\pi}{4}\\).",
-          answer: ["3"],
-          expl: "\\(\\sec\\frac{5\\pi}{3} = 2\\) and \\(\\cot\\frac{7\\pi}{4} = -1\\), so \\(2 - (-1) = 3\\)." },
-        { kind: "single", type: "input",
-          q: "If \\(f(x) = 6\\sqrt{x} + x^2 - x + 2\\), find \\(f'(1)\\).",
-          answer: ["4"],
-          expl: "\\(f'(x) = \\frac{3}{\\sqrt{x}} + 2x - 1\\); at \\(x=1\\): \\(3 + 2 - 1 = 4\\)." },
-        { kind: "single", type: "mc",
-          q: "Determine the domain of \\(y = \\sqrt{7 - 4x}\\), in interval notation.",
-          choices: ["\\(\\left(-\\infty, \\frac{7}{4}\\right]\\)", "\\(\\left[\\frac{7}{4}, \\infty\\right)\\)", "\\(\\left(-\\infty, \\frac{7}{4}\\right)\\)", "\\(\\left[-\\frac{7}{4}, \\infty\\right)\\)"],
-          answer: 0,
-          expl: "Need \\(7 - 4x \\ge 0 \\Rightarrow x \\le \\frac{7}{4}\\) (dividing by \\(-4\\) flips the sign)." },
-        { kind: "single", type: "input",
-          q: "Solve for \\(x\\): \\(\\dfrac{1}{2}e^{\\ln 5x} = 40\\).",
-          answer: ["16"],
-          expl: "\\(e^{\\ln 5x} = 80 \\Rightarrow 5x = 80 \\Rightarrow x = 16\\)." },
-        { kind: "single", type: "mc",
-          q: "Simplify \\(\\dfrac{\\csc^2 x}{\\cot^2 x - 1}\\).",
-          choices: ["\\(\\dfrac{1}{\\cos^2 x - \\sin^2 x}\\) (i.e. \\(\\sec 2x\\))", "\\(\\csc 2x\\)", "\\(1\\)", "\\(\\tan^2 x\\)"],
-          answer: 0,
-          expl: "Multiply top and bottom by \\(\\sin^2 x\\): \\(\\frac{1}{\\cos^2x - \\sin^2x} = \\sec 2x\\)." },
-        { kind: "multi",
-          stem: "Evaluate each limit.",
+        { kind: "multi", title: "Question 1 — Function Concepts",
+          stem: "The function \\(h\\) gives the height (in meters) of a drone \\(t\\) minutes after launch. Selected values of \\(h(t)\\) are shown in the table.<table class='hist-table'><thead><tr><th>\\(t\\) (min)</th><td>0</td><td>2</td><td>5</td><td>9</td><td>12</td></tr></thead><tbody><tr><th>\\(h(t)\\) (m)</th><td>4</td><td>16</td><td>25</td><td>19</td><td>7</td></tr></tbody></table>",
           parts: [
-            { label: "a", type: "input", q: "\\(\\displaystyle\\lim_{x \\to 3}\\frac{x^2 - 9}{x - 3}\\)", answer: ["6"], expl: "Factor: \\(\\frac{(x-3)(x+3)}{x-3} = x+3 \\to 6\\)." },
-            { label: "b", type: "input", q: "\\(\\displaystyle\\lim_{x \\to \\infty}\\frac{3x^2 + 1}{x^2 - 5}\\)", answer: ["3"], expl: "Equal degrees → ratio of leading coefficients \\(= 3\\)." },
-            { label: "c", type: "input", q: "\\(\\displaystyle\\lim_{x \\to 0}\\frac{\\sin 5x}{2x}\\)", answer: ["5/2", "2.5"], expl: "\\(\\frac{5}{2}\\cdot\\frac{\\sin 5x}{5x} \\to \\frac{5}{2}\\)." },
+            { label: "a", type: "input", q: "Find the average rate of change of \\(h\\) over the interval \\(2 \\le t \\le 5\\). Include units of meters per minute as a number.", answer: ["3"],
+              expl: "Average rate of change \\(= \\frac{h(5)-h(2)}{5-2} = \\frac{25-16}{3} = 3\\) meters per minute." },
+            { label: "b", type: "mc", q: "On the interval \\(5 \\le t \\le 12\\), the function \\(h\\) is…",
+              choices: ["decreasing", "increasing", "constant", "increasing then constant"], answer: 0,
+              expl: "From \\(t=5\\) to \\(t=12\\), \\(h\\) goes \\(25 \\to 19 \\to 7\\) — the values fall, so \\(h\\) is decreasing." },
+            { label: "c", type: "mc", q: "The average rate of change of \\(h\\) is \\(6\\) on \\([0,2]\\) and \\(3\\) on \\([2,5]\\). Over \\(0 \\le t \\le 5\\), this suggests the graph of \\(h\\) is…",
+              choices: ["concave down (rates of change are decreasing)", "concave up (rates of change are increasing)", "linear", "periodic"], answer: 0,
+              expl: "The average rates of change are decreasing (\\(6 \\to 3\\)) while \\(h\\) still rises, which indicates the graph is <strong>concave down</strong> on that interval." },
           ] },
-        { kind: "single", type: "mc",
-          q: "Given \\(f'(x) = (x+3)^2(x-1)\\), find the \\(x\\)-coordinate of any relative extrema of \\(f\\).",
-          choices: ["\\(x = -3\\) and \\(x = 1\\)", "\\(x = 1\\) only", "\\(x = -3\\) only", "none"],
-          answer: 1,
-          expl: "\\((x+3)^2\\) never changes sign; only at \\(x=1\\) does \\(f'\\) go \\(-\\) to \\(+\\) → relative minimum." },
-        { kind: "multi",
-          stem: "Consider the ellipse \\(4x^2 + 16y^2 - 32x - 192y + 576 = 0\\).",
+        { kind: "multi", title: "Question 2 — Modeling a Non-Periodic Context",
+          stem: "A bacteria population is 500 at time \\(t = 0\\) hours and doubles every 3 hours.",
           parts: [
-            { label: "a", type: "mc", q: "Write it in standard form.",
-              choices: ["\\(\\frac{(x-4)^2}{16} + \\frac{(y-6)^2}{4} = 1\\)", "\\(\\frac{(x-4)^2}{4} + \\frac{(y-6)^2}{16} = 1\\)", "\\(\\frac{(x+4)^2}{16} + \\frac{(y+6)^2}{4} = 1\\)", "\\(\\frac{(x-4)^2}{64} + \\frac{(y-6)^2}{16} = 1\\)"],
-              answer: 0, expl: "Complete the square: \\(4(x-4)^2 + 16(y-6)^2 = 64\\); divide by 64." },
-            { label: "b", type: "input", q: "What is the length of the major axis?", answer: ["8"], expl: "\\(a^2 = 16 \\Rightarrow a = 4\\); major axis \\(= 2a = 8\\)." },
-            { label: "c", type: "mc", q: "Find the foci.",
-              choices: ["\\((4 \\pm 2\\sqrt{3},\\ 6)\\)", "\\((4,\\ 6 \\pm 2\\sqrt{3})\\)", "\\((4 \\pm \\sqrt{20},\\ 6)\\)", "\\((\\pm 2\\sqrt{3},\\ 0)\\)"],
-              answer: 0, expl: "\\(c^2 = 16 - 4 = 12\\), \\(c = 2\\sqrt3\\); horizontal major axis → \\((4 \\pm 2\\sqrt3, 6)\\)." },
+            { label: "a", type: "mc", q: "Which function models the population \\(P(t)\\), in bacteria, after \\(t\\) hours?",
+              choices: ["\\(P(t) = 500 \\cdot 2^{t/3}\\)", "\\(P(t) = 500 \\cdot 2^{3t}\\)", "\\(P(t) = 500 \\cdot 3^{t/2}\\)", "\\(P(t) = 500 + 2t\\)"], answer: 0,
+              expl: "Exponential growth that doubles every 3 hours: \\(P(t) = 500\\cdot 2^{t/3}\\). The exponent \\(t/3\\) counts how many 3-hour doubling periods have passed." },
+            { label: "b", type: "input", q: "Find the population after 9 hours.", answer: ["4000"],
+              expl: "\\(P(9) = 500\\cdot 2^{9/3} = 500\\cdot 2^3 = 500\\cdot 8 = 4000\\)." },
+            { label: "c", type: "input", q: "After how many hours does the population first reach 8000?", answer: ["12"],
+              expl: "\\(500\\cdot 2^{t/3} = 8000 \\Rightarrow 2^{t/3} = 16 = 2^4 \\Rightarrow \\frac{t}{3} = 4 \\Rightarrow t = 12\\) hours." },
           ] },
-        { kind: "single", type: "input",
-          q: "Evaluate \\(\\displaystyle\\int_2^3 \\frac{1}{x^2}\\,dx\\).",
-          answer: ["1/6"],
-          expl: "\\(-x^{-1}\\big|_2^3 = -\\frac13 + \\frac12 = \\frac16\\)." },
-        { kind: "single", type: "mc",
-          q: "Given \\(f(x) = \\sqrt{2x^2 - 7x + 2}\\), find \\(f'(0)\\).",
-          choices: ["\\(-\\dfrac{7}{2\\sqrt{2}}\\)", "\\(-\\dfrac{7}{\\sqrt{2}}\\)", "\\(\\dfrac{1}{2\\sqrt{2}}\\)", "\\(-7\\)"],
-          answer: 0,
-          expl: "Chain rule: \\(\\frac{4x-7}{2\\sqrt{2x^2-7x+2}}\\); at \\(x=0\\): \\(\\frac{-7}{2\\sqrt2}\\)." },
-        { kind: "single", type: "input",
-          q: "Evaluate \\(\\displaystyle\\int_0^2 (2x + 1)\\,dx\\).",
-          answer: ["6"],
-          expl: "Antiderivative \\(x^2 + x\\): \\((4+2) - 0 = 6\\)." },
-        { kind: "single", type: "mc",
-          q: "Find the magnitude of the vector \\(\\mathbf{v} = \\langle 7, -2 \\rangle\\).",
-          choices: ["\\(\\sqrt{53}\\)", "\\(\\sqrt{45}\\)", "\\(5\\)", "\\(53\\)"],
-          answer: 0,
-          expl: "\\(\\sqrt{7^2 + (-2)^2} = \\sqrt{53}\\) (does not simplify)." },
-        { kind: "single", type: "mc",
-          q: "Convert the rectangular point \\((-1, \\sqrt{3})\\) to polar form with \\(r > 0\\) and \\(0 \\le \\theta < 2\\pi\\).",
-          choices: ["\\(\\left(2, \\frac{2\\pi}{3}\\right)\\)", "\\(\\left(2, \\frac{\\pi}{3}\\right)\\)", "\\(\\left(2, \\frac{5\\pi}{6}\\right)\\)", "\\(\\left(4, \\frac{2\\pi}{3}\\right)\\)"],
-          answer: 0,
-          expl: "\\(r = \\sqrt{1+3} = 2\\); QII with reference \\(\\frac{\\pi}{3}\\) → \\(\\theta = \\frac{2\\pi}{3}\\)." },
-        { kind: "single", type: "mc",
-          q: "Solve on \\([0, 2\\pi]\\): \\(\\sqrt{3}\\cot\\theta + 2\\cos\\theta\\cot\\theta = 0\\).",
-          choices: ["\\(\\left\\{\\frac{\\pi}{2}, \\frac{3\\pi}{2}, \\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\right\\}\\)", "\\(\\left\\{\\frac{\\pi}{2}, \\frac{3\\pi}{2}\\right\\}\\)", "\\(\\left\\{\\frac{\\pi}{6}, \\frac{11\\pi}{6}\\right\\}\\)", "\\(\\left\\{\\frac{5\\pi}{6}, \\frac{7\\pi}{6}\\right\\}\\)"],
-          answer: 0,
-          expl: "Factor \\(\\cot\\theta(\\sqrt3 + 2\\cos\\theta)=0\\): \\(\\cot\\theta=0 \\to \\frac{\\pi}{2},\\frac{3\\pi}{2}\\); \\(\\cos\\theta=-\\frac{\\sqrt3}{2} \\to \\frac{5\\pi}{6},\\frac{7\\pi}{6}\\)." },
       ],
     },
     {
-      title: "Part II — Calculator Permitted",
-      note: "15 questions. A calculator is allowed; keep it in radian mode and round as directed.",
+      title: "Section II, Part B — Free Response (No Calculator)",
+      note: "2 questions. A calculator is NOT permitted.",
+      frq: true,
       items: [
-        { kind: "single", type: "mc",
-          q: "Write the equation of the line tangent to \\(f(x) = 6\\sqrt{x} + x^2 - x + 2\\) at \\(x = 1\\).",
-          choices: ["\\(y - 8 = 4(x - 1)\\)", "\\(y - 8 = 5(x - 1)\\)", "\\(y - 4 = 8(x - 1)\\)", "\\(y = 4x\\)"],
-          answer: 0,
-          expl: "Point \\(f(1)=8\\), slope \\(f'(1)=4\\): \\(y - 8 = 4(x-1)\\)." },
-        { kind: "single", type: "mc",
-          q: "On what interval is \\(f(x) = \\dfrac{x^3}{3} - \\dfrac{3x^2}{2} - 10x - 1\\) decreasing?",
-          choices: ["\\((-2, 5)\\)", "\\((-5, 2)\\)", "\\((-\\infty, -2)\\)", "\\((5, \\infty)\\)"],
-          answer: 0,
-          expl: "\\(f'(x) = x^2 - 3x - 10 = (x-5)(x+2) < 0\\) between the roots: \\((-2, 5)\\)." },
-        { kind: "multi",
-          stem: "A particle moves along the \\(x\\)-axis with position \\(g(t) = \\dfrac{t^3}{3} + 2t^2 - 12t + 1\\).",
+        { kind: "graphmulti", title: "Question 3 — Modeling a Periodic Context",
+          stem: "A rider's height \\(h\\) (in meters) on a Ferris wheel varies periodically with time \\(t\\) (in seconds), as shown. The minimum height is 4 m (at \\(t = 0\\)) and the maximum height is 50 m, with a period of 30 seconds.",
+          graph: { title: "Height h (m) vs. time t (s)", xmin: 0, xmax: 60, ymin: 0, ymax: 56,
+            curve: [[0,4],[5,15.5],[10,38.5],[15,50],[20,38.5],[25,15.5],[30,4],[35,15.5],[40,38.5],[45,50],[50,38.5],[55,15.5],[60,4]] },
           parts: [
-            { label: "a", type: "input", q: "Find the velocity at \\(t = 3\\).", answer: ["9"], expl: "\\(v(t)=t^2+4t-12\\); \\(v(3)=9\\)." },
-            { label: "b", type: "input", q: "Find the acceleration at \\(t = 3\\).", answer: ["10"], expl: "\\(a(t)=2t+4\\); \\(a(3)=10\\)." },
-            { label: "c", type: "mc", q: "Is the speed increasing or decreasing at \\(t = 3\\)?",
-              choices: ["increasing — \\(v\\) and \\(a\\) have the same sign", "decreasing — opposite signs", "neither", "cannot tell"],
-              answer: 0, expl: "\\(v(3)=9>0\\), \\(a(3)=10>0\\): same sign → speed increasing." },
+            { label: "a", type: "input", q: "What is the amplitude of \\(h\\) (in meters)?", answer: ["23"],
+              expl: "Amplitude \\(= \\frac{\\text{max} - \\text{min}}{2} = \\frac{50 - 4}{2} = 23\\) m." },
+            { label: "b", type: "input", q: "What is the value of the midline, \\(h = \\,?\\) (in meters)?", answer: ["27"],
+              expl: "Midline \\(= \\frac{\\text{max} + \\text{min}}{2} = \\frac{50 + 4}{2} = 27\\) m." },
+            { label: "c", type: "input", q: "What is the period of \\(h\\) (in seconds)?", answer: ["30"],
+              expl: "The graph completes one full cycle every 30 seconds, so the period is 30." },
+            { label: "d", type: "mc", q: "Which function models the rider's height?",
+              choices: ["\\(h(t) = -23\\cos\\!\\left(\\frac{\\pi}{15}t\\right) + 27\\)", "\\(h(t) = 23\\cos\\!\\left(\\frac{\\pi}{15}t\\right) + 27\\)", "\\(h(t) = -23\\sin\\!\\left(\\frac{\\pi}{15}t\\right) + 27\\)", "\\(h(t) = -27\\cos\\!\\left(\\frac{\\pi}{15}t\\right) + 23\\)"], answer: 0,
+              expl: "Amplitude 23, midline 27, period 30 \\(\\Rightarrow b = \\frac{2\\pi}{30} = \\frac{\\pi}{15}\\). Since the minimum is at \\(t = 0\\), use \\(-\\cos\\): \\(h(t) = -23\\cos(\\frac{\\pi}{15}t) + 27\\)." },
           ] },
-        { kind: "single", type: "input",
-          q: "The continuous function \\(f\\) has \\(f(3)=11,\\ f(6)=29,\\ f(8)=41,\\ f(9)=19\\). Using subintervals \\([3,6],[6,8],[8,9]\\), find the LEFT Riemann sum for \\(\\displaystyle\\int_3^9 f(x)\\,dx\\).",
-          answer: ["132"],
-          expl: "\\(3(11)+2(29)+1(41)=132\\)." },
-        { kind: "single", type: "input",
-          q: "Two sides of a triangle are 5 and 7 with an included angle of \\(60°\\). Find the third side (round to 2 decimals).",
-          answer: ["6.24"],
-          expl: "\\(c^2 = 25+49-70\\cos60° = 39\\), \\(c = \\sqrt{39} \\approx 6.24\\)." },
-        { kind: "multi",
-          stem: "A particle moves along the polar curve \\(r = 8 - \\cos\\theta\\).",
+        { kind: "multi", title: "Question 4 — Symbolic Manipulations",
+          stem: "Solve each equation or simplify each expression. Give exact values.",
           parts: [
-            { label: "a", type: "mc", q: "Find the average rate of change of \\(r\\) with respect to \\(\\theta\\) on \\(\\left[\\frac{\\pi}{2}, \\pi\\right]\\).",
-              choices: ["\\(\\dfrac{2}{\\pi}\\)", "\\(\\dfrac{1}{\\pi}\\)", "\\(\\dfrac{\\pi}{2}\\)", "\\(-\\dfrac{2}{\\pi}\\)"],
-              answer: 0, expl: "\\(\\frac{r(\\pi)-r(\\pi/2)}{\\pi/2} = \\frac{9-8}{\\pi/2} = \\frac{2}{\\pi}\\)." },
-            { label: "b", type: "mc", q: "On this interval, the distance from the graph to the origin is…",
-              choices: ["increasing", "decreasing", "constant", "zero"],
-              answer: 0, expl: "Average rate \\(\\frac{2}{\\pi} > 0\\), so \\(r\\) is increasing." },
+            { label: "a", type: "input", q: "Solve for \\(x\\): \\(2^{x+1} = 32\\).", answer: ["4"],
+              expl: "\\(32 = 2^5\\), so \\(2^{x+1} = 2^5 \\Rightarrow x + 1 = 5 \\Rightarrow x = 4\\)." },
+            { label: "b", type: "input", q: "Solve for \\(x\\): \\(\\log_3(x - 1) = 2\\).", answer: ["10"],
+              expl: "Rewrite as \\(x - 1 = 3^2 = 9 \\Rightarrow x = 10\\). (Check: \\(10 - 1 = 9 > 0\\) ✓.)" },
+            { label: "c", type: "mc", q: "Solve \\(2\\sin\\theta - 1 = 0\\) on \\([0, 2\\pi)\\).",
+              choices: ["\\(\\left\\{\\frac{\\pi}{6}, \\frac{5\\pi}{6}\\right\\}\\)", "\\(\\left\\{\\frac{\\pi}{6}, \\frac{7\\pi}{6}\\right\\}\\)", "\\(\\left\\{\\frac{\\pi}{3}, \\frac{2\\pi}{3}\\right\\}\\)", "\\(\\left\\{\\frac{\\pi}{6}\\right\\}\\)"], answer: 0,
+              expl: "\\(\\sin\\theta = \\frac{1}{2}\\); sine is positive in QI and QII with reference angle \\(\\frac{\\pi}{6}\\): \\(\\theta = \\frac{\\pi}{6}, \\frac{5\\pi}{6}\\)." },
+            { label: "d", type: "mc", q: "Simplify \\(\\dfrac{1 - \\cos^2\\theta}{\\sin\\theta}\\).",
+              choices: ["\\(\\sin\\theta\\)", "\\(\\cos\\theta\\)", "\\(\\tan\\theta\\)", "\\(1\\)"], answer: 0,
+              expl: "\\(1 - \\cos^2\\theta = \\sin^2\\theta\\), so \\(\\frac{\\sin^2\\theta}{\\sin\\theta} = \\sin\\theta\\)." },
           ] },
-        { kind: "single", type: "mc",
-          q: "Solve on \\([0, 2\\pi)\\), to the nearest thousandth: \\(e^x\\tan^2 x - e^x\\tan x - 12e^x = 0\\).",
-          choices: ["\\(\\{1.326,\\ 1.893,\\ 4.467,\\ 5.034\\}\\)", "\\(\\{1.326,\\ 4.467\\}\\)", "\\(\\{0,\\ 1.326,\\ 1.893\\}\\)", "no solution"],
-          answer: 0,
-          expl: "Factor \\(e^x(\\tan x-4)(\\tan x+3)=0\\): \\(\\tan x=4\\to 1.326,4.467\\); \\(\\tan x=-3\\to 1.893,5.034\\)." },
-        { kind: "graphmulti",
-          stem: "The graph of \\(f'\\), the derivative of \\(f\\), is shown. Use it for both parts.",
-          graph: { title: "Graph of f′", xmin: -9, xmax: 9, ymin: -8, ymax: 8,
-            curve: [[-9,6],[-8,4],[-7,2.5],[-6,1.8],[-5,1.5],[-4,1.8],[-3,2],[-2,1.5],[-1,0],[0,-2.5],[1,-4],[2,-4.8],[3,-5],[4,-4],[5,0],[6,2.5],[7,3.8],[8,4.5],[9,5]],
-            ends: [[-9,6,true],[9,5,true]] },
-          parts: [
-            { label: "a", type: "mc", q: "On which interval is \\(f\\) decreasing?",
-              choices: ["\\((-1, 5)\\)", "\\((-9, -1) \\cup (5, 9)\\)", "\\((-5, 1)\\)", "\\((-9, 9)\\)"],
-              answer: 0, expl: "\\(f\\) decreases where \\(f' < 0\\): below the axis on \\((-1, 5)\\)." },
-            { label: "b", type: "mc", q: "At which \\(x\\) does \\(f\\) have a relative maximum?",
-              choices: ["\\(x = -1\\)", "\\(x = 5\\)", "\\(x = -5\\)", "\\(x = 2\\)"],
-              answer: 0, expl: "\\(f'\\) changes \\(+\\) to \\(-\\) at \\(x = -1\\)." },
-          ] },
-        { kind: "multi",
-          stem: "A particle moves along a curve given by \\(x(t) = 2t^2 - 1\\) and \\(y(t) = t + 8\\).",
-          parts: [
-            { label: "a", type: "mc", q: "Eliminate the parameter to write a rectangular equation.",
-              choices: ["\\(x = 2(y - 8)^2 - 1\\)", "\\(y = 2(x - 8)^2 - 1\\)", "\\(x = 2y^2 - 17\\)", "\\(y = \\sqrt{2x} + 8\\)"],
-              answer: 0, expl: "\\(t = y - 8\\); substitute: \\(x = 2(y-8)^2 - 1\\)." },
-            { label: "b", type: "input", q: "The curve crosses the \\(x\\)-axis (\\(y = 0\\)). Find that \\(x\\)-coordinate.", answer: ["127"],
-              expl: "\\(y=0 \\Rightarrow t=-8\\); \\(x(-8)=2(64)-1=127\\)." },
-          ] },
-        { kind: "single", type: "mc",
-          q: "Solve, to the nearest thousandth: \\(-2 + \\ln(3 - x) = 7\\).",
-          choices: ["\\(x \\approx -8100.084\\)", "\\(x \\approx 8103.084\\)", "\\(x \\approx -145.413\\)", "\\(x \\approx 2.999\\)"],
-          answer: 0,
-          expl: "\\(\\ln(3-x)=9 \\Rightarrow 3-x=e^9 \\Rightarrow x = 3 - e^9 \\approx -8100.084\\)." },
-        { kind: "single", type: "mc",
-          q: "You invest \\($1000\\) at 6% annual interest, compounded monthly. What is it worth after 5 years?",
-          choices: ["\\($1338.23\\)", "\\($1348.85\\)", "\\($1300.00\\)", "\\($1419.07\\)"],
-          answer: 1,
-          expl: "\\(A = 1000(1 + \\frac{0.06}{12})^{60} = 1000(1.005)^{60} \\approx \\$1348.85\\)." },
-        { kind: "single", type: "input",
-          q: "A substance has a half-life of 8 days. Starting with 100 g, how many grams remain after 24 days?",
-          answer: ["12.5", "25/2"],
-          expl: "24 days = 3 half-lives: \\(100 \\to 50 \\to 25 \\to 12.5\\) g." },
-        { kind: "single", type: "input",
-          q: "In triangle \\(ABC\\), \\(A = 30°\\), \\(B = 45°\\), and \\(a = 10\\). Find side \\(b\\) (round to 2 decimals).",
-          answer: ["14.14"],
-          expl: "Law of Sines: \\(b = \\frac{10\\sin 45°}{\\sin 30°} = \\frac{10(0.7071)}{0.5} \\approx 14.14\\)." },
-        { kind: "single", type: "input",
-          q: "Given \\(f(x) = \\begin{cases} e^x, & x > 0 \\\\ 2^{3x}, & x \\le 0 \\end{cases}\\) and \\(g(x) = \\begin{cases} \\ln\\frac{x}{4}, & x \\ge 4 \\\\ x + 1, & x < 4 \\end{cases}\\), find \\(f(g(4))\\).",
-          answer: ["1"],
-          expl: "\\(g(4)=\\ln\\frac{4}{4}=\\ln1=0\\); then \\(f(0)=2^{0}=1\\)." },
-        { kind: "single", type: "mc",
-          q: "A car worth \\($24{,}000\\) depreciates 15% per year. Its value after 4 years is closest to…",
-          choices: ["\\($9{,}600\\)", "\\($12{,}528\\)", "\\($14{,}400\\)", "\\($17{,}340\\)"],
-          answer: 1,
-          expl: "Keep 85% each year: \\(24000(0.85)^4 \\approx \\$12{,}528\\)." },
       ],
     },
   ],
@@ -6217,7 +6114,7 @@ function examUnitKey(si, ii, pi) { return pi == null ? `s${si}i${ii}` : `s${si}i
 
 function examUnitHTML(u, key) {
   const resp = examState.responses[key];
-  let h = `<div class="exam-q">${u.q}</div>`;
+  let h = `<div class="exam-q">${u.q}</div>` + ((u.graph || u.doc || u.graphic) ? questionStimulus(u) : "");
   if (u.type === "mc") {
     h += `<div class="exam-choices" data-key="${key}">`;
     u.choices.forEach((c, ci) => {
@@ -6263,16 +6160,19 @@ function renderExam() {
   let html = `<div class="exam-paper">`;
   html += `<div class="exam-head"><h1>${ex.title}</h1><p class="exam-instr">${ex.instructions}</p></div>`;
   if (examState.graded) html += `<div id="exam-scorebanner" class="exam-scorebanner"></div>`;
-  let qnum = 0;
+  let qnum = 0, frqn = 0;
   ex.sections.forEach((sec, si) => {
     html += `<div class="exam-section-head"><div class="exam-section-title">${sec.title}</div>${sec.note ? `<div class="exam-section-note">${sec.note}</div>` : ""}</div>`;
     sec.items.forEach((it, ii) => {
-      qnum++;
-      html += `<div class="exam-item">`;
-      if (it.kind === "single") {
-        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body">${examUnitHTML(it, examUnitKey(si, ii))}</div></div>`;
+      const key = examUnitKey(si, ii);
+      let numLabel;
+      if (sec.frq) { frqn++; numLabel = "FRQ " + frqn; } else { qnum++; numLabel = qnum + "."; }
+      html += `<div class="exam-item${sec.frq ? " exam-frq" : ""}">`;
+      if (it.kind === "single" || it.kind === "ref") {
+        const u = it.kind === "ref" ? QBYID[it.id] : it;
+        html += `<div class="exam-stem"><span class="exam-num">${numLabel}</span><div class="exam-stem-body">${examUnitHTML(u, key)}</div></div>`;
       } else {
-        html += `<div class="exam-stem"><span class="exam-num">${qnum}.</span><div class="exam-stem-body"><div class="exam-q">${it.stem}</div>${it.graph ? renderGraph(it.graph, { showShade: examState.graded }) : ""}</div></div>`;
+        html += `<div class="exam-stem"><span class="exam-num">${numLabel}</span><div class="exam-stem-body">${it.title ? `<div class="exam-frq-title">${it.title}</div>` : ""}<div class="exam-q">${it.stem}</div>${it.graph ? renderGraph(it.graph, { showShade: examState.graded }) : ""}</div></div>`;
         it.parts.forEach((p, pi) => {
           html += `<div class="exam-part"><span class="exam-part-label">(${p.label})</span><div class="exam-part-body">${examUnitHTML(p, examUnitKey(si, ii, pi))}</div></div>`;
         });
@@ -6314,7 +6214,9 @@ function wireExam(ex) {
 function gradeExam(ex) {
   let total = 0, correct = 0, blank = 0;
   ex.sections.forEach((sec, si) => sec.items.forEach((it, ii) => {
-    const units = it.kind === "single" ? [[it, examUnitKey(si, ii)]] : it.parts.map((p, pi) => [p, examUnitKey(si, ii, pi)]);
+    const units = (it.kind === "single" || it.kind === "ref")
+      ? [[it.kind === "ref" ? QBYID[it.id] : it, examUnitKey(si, ii)]]
+      : it.parts.map((p, pi) => [p, examUnitKey(si, ii, pi)]);
     units.forEach(([u, key]) => {
       total++;
       const resp = examState.responses[key];
