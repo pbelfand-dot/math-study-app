@@ -13,9 +13,12 @@ Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
 ```sh
 npm run dev     # http://localhost:8080
 npm run sim     # Monte Carlo harness — the rarity table
+npm run bundle  # dist/build-a-hooper.html — one self-contained file
 ```
 
-The dev server exists only because ES modules cannot load over `file://`.
+The dev server exists only because ES modules cannot load over `file://`. If you
+would rather not run anything, `npm run bundle` flattens the modules into a single
+85 kB HTML file you can double-click straight off disk — same game, no server.
 
 ## The harness
 
