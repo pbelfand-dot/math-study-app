@@ -23,24 +23,31 @@ would rather not run anything, `npm run bundle` flattens the modules into a sing
 
 ### The executable
 
-`npm run exe` produces a standalone Windows binary using Node's single-executable
-format: the official `node.exe` with the game injected as a resource. Nothing to
-install on the target machine. `npm run exe:mac` and `npm run exe:linux` cross-build
-the same way — the "compiler" is just the official Node binary for that platform, so
-only `postject` has to run locally.
+`npm run exe` produces a **366 kB** standalone Windows app: a small C launcher
+(`tools/launcher.c`) with the game embedded as a byte array, which writes it to the
+temp directory and hands it to the default browser. No install, no server, no port.
+Building it needs `mingw-w64`; running it needs nothing.
 
-Running it starts a loopback server on an ephemeral port and opens the default
-browser, because a browser is a better renderer than anything worth shipping a GUI
-toolkit for. It is ~83 MB, essentially all Node runtime; the game is 326 kB of it.
+| | native (default) | Node SEA (`npm run exe:node`) |
+|---|---|---|
+| size | 366 kB | 83 MB |
+| how it runs | writes temp file, opens browser | loopback server, opens browser |
+| platforms | Windows | Windows, macOS, Linux |
+| build needs | mingw-w64 | postject |
 
-Two things worth knowing. The build **strips the Authenticode signature** from
-`node.exe` before injecting — appending a resource invalidates it, and Windows treats
-a corrupt signature worse than a missing one. The result is therefore **unsigned**, so
-SmartScreen shows "Windows protected your PC" on first run (More info → Run anyway).
-Signing needs a certificate this build cannot have.
+The SEA path exists for macOS and Linux (`npm run exe:mac`, `npm run exe:linux`),
+where mingw cannot help. It is 83 MB because it carries an entire JavaScript runtime
+whose only job is to serve one 326 kB file — which is exactly why the native launcher
+is the default. That path also **strips the Authenticode signature** from `node.exe`
+before injecting, since appending a resource invalidates it and Windows treats a
+corrupt signature worse than a missing one.
 
-Verified by running the actual `.exe` under Wine: it serves content byte-identical to
-`dist/build-a-hooper.html` and plays through to a career with no console errors.
+Both are **unsigned**, so SmartScreen shows "Windows protected your PC" on first run
+(More info → Run anyway). Signing needs a certificate this build cannot have.
+
+Both builds were verified by running the actual `.exe` under Wine: each delivers the
+browser content byte-identical to `dist/build-a-hooper.html`, and that page plays
+through to a career with no console errors.
 
 ## The harness
 
