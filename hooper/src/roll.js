@@ -1,5 +1,7 @@
 import {
-  P_UP,
+  UP_CHANCE,
+  UP_SCALE,
+  DOWN_SCALE,
   FREAK_CHANCE,
   FREAK_MULT,
   STAT_FLOOR,
@@ -15,26 +17,32 @@ import {
   RARITY_TIERS,
 } from './constants.js';
 import { defaultRng } from './rng.js';
+import { normalTail, normalTailInv } from './normal.js';
 import { rollArchetype, applyGift } from './archetypes.js';
 
 export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-// P(stat >= expected + d) = exp(-(d/sigma)^2), sign-flipped 70% of the time.
+// Half-normal magnitude by inverse transform, fair coin for direction, with a
+// wider scale downward than upward. See the note in constants.js for why this
+// replaced the original sqrt(-ln u) draw.
 export function rollStat(expected, sigma, rng = defaultRng, floorRel = null) {
+  const up = rng.random() < UP_CHANCE;
   const u = rng.random() || 1e-12;
-  let d = sigma * Math.sqrt(-Math.log(u));
-  if (rng.random() >= P_UP) d = -d;
+  // P(|Z| > t) = u  =>  t = normalTailInv(u/2), which is distributed as |Z|.
+  const mag = normalTailInv(u / 2) * sigma * (up ? UP_SCALE : DOWN_SCALE);
+  let d = up ? mag : -mag;
   if (floorRel !== null && d < floorRel) d = floorRel;
   return clamp(Math.round(expected + d), STAT_FLOOR, STAT_CEIL);
 }
 
 // P(rolling this high or higher), always against the NORMAL sigma — that is
 // what makes a freak-gene pull read as absurd rather than merely lucky.
+// Exactly at the expected value this returns 0.5, which is the point: the
+// number on screen is the median, not a target you usually miss.
 export function rarityP(v, expected, sigma) {
   const d = v - expected;
-  return d > 0
-    ? P_UP * Math.exp(-((d / sigma) ** 2))
-    : 1 - P_UP * Math.exp(-((d / sigma) ** 2));
+  if (d >= 0) return UP_CHANCE * 2 * normalTail(d / (sigma * UP_SCALE));
+  return 1 - (1 - UP_CHANCE) * 2 * normalTail(-d / (sigma * DOWN_SCALE));
 }
 
 export function tierFor(p) {

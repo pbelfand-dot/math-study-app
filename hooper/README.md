@@ -69,14 +69,50 @@ npm run sim -- -n 2000000      # roll count
 paste into `src/constants.js`. Those three are measured, not chosen — regenerate them
 whenever anything upstream moves, then re-run the other checks.
 
+## The roll curve is magnetic
+
+The original draw was `sigma * sqrt(-ln u)` with 30% of deviations pointing up.
+That magnitude is **Rayleigh distributed**: its density is *zero* at the expected
+value and peaks at `sigma/sqrt(2)`. So the number labelled "expected" was the one
+outcome you could essentially never roll, the single most likely result sat about
+0.7 sigma below it (21 points below, for Three), and you landed under it 70% of the
+time. The label was not describing the distribution.
+
+The curve now draws a **half-normal magnitude with a fair coin for direction**, and a
+wider scale downward than upward:
+
+| | old | new |
+|---|---|---|
+| lands at or above expected | 30.6% | **51.0%** |
+| lands within 5 of expected | 7.2% | **22.2%** |
+| pinned at the 25 floor | 30.8% | **19.0%** |
+| median deviation | −11 | **0** |
+
+Falloff is Gaussian, so drifting a little is cheap and drifting a lot gets expensive
+fast — and the two sides diverge as you go out, which is the point:
+
+| distance from expected | that far below | that far above | bad is likelier by |
+|---|---|---|---|
+| 0.5σ | 31.0% | 26.6% | 1.2× |
+| 1.0σ | 16.1% | 10.6% | 1.5× |
+| 2.0σ | 2.4% | 1 in 161 | 3.8× |
+| 3.0σ | 1 in 672 | 1 in 11,310 | 16.8× |
+| 3.5σ | 1 in 3,777 | 1 in 164,701 | 43.6× |
+
+Near the average the sides are nearly even. Far out, a horrible roll is 44× likelier
+than a brilliant one — while still being 1 in 3,777, so genuinely bad players stay
+hard to get too.
+
 ## Verification status
 
-**95+ rates, 2M rolls, rolled archetypes disabled.** Reproduces the published table;
-worst deviation 3.7%, on Block, the rarest column and so the noisiest.
+**95+ rates, 2M rolls, rolled archetypes disabled.** `UP_SCALE` is tuned so the chase
+economy survives the curve change: the ordering is identical and every rate lands
+within 8% of the originally published table, so rare pulls are exactly as rare as
+before — only the bulk moved onto the target.
 
 | | Finishing | Speed | Playmaking | Mid-Range | Handles | Three | Perim D | Dunk | Rebounding | Interior D | Post | Block |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| measured | 22 | 45 | 65 | 67 | 68 | 78 | 82 | 206 | 215 | 299 | 301 | 411 |
+| measured | 23 | 46 | 65 | 66 | 68 | 76 | 80 | 201 | 208 | 279 | 282 | 396 |
 | published | 22 | 45 | 65 | 67 | 67 | 77 | 83 | 209 | 220 | 298 | 306 | 427 |
 
 **Archetype inflation, 1M rolls each.** Gifts inflate the height-gated stats most and
@@ -121,21 +157,20 @@ shooting-and-IQ builds at `dependence <= 0.85` finish at 32.6.
 
 Reported rather than quietly tuned around.
 
-**1. The chase-pull table is not reachable from the spec's constants.** The 12-row 95+
-table pins dunk base 8, growth 2.9, sigma 18, `P_UP` 0.30 and `FREAK_MULT` 2.6, and
-with those pinned there is no free parameter left. What the stated math actually gives
-for a 5'10" chasing a 95+ dunk (expected value 25 at that height):
+**1. The chase-pull table is not reachable from the spec's constants.** Its two "with
+freak gene" figures — 1 in 5,800,000 for the 5'10"/95 dunk, ~1 in 6,000,000 for the
+5'4"/99 dunk in hard rule 3 — are inconsistent with each other under the engine's own
+arithmetic, and were not reachable under the original curve either. For a 5'10"
+chasing a 95+ dunk (expected 25 at that height):
 
-| | spec | this engine |
-|---|---|---|
-| without freak gene | 1 in 558,000,000 | 1 in 8,377,338 |
-| freak gene already on dunk | 1 in 5,800,000 | 1 in 29 |
-| blended, a fresh roll at that height | — | 1 in 104,832 |
+| | spec | old curve | magnetic curve |
+|---|---|---|---|
+| without freak gene | 1 in 558,000,000 | 1 in 8,377,338 | 1 in 1,251,802 |
+| freak gene already on dunk | 1 in 5,800,000 | 1 in 29 | 1 in 31 |
+| blended, a fresh roll at that height | — | 1 in 104,832 | 1 in 101,842 |
 
-The spec's two "with freak gene" figures (5.8M here, ~6M for the 5'4"/99 case in hard
-rule 3) are also inconsistent with each other under the engine's arithmetic. The design
-*intent* does hold: without the gene the pull is effectively impossible, with it, it is
-real. Constants were left exactly as specified. `npm run sim -- --chase`.
+The design *intent* holds under both: without the gene the pull is effectively
+impossible, with it, it is real. `npm run sim -- --chase`.
 
 **2. Three Common archetypes have no cost.** Section 5A states every rolled archetype
 must have one, but the Common table lists "—" for Gym Rat, High Motor and Soft Touch

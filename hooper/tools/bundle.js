@@ -18,6 +18,7 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const MODULES = [
   'src/constants.js',
   'src/rng.js',
+  'src/normal.js',
   'src/archetypes.js',
   'src/traits.js',
   'src/names.js',
@@ -39,6 +40,25 @@ const read = (p) => readFile(join(ROOT, p), 'utf8');
 // Fonts first: the @font-face data URIs have to be declared before the rules
 // that use the families.
 const css = (await read('web/fonts.css')) + '\n' + (await read('web/styles.css'));
+
+// Every local module a file imports must itself be in MODULES, or the bundle
+// silently loses those definitions and only breaks at runtime — the dev server
+// keeps working, because there the imports are real. Check it here instead.
+{
+  const listed = new Set(MODULES.map((m) => m.split('/').pop()));
+  const missing = [];
+  for (const m of MODULES) {
+    const src = await read(m);
+    for (const [, spec] of src.matchAll(/from\s+['"](\.[^'"]+)['"]/g)) {
+      const file = spec.split('/').pop();
+      if (!listed.has(file)) missing.push(`${m} imports ${spec}`);
+    }
+  }
+  if (missing.length) {
+    console.error('bundle: these imports are not in MODULES:\n  ' + missing.join('\n  '));
+    process.exit(1);
+  }
+}
 const parts = [];
 for (const m of MODULES) {
   const src = strip(await read(m));

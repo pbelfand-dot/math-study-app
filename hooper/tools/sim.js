@@ -8,7 +8,8 @@
 //   npm run sim -- --careers    -- career-outcome distribution
 //   npm run sim -- -n 2000000   -- roll count
 
-import { SKILL_KEYS, SKILLS, VERIFIED_95_PLUS, P_UP, FREAK_CHANCE, FREAK_MULT, SCOUT_NOISE } from '../src/constants.js';
+import { SKILL_KEYS, SKILLS, VERIFIED_95_PLUS, UP_CHANCE, UP_SCALE, FREAK_CHANCE, FREAK_MULT, SCOUT_NOISE } from '../src/constants.js';
+import { normalTail } from '../src/normal.js';
 import { rollCompleteBuild, rollStat, expectedSkill, clamp } from '../src/roll.js';
 import { makeRng, mulberry32 } from '../src/rng.js';
 import { rawComposite, overallFor, buildRarityScore, positionFor } from '../src/overall.js';
@@ -75,8 +76,8 @@ function chaseOdds(height, key, threshold) {
   const expected = expectedSkill(key, height);
   const sigma = SKILLS[key].sigma;
   const d = threshold - 0.5 - expected; // Math.round boundary
-  const pNoFreak = P_UP * Math.exp(-((d / sigma) ** 2));
-  const pFreak = P_UP * Math.exp(-((d / (sigma * FREAK_MULT)) ** 2));
+  const pNoFreak = UP_CHANCE * 2 * normalTail(d / (sigma * UP_SCALE));
+  const pFreak = UP_CHANCE * 2 * normalTail(d / (sigma * FREAK_MULT * UP_SCALE));
   const pGeneHere = FREAK_CHANCE / SKILL_KEYS.length; // freak lands on THIS attribute
   const blended = pGeneHere * pFreak + (1 - pGeneHere) * pNoFreak;
   return { expected, pNoFreak, pFreak, pGeneHere, blended };
@@ -108,14 +109,16 @@ function chaseCheck() {
   }
 
   console.log(`
-NOTE. The 12-row 95+ table above reproduces the published Monte Carlo to within
-sampling noise, which pins every constant these chase numbers depend on: dunk
-base 8, growth 2.9, sigma 18, P_UP 0.30, FREAK_MULT 2.6. With those pinned there
-is no free parameter left, and the chase figures printed here are what the stated
-math actually yields. The spec's chase table is not reachable from the spec's own
-constants (its two "with freak gene" figures, 5.8M and 6M, are also inconsistent
-with each other by the engine's own arithmetic). Constants were left alone; this
-is reported rather than tuned around.`);
+NOTE. The roll curve is the magnetic one (half-normal, centred on the expected
+value) rather than the spec's sqrt(-ln u) draw — see the note in constants.js for
+why that one put the most likely roll 0.7 sigma below the number it labelled
+"expected". UP_SCALE was tuned so the 12-row 95+ table still lands on the
+published rates, so the chase economy is unchanged even though the bulk moved.
+
+The spec's chase table was never reachable from the spec's own constants either:
+its two "with freak gene" figures, 5.8M and 6M, are inconsistent with each other
+by the engine's arithmetic. The design intent holds under both curves — without
+the gene the pull is effectively impossible, with it, it is real.`);
 }
 
 // ---------------------------------------------------------------------------

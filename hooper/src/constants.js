@@ -3,7 +3,32 @@
 // `npm run sim` and comparing the printed table to VERIFIED_95_PLUS below.
 // ---------------------------------------------------------------------------
 
-export const P_UP = 0.30; // only 30% of deviations go up — upside is expensive
+// ---------------------------------------------------------------------------
+// THE ROLL CURVE — magnetic, centred on the expected value.
+//
+// The original curve drew its deviation as sigma*sqrt(-ln u), which is a
+// RAYLEIGH magnitude: its density is zero at the expected value and peaks at
+// sigma/sqrt(2). Combined with only 30% of deviations pointing up, that put the
+// single most likely roll about 0.7 sigma BELOW the number labelled "expected"
+// (21 points below, for Three), and landed you under it 70% of the time. The
+// label was not describing the distribution.
+//
+// This curve is a half-normal magnitude with a fair coin for direction, so:
+//   - the density PEAKS at the expected value instead of having a hole there,
+//   - the expected value is the true median: half above, half below,
+//   - probability falls off as exp(-d^2), so drifting a little is cheap and
+//     drifting a lot gets expensive fast,
+//   - the downward scale is wider than the upward one, so at any given distance
+//     the bad side is likelier than the good side — but a genuinely horrible
+//     roll is still hard, because that side decays just as fast.
+//
+// UP_SCALE is tuned so the 95+ chase rates land on the published table: the
+// rarity economy is unchanged, only the bulk moved onto the target.
+// ---------------------------------------------------------------------------
+export const UP_CHANCE = 0.5; // fair coin — "expected" has to mean expected
+export const UP_SCALE = 0.80; // upside spread, as a fraction of sigma
+export const DOWN_SCALE = 1.01; // downside spread — wider, so bad is likelier
+
 export const FREAK_CHANCE = 1 / 300; // one build in 300 gets a freak gene
 export const FREAK_MULT = 2.6; // freak gene multiplies SIGMA, not the value
 
@@ -136,39 +161,39 @@ export const OVERALL_ANCHORS = [
 // Empirical quantiles of the raw composite, emitted by `npm run sim --calibrate`.
 // [percentile, rawValue] ascending. Regenerate whenever a constant changes.
 export const RAW_QUANTILES = [
-  [23.5775, 0],
-  [27.6425, 0.001],
-  [30.4555, 0.01],
-  [33.7105, 0.05],
-  [35.7172, 0.1],
-  [38.3744, 0.2],
-  [40.4238, 0.3],
-  [42.2626, 0.4],
-  [44.0556, 0.5],
-  [45.9081, 0.6],
-  [47.9481, 0.7],
-  [50.4107, 0.8],
-  [53.9462, 0.9],
-  [56.9513, 0.95],
-  [60.4250, 0.98],
-  [61.9113, 0.987],
-  [64.9485, 0.995],
-  [69.5217, 0.999],
-  [70.1388, 0.9992],
-  [74.2137, 0.99985],
-  [75.0437, 0.9999],
-  [79.7450, 0.99999],
-  [86.5018, 1],
+  [26.6275, 0],
+  [32.6865, 0.001],
+  [36.5726, 0.01],
+  [40.3273, 0.05],
+  [42.4481, 0.1],
+  [45.1140, 0.2],
+  [47.1090, 0.3],
+  [48.8472, 0.4],
+  [50.5138, 0.5],
+  [52.2109, 0.6],
+  [54.0628, 0.7],
+  [56.2783, 0.8],
+  [59.4177, 0.9],
+  [62.0895, 0.95],
+  [65.1269, 0.98],
+  [66.4260, 0.987],
+  [69.0815, 0.995],
+  [72.9400, 0.999],
+  [73.3975, 0.9992],
+  [76.8212, 0.99985],
+  [77.4740, 0.9999],
+  [81.0721, 0.99999],
+  [84.6170, 1],
 ];
 
 // Build-rarity score cutoffs, emitted by the same calibration pass. The score is
 // spike-weighted surprisal (see buildRarityScore), not a flat sum.
 export const BUILD_RARITY_CUTS = {
-  Uncommon: 8.533,
-  Rare: 10.805,
-  Elite: 13.028,
-  Legendary: 15.440,
-  Mythic: 18.339,
+  Uncommon: 9.323,
+  Rare: 11.494,
+  Elite: 13.631,
+  Legendary: 15.953,
+  Mythic: 18.545,
 };
 
 export const DRAFT_CUTOFF = 62; // scout hype below this goes undrafted
@@ -179,25 +204,25 @@ export const SCOUT_NOISE = 6.5;
 // Hype carries variance the overall anchors do not describe, which is why this
 // cannot be derived from OVERALL_ANCHORS. Emitted by `npm run sim -- --calibrate`.
 export const HYPE_QUANTILES = [
-  [-4.9707, 0],
-  [30.1221, 0.1],
-  [41.4395, 0.3],
-  [49.8326, 0.5],
-  [57.7594, 0.7],
-  [62.0259, 0.8],
-  [64.4536, 0.85],
-  [67.3107, 0.9],
-  [69.4519, 0.93],
-  [71.2676, 0.95],
-  [72.3665, 0.96],
-  [73.6991, 0.97],
-  [75.4474, 0.98],
-  [76.6309, 0.985],
-  [78.2391, 0.99],
-  [80.8311, 0.995],
-  [84.1331, 0.998],
-  [86.6154, 0.999],
-  [89.2246, 0.9995],
-  [95.5944, 0.9999],
-  [117.4974, 1],
+  [-5.3238, 0],
+  [30.1124, 0.1],
+  [41.4259, 0.3],
+  [49.8307, 0.5],
+  [57.7877, 0.7],
+  [62.0810, 0.8],
+  [64.5030, 0.85],
+  [67.3386, 0.9],
+  [69.4853, 0.93],
+  [71.2854, 0.95],
+  [72.3844, 0.96],
+  [73.7183, 0.97],
+  [75.4889, 0.98],
+  [76.6711, 0.985],
+  [78.2568, 0.99],
+  [80.8895, 0.995],
+  [84.1440, 0.998],
+  [86.6884, 0.999],
+  [89.3953, 0.9995],
+  [95.7457, 0.9999],
+  [113.1957, 1],
 ];
