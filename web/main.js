@@ -488,7 +488,55 @@ function renderVault() {
              stored in this browser only</div>`
         : `<p class="note">Nothing here yet. Simulate a career and it lands in the vault.</p>`
     }
+    <div class="section-label">Back up your progress</div>
+    <p class="note">There is no account and no server &mdash; everything lives on this device.
+    Copy this text somewhere safe and you can restore it on any phone, or after a
+    reinstall.</p>
+    <textarea id="backupBox" class="backup" readonly rows="3">${esc(Progress.exportProgress(p))}</textarea>
+    <div class="row" style="margin-top:9px">
+      <button class="b-alt" id="copyBackup" type="button">Copy backup</button>
+      <button class="b-alt" id="pasteBackup" type="button">Restore from text</button>
+    </div>
+    <div id="restoreSlot"></div>
   </div>`;
+
+  $('copyBackup').onclick = async () => {
+    const box = $('backupBox');
+    try {
+      await navigator.clipboard.writeText(box.value);
+      $('copyBackup').textContent = 'Copied';
+    } catch {
+      // iOS in standalone mode can refuse the clipboard API; selecting the text
+      // lets the user copy it with the normal long-press menu instead.
+      box.removeAttribute('readonly');
+      box.select();
+      box.setSelectionRange(0, box.value.length);
+      $('copyBackup').textContent = 'Selected — hold to copy';
+    }
+    setTimeout(() => ($('copyBackup').textContent = 'Copy backup'), 2200);
+  };
+
+  $('pasteBackup').onclick = () => {
+    $('restoreSlot').innerHTML = `
+      <p class="note" style="margin-top:12px">Paste a backup below, then press Restore.
+      This replaces everything currently on this device.</p>
+      <textarea id="restoreBox" class="backup" rows="3" placeholder="Paste backup text here"></textarea>
+      <div class="row" style="margin-top:9px">
+        <button class="b-roll" id="doRestore" type="button">Restore</button>
+      </div>
+      <div id="restoreMsg" class="note"></div>`;
+    $('doRestore').onclick = () => {
+      const r = Progress.importProgress($('restoreBox').value);
+      if (!r.ok) {
+        $('restoreMsg').innerHTML = `<span style="color:var(--t5)">${esc(r.error)}</span>`;
+        return;
+      }
+      S.prog = r.progress;
+      Progress.save(S.prog);
+      syncCounters();
+      renderVault();
+    };
+  };
 }
 
 function renderBadges() {
@@ -509,6 +557,30 @@ $('navPlay').onclick = () => setView('play');
 $('navVault').onclick = () => setView('vault');
 $('navBadges').onclick = () => setView('badges');
 
+// iOS gives no install prompt and buries "Add to Home Screen" in the Share
+// sheet, so most people never find it. Shown once, dismissible, and only when
+// it is actually actionable: iOS, in Safari, not already installed.
+function maybeShowInstallHint() {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && 'ontouchend' in document);
+  const standalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  if (!isIOS || standalone) return;
+  try {
+    if (localStorage.getItem('hooper.installHint') === 'off') return;
+  } catch { /* ignore */ }
+  $('installHint').innerHTML =
+    `<span>Install it: tap <b>Share</b>, then <b>Add to Home Screen</b>. It then runs
+     offline with no browser bar.</span>
+     <button class="chip" id="hintClose" type="button" aria-label="Dismiss">Got it</button>`;
+  $('installHint').classList.remove('hidden');
+  $('hintClose').onclick = () => {
+    $('installHint').classList.add('hidden');
+    try { localStorage.setItem('hooper.installHint', 'off'); } catch { /* ignore */ }
+  };
+}
+
 syncCounters();
 newBuild();
 setView('play');
+maybeShowInstallHint();

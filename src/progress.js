@@ -171,6 +171,37 @@ export function bestCareers(p, n = 25) {
   return [...p.history].sort((a, b) => b.score - a.score).slice(0, n);
 }
 
+// ---------------------------------------------------------------------------
+// Backup and restore
+//
+// iOS can clear a site's stored data. Home-screen apps are exempt from the
+// aggressive seven-day rule, but "exempt in normal conditions" is not a promise
+// worth staking a month of pulls on, and there is no server to fall back to.
+// Making progress exportable turns an unrecoverable loss into an inconvenience.
+// ---------------------------------------------------------------------------
+export function exportProgress(p) {
+  return JSON.stringify({ app: 'build-a-hooper', exported: new Date().toISOString(), data: p });
+}
+
+// Returns { ok, progress, error }. Never throws and never partially applies —
+// a bad paste has to leave existing progress untouched.
+export function importProgress(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(String(text).trim());
+  } catch {
+    return { ok: false, error: 'That is not valid backup text.' };
+  }
+  const d = parsed && parsed.app === 'build-a-hooper' ? parsed.data : parsed;
+  if (!d || typeof d !== 'object' || typeof d.builds !== 'number' || !Array.isArray(d.history)) {
+    return { ok: false, error: 'That does not look like a Build a Hooper backup.' };
+  }
+  const merged = { ...blank(), ...d, streak: { ...blank().streak, ...(d.streak || {}) } };
+  merged.version = 1;
+  if (merged.history.length > HISTORY_CAP) merged.history.length = HISTORY_CAP;
+  return { ok: true, progress: merged };
+}
+
 // Bundled together under one exported name. The bundler flattens modules into a
 // single scope, so `import * as P` has no namespace object to bind to and any
 // `P.foo` becomes a ReferenceError in the built file while the dev server keeps
@@ -178,4 +209,5 @@ export function bestCareers(p, n = 25) {
 export const Progress = {
   todayStamp, load, save, bumpStreak, streakAlive,
   ACHIEVEMENTS, checkAchievements, careerScore, record, bestCareers,
+  exportProgress, importProgress,
 };

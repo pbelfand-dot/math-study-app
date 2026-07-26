@@ -21,7 +21,19 @@ Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
 **Android** — Chrome shows an *Install app* prompt, or menu → *Install app*.
 
 It then runs from the home screen with no browser chrome, works with no signal,
-and keeps your vault, badges and streak on the device. Rebuild it with
+and keeps your vault, badges and streak on the device.
+
+**Offline is verified, not assumed.** Load once with a connection, then cold-start
+with the network cut: the game loads, a full career simulates, progress saves, and a
+relaunch still has it — zero failed requests, zero errors. The only requirement is
+that first online load, which is what installs the cached copy.
+
+**Progress is backed up by hand, because there is nowhere else to put it.** iOS can
+clear a site's stored data; home-screen apps are exempt from the aggressive seven-day
+rule, but "exempt in normal conditions" is not worth staking a month of pulls on when
+there is no server to restore from. The vault has Copy backup / Restore from text:
+tested against a full wipe, and a malformed paste is rejected without touching what is
+already there. Rebuild it with
 `npm run site` after any change; the service worker cache is keyed to a hash of
 the page, so a new build replaces the old one instead of leaving people stranded
 on a stale copy.
