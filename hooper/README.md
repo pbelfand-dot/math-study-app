@@ -14,11 +14,33 @@ Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
 npm run dev     # http://localhost:8080
 npm run sim     # Monte Carlo harness — the rarity table
 npm run bundle  # dist/build-a-hooper.html — one self-contained file
+npm run exe     # dist/BuildAHooper.exe — standalone Windows app
 ```
 
 The dev server exists only because ES modules cannot load over `file://`. If you
 would rather not run anything, `npm run bundle` flattens the modules into a single
-85 kB HTML file you can double-click straight off disk — same game, no server.
+326 kB HTML file you can double-click straight off disk — same game, no server.
+
+### The executable
+
+`npm run exe` produces a standalone Windows binary using Node's single-executable
+format: the official `node.exe` with the game injected as a resource. Nothing to
+install on the target machine. `npm run exe:mac` and `npm run exe:linux` cross-build
+the same way — the "compiler" is just the official Node binary for that platform, so
+only `postject` has to run locally.
+
+Running it starts a loopback server on an ephemeral port and opens the default
+browser, because a browser is a better renderer than anything worth shipping a GUI
+toolkit for. It is ~83 MB, essentially all Node runtime; the game is 326 kB of it.
+
+Two things worth knowing. The build **strips the Authenticode signature** from
+`node.exe` before injecting — appending a resource invalidates it, and Windows treats
+a corrupt signature worse than a missing one. The result is therefore **unsigned**, so
+SmartScreen shows "Windows protected your PC" on first run (More info → Run anyway).
+Signing needs a certificate this build cannot have.
+
+Verified by running the actual `.exe` under Wine: it serves content byte-identical to
+`dist/build-a-hooper.html` and plays through to a career with no console errors.
 
 ## The harness
 
@@ -143,7 +165,10 @@ src/verdict.js      the shareable line
 src/names.js        original league, teams and names
 tools/sim.js        Monte Carlo harness
 tools/serve.js      static dev server
-web/                UI
+tools/bundle.js     flattens the modules into one HTML file
+tools/build-exe.js  standalone executable (Node SEA)
+tools/fetch-fonts.js  regenerates web/fonts.css
+web/                UI — scoreboard styling, fonts inlined as data URIs
 ```
 
 ## Design notes

@@ -7,6 +7,10 @@
   "scripts": {
     "sim": "node tools/sim.js",
     "dev": "node tools/serve.js",
-    "bundle": "node tools/bundle.js"
+    "bundle": "node tools/bundle.js",
+    "exe": "node tools/build-exe.js",
+    "exe:mac": "node tools/build-exe.js --target darwin-arm64",
+    "exe:linux": "node tools/build-exe.js --target linux-x64",
+    "fonts": "node tools/fetch-fonts.js"
   }
 }
