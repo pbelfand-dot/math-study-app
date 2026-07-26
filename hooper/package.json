@@ -1,0 +1,11 @@
+{
+  "name": "build-a-hooper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A basketball build-roller and career simulator. Every attribute is scored against what is expected for that player's height.",
+  "scripts": {
+    "sim": "node tools/sim.js",
+    "dev": "node tools/serve.js"
+  }
+}
