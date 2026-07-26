@@ -77,6 +77,10 @@ export function startBuild(rng = defaultRng, opts = {}) {
   const wingspan = height + Math.round(rng.gauss(2.5, 2.6));
   const frameIndex = clamp(Math.round(rng.gauss(2, 1)), 0, 4);
   const freak = opts.noFreak ? null : rng.chance(FREAK_CHANCE) ? rng.pick(SKILL_KEYS) : null;
+  // Draft age and rawness are rolled here, not in the sim, so the build sheet
+  // and the career agree on what draft night looked like.
+  const draftAge = 19 + rng.int(4);
+  const rawness = rng.gauss(0, 1.8);
 
   return {
     rng,
@@ -84,6 +88,8 @@ export function startBuild(rng = defaultRng, opts = {}) {
     wingspan,
     frameIndex,
     frame: FRAMES[frameIndex],
+    draftAge,
+    rawness,
     freakGene: freak,
     archetype: null, // filled by beat 3
     mentality: null, // filled by beat 4

@@ -4,7 +4,7 @@ import {
   rollMentals, beatPlan, formatHeight, oddsText,
 } from '../src/roll.js';
 import { applyGift, titleFor } from '../src/archetypes.js';
-import { overallFor, fitFor, positionFor, buildRarityTier } from '../src/overall.js';
+import { potentialFor, draftOverallFor, fitFor, positionFor, buildRarityTier } from '../src/overall.js';
 import { simulateCareer } from '../src/career.js';
 import { writeVerdict } from '../src/verdict.js';
 import { defaultRng, seededRng } from '../src/rng.js';
@@ -245,14 +245,15 @@ function finish() {
   rollMentals(b);
   S.done = true;
 
-  const ovr = overallFor(b);
+  const potential = potentialFor(b);
+  const draftOvr = draftOverallFor(b);
   const pos = positionFor(b.height);
   const rarity = buildRarityTier(b);
   const title = titleFor(b);
   const fit = fitFor(b);
 
   S.session.builds++;
-  if (ovr > S.session.best) S.session.best = ovr;
+  if (potential > S.session.best) S.session.best = potential;
   save(STORE, S.session);
   syncCounters();
 
@@ -268,9 +269,11 @@ function finish() {
 
   $('ovrSlot').innerHTML = `
     <div class="overall">
-      <div><div class="ovr-l">Overall</div><div class="ovr-n">${ovr}</div></div>
+      <div><div class="ovr-l">Potential &mdash; his prime</div><div class="ovr-n">${potential}</div></div>
+      <div><div class="ovr-l">Draft night</div><div class="ovr-n" style="color:var(--led-dim)">${draftOvr}</div></div>
       <div class="ovr-side">
         ${rarity.name.toUpperCase()} BUILD<br>
+        ENTERS AT ${b.draftAge}<br>
         FIT ${fit >= 0 ? '+' : ''}${fit.toFixed(2)} ${fit > 0.15 ? '&mdash; MATCHED' : fit < -0.15 ? '&mdash; MISMATCHED' : ''}
       </div>
       <div class="pos-badge">${pos.short}</div>
@@ -281,8 +284,10 @@ function finish() {
     </div>`;
 
   stage(`<div class="stage-lbl">Build complete &mdash; ${esc(S.name)}</div>
-    <div class="stage-num" style="font-size:48px">${ovr}</div>
-    <div class="stage-sub">Four mental attributes still hidden. Simulate to see what he actually was.</div>`);
+    <div class="stage-num" style="font-size:48px">${draftOvr} <span style="color:var(--led-dim);font-size:.45em">&rarr;</span> ${potential}</div>
+    <div class="stage-exp">DRAFT NIGHT &rarr; CEILING &middot; the attributes above describe the ceiling</div>
+    <div class="stage-sub">Whether he ever gets there is work ethic, playing time and luck &mdash;
+    and four mental attributes you still cannot see. Simulate to find out.</div>`);
 }
 
 // ---------------------------------------------------------------------------
@@ -301,7 +306,12 @@ function runCareer() {
 
   const line = (k, val) => `<div class="line"><span>${k}</span><span>${val}</span></div>`;
   const body = c.madeLeague
-    ? line('PEAK OVERALL', c.peakRating) +
+    ? line('DRAFT OVR &rarr; PEAK', `${c.draftOvr} &rarr; ${c.peakRating}` +
+        `<span style="color:var(--led-dim);font-weight:400"> (+${c.peakRating - c.draftOvr})</span>`) +
+      line('POTENTIAL', c.peakRating >= c.potential
+        ? `${c.potential} &mdash; reached it`
+        : `${c.potential} &mdash; got ${Math.round(((c.peakRating - c.draftOvr) / Math.max(1, c.potential - c.draftOvr)) * 100)}% there`) +
+      line('OFFSEASON LEAPS', c.leaps) +
       line('SEASONS', c.seasons.length) +
       line('LOST TO INJURY', c.seasonsLostToInjury) +
       line('CAREER AVERAGES', `${a.ppg} / ${a.rpg} / ${a.apg}`) +
@@ -316,7 +326,7 @@ function runCareer() {
       (s) => `<tr class="${s.allStar ? 'hl' : ''}">
         <td>${s.age}</td><td>${esc(s.team)}</td><td>${s.rating}</td><td>${s.games}</td>
         <td>${s.minutes}</td><td>${s.ppg}</td><td>${s.rpg}</td><td>${s.apg}</td><td>${s.wins}</td>
-        <td>${[s.mvp ? 'MVP' : '', s.allStar ? 'AS' : '', s.ring ? 'TITLE' : '', s.injury ? esc(s.injury.kind) : ''].filter(Boolean).join(' ') || '—'}</td>
+        <td>${[s.leapt ? 'LEAP' : '', s.mvp ? 'MVP' : '', s.allStar ? 'AS' : '', s.ring ? 'TITLE' : '', s.injury ? esc(s.injury.kind) : ''].filter(Boolean).join(' ') || '—'}</td>
       </tr>`,
     )
     .join('');
@@ -324,7 +334,7 @@ function runCareer() {
   $('car').innerHTML = `<div class="career">
     <h2>Career Result</h2>
     <div class="draft">${draftLine}</div>
-    <div class="draft-sub">SCOUT HYPE ${c.hype} &middot; TRUE RATING ${c.overall}${c.guaranteedByArchetype ? ' &middot; ARCHETYPE GUARANTEED A SLOT' : ''}</div>
+    <div class="draft-sub">ENTERED AT ${b.draftAge} &middot; SCOUT HYPE ${c.hype} &middot; TRUE CEILING ${c.potential}${c.guaranteedByArchetype ? ' &middot; ARCHETYPE GUARANTEED A SLOT' : ''}</div>
     ${body}
     <div class="reveal">
       <h3>Hidden attributes &mdash; revealed</h3>
@@ -341,7 +351,7 @@ function runCareer() {
       c.seasons.length
         ? `<details class="log"><summary>Season by season (${c.seasons.length})</summary>
              <div class="scroll-x"><table>
-               <thead><tr><th>Age</th><th>Team</th><th>Rtg</th><th>G</th><th>MP</th><th>PPG</th><th>RPG</th><th>APG</th><th>W</th><th>Notes</th></tr></thead>
+               <thead><tr><th>Age</th><th>Team</th><th>OVR</th><th>G</th><th>MP</th><th>PPG</th><th>RPG</th><th>APG</th><th>W</th><th>Notes</th></tr></thead>
                <tbody>${seasonRows}</tbody></table></div></details>`
         : ''
     }

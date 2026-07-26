@@ -59,6 +59,7 @@ npm run sim -- --archetypes    # same table with rolled archetypes enabled
 npm run sim -- --both          # before/after comparison
 npm run sim -- --overall       # overall distribution vs the calibration target
 npm run sim -- --careers       # draft, career, award and in-league rate checks
+npm run sim -- --progression   # rookie -> peak growth by draft slot
 npm run sim -- --chase         # chase-pull odds
 npm run sim -- --sample 8      # readable sample builds, careers and verdicts
 npm run sim -- --calibrate     # re-emit the empirical constants
@@ -129,29 +130,66 @@ against the natural expectation and the normal sigma, so a gift shows up as a be
 number at the same tier boundaries. The **build**-rarity cuts were recalibrated with
 gifts enabled.
 
-**Overall distribution**, 1M rolls, against the Basketball GM shape:
+## Potential, draft rating, and development
 
-| Band | Measured / season | Target |
+A build's headline number is its **potential** — the prime it reaches if it develops.
+Draft-day rating is derived from it and is always lower, by more for the young and
+raw: a nineteen-year-old with a 92 ceiling still enters the league in the low 70s,
+while a finished twenty-two-year-old with a 70 ceiling enters at 66. That gap is the
+whole reason draft classes are a gamble, and closing it is what a career is.
+
+The OVR scale reads the way a basketball fan expects: under 60 is not a pro, 60–69 is
+the end of a bench, 70–79 is a rotation player up to a solid starter, 80–89 is an
+all-star, 90+ is a franchise. An earlier version calibrated 70+ as the top 1.2% of
+all builds — internally consistent, but it made 70 a career ceiling instead of a
+starting point, so a prospect entered at 62 and topped out at 69.
+
+Development is gated on work ethic, fit, and — the one people forget — **playing
+time**. A prospect who never gets minutes does not develop, whatever his ceiling was.
+Gains are front-loaded into years two through four, with a small chance each young
+season of an offseason leap.
+
+| Draft slot | Potential | Rookie | Peak | Growth | Peak age | Career PPG |
+|---|---|---|---|---|---|---|
+| top 5 | 82.0 | 70.0 | 79.3 | **+9.3** | 25.8 | 12.5 |
+| lottery 6–14 | 76.1 | 66.6 | 73.9 | +7.2 | 25.6 | 9.3 |
+| first 15–30 | 72.6 | 64.4 | 69.9 | +5.5 | 24.7 | 7.3 |
+| second 31–60 | 67.0 | 61.2 | 64.5 | +3.3 | 23.3 | 4.8 |
+| undrafted | 56.8 | 51.9 | 52.1 | +0.2 | 20.6 | 0.8 |
+
+Builds with 88+ potential go **74.1 → 86.8** and average 16.7 ppg with 5.7 all-star
+selections. `npm run sim -- --progression`.
+
+**Potential across all rolled builds**, 500k rolls:
+
+| Band | Share | One per |
 |---|---|---|
-| 70–79 | 5.5 | ~6 |
-| 80–89 | 0.29 | ~1 per 3 seasons |
-| 90+ | 0.08 | ~7 per century |
+| 70–79 rotation/starter | 11.6% | 9 builds |
+| 80–89 all-star | 3.1% | 32 builds |
+| 90+ franchise | 0.32% | 312 builds |
 
 **Career sim**, 200k careers, per player-season against a 450-player league:
 
 | | measured | target |
 |---|---|---|
-| drafted | 20.4% | — |
-| lottery share of drafted | 22.6% | 23% (14 of 60) |
-| all-star selection | 5.09% | 5.3% (24 of 450) |
-| MVP | 0.198% | 0.22% (1 of 450) |
-| championship | 3.30% | 3.3% (15 of 450) |
-| Hall of Fame (of those who played) | 0.47% | ~0.5% |
-| lottery picks who bust | 35.9% | — |
+| drafted | 21.5% | — |
+| all-star selection | 5.63% | 5.3% (24 of 450) |
+| MVP | 0.224% | 0.22% (1 of 450) |
+| championship | 3.78% | 3.3% (15 of 450) |
+| Hall of Fame (of those who played) | 0.42% | ~0.5% |
+| lottery picks who bust | 44.1% | — |
 
-Mean career 7.3 seasons for players who reach the league. The aging mechanic
-separates as designed: builds with `dependence >= 1.6` finish at 29.9 on average,
-shooting-and-IQ builds at `dependence <= 0.85` finish at 32.6.
+And the in-league rating mix, per player-season, against a real 450-man league:
+
+| Band | measured | target |
+|---|---|---|
+| 70–79 rotation/starter | 36.5% | ~33% (150 of 450) |
+| 80–89 all-star | 7.3% | ~10% (45 of 450) |
+| 90+ franchise | 0.46% | ~1.3% (6 of 450) |
+
+Mean career 7.2 seasons for players who reach the league. The aging mechanic
+separates as designed: athleticism-dependent builds finish several years earlier than
+shooting-and-IQ builds.
 
 ## Two places the spec's own numbers do not close
 

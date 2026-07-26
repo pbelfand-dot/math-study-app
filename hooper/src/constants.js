@@ -119,42 +119,42 @@ export const VERIFIED_95_PLUS = {
 };
 
 // ---------------------------------------------------------------------------
-// OVERALL CALIBRATION
+// THE OVR SCALE — read it the way a basketball fan reads one.
 //
-// Overall is a percentile rank of the rolled-build population, mapped through
-// anchor points chosen to match the Basketball GM rating shape cited in the
-// spec: ~6 players/season in the 70s, one in the 80s every three years, ~7 in
-// the 90s per simulated century (~450 league players/season).
-//   P(>=70) ~ 1.3%   P(>=80) ~ 0.08%   P(>=90) ~ 0.015%
-// The p=0.80 -> 62 anchor is what makes the spec's "below ~62 goes undrafted"
-// land at roughly one build in five getting drafted.
+// This maps a build's percentile onto a rating whose bands mean what people
+// expect them to mean:
 //
-// WHAT IS BEING CALIBRATED, because there are two defensible readings and they
-// differ by ~9x. The BBGM figures are a snapshot of one league season. Matching
-// them against simulated PLAYER-SEASONS is the wrong target: a 70 plays fifteen
-// seasons and a 62 plays two, so survivorship counts good players many times
-// over, and forcing that series onto the BBGM shape would make a 70 overall a
-// 1-in-2,300 roll — a chase nobody ever completes.
+//   < 60   not a pro
+//   60-69  end of the bench, two-way, fringe roster
+//   70-79  real rotation player up to solid starter
+//   80-89  all-star
+//   90+    franchise player
 //
-// So the target here is the PER-BUILD rate: how often someone rolling builds
-// sees a 70, an 80, a 90 should match how often those ratings exist in a league
-// season. ~1.3% / ~0.08% / ~0.015%, i.e. one 70 per ~80 builds, one 80 per
-// ~1,250, one 90 per ~6,700. The richer in-league distribution that falls out of
-// this is survivorship, not inflation, and `--careers` reports it separately.
+// This replaced an earlier curve calibrated so that 70+ was the top 1.2% of all
+// builds. That was internally consistent, but it made 70 a career ceiling
+// instead of a starting point — a rolled build would enter at 62, top out at
+// 69, and the number never meant anything a viewer could translate.
 //
-// Anchors sit on the bucket BOUNDARY (69.5, not 70) because overall is rounded
-// for display, and Math.round(69.6) would otherwise smuggle an extra ~1% of
-// builds into the 70s.
+// What a build rolls is its POTENTIAL: the prime it reaches if it develops.
+// Draft-day rating is derived from it (see draftOverallFor) and is always
+// lower, by more for the high-upside prospects — which is why a nineteen-year-
+// old with a 92 ceiling still enters the league in the mid-70s.
+// ---------------------------------------------------------------------------
 export const OVERALL_ANCHORS = [
-  [0.0, 18],
-  [0.02, 25],
-  [0.15, 35],
-  [0.3, 42],
-  [0.5, 50],
-  [0.8, 61.5], // draft cutoff sits here — do not move without re-checking draft rate
-  [0.987, 69.5],
-  [0.9992, 79.5],
-  [0.99985, 89.5],
+  [0.0, 20],
+  [0.1, 32],
+  [0.3, 40],
+  [0.5, 45],
+  [0.7, 57],
+  [0.75, 62],
+  [0.8, 66],
+  [0.85, 70],
+  [0.9, 73],
+  [0.95, 77],
+  [0.98, 83],
+  [0.99, 86],
+  [0.997, 90],
+  [0.9999, 95],
   [1.0, 99],
 ];
 
@@ -204,25 +204,25 @@ export const SCOUT_NOISE = 6.5;
 // Hype carries variance the overall anchors do not describe, which is why this
 // cannot be derived from OVERALL_ANCHORS. Emitted by `npm run sim -- --calibrate`.
 export const HYPE_QUANTILES = [
-  [-5.3238, 0],
-  [30.1124, 0.1],
-  [41.4259, 0.3],
-  [49.8307, 0.5],
-  [57.7877, 0.7],
-  [62.0810, 0.8],
-  [64.5030, 0.85],
-  [67.3386, 0.9],
-  [69.4853, 0.93],
-  [71.2854, 0.95],
-  [72.3844, 0.96],
-  [73.7183, 0.97],
-  [75.4889, 0.98],
-  [76.6711, 0.985],
-  [78.2568, 0.99],
-  [80.8895, 0.995],
-  [84.1440, 0.998],
-  [86.6884, 0.999],
-  [89.3953, 0.9995],
-  [95.7457, 0.9999],
-  [113.1957, 1],
+  [-7.1341, 0],
+  [28.5726, 0.1],
+  [38.4620, 0.3],
+  [46.1657, 0.5],
+  [55.7512, 0.7],
+  [61.7156, 0.8],
+  [65.0164, 0.85],
+  [68.7161, 0.9],
+  [71.4467, 0.93],
+  [73.6966, 0.95],
+  [75.0534, 0.96],
+  [76.6616, 0.97],
+  [78.7761, 0.98],
+  [80.1623, 0.985],
+  [81.9601, 0.99],
+  [84.7895, 0.995],
+  [88.1072, 0.998],
+  [90.2917, 0.999],
+  [92.3469, 0.9995],
+  [96.3443, 0.9999],
+  [110.8964, 1],
 ];

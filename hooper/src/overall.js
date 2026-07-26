@@ -97,11 +97,26 @@ export function hypeToPercentile(h) {
   return interp(HYPE_QUANTILES, h);
 }
 
-export function overallFor(b) {
+// What the build is worth at its PRIME, if it develops. This is the number the
+// rolled attributes describe.
+export function potentialFor(b) {
   const raw = rawComposite(b);
   const p = rawToPercentile(raw);
   return clamp(Math.round(percentileToOverall(p)), 10, 99);
 }
+
+// What he is on draft night. Always below potential, and further below it the
+// higher the ceiling — a nineteen-year-old with star tools is further from
+// using them than a twenty-two-year-old who is already what he will be. That
+// gap is the whole reason draft classes are a gamble.
+export function draftOverallFor(b) {
+  const pot = potentialFor(b);
+  const gap = clamp((pot - 50) * 0.45 + (21 - b.draftAge) * 1.8 + b.rawness, 1, 28);
+  return clamp(Math.round(pot - gap), 20, 99);
+}
+
+// Kept as the build's headline number = its ceiling.
+export const overallFor = potentialFor;
 
 // ---------------------------------------------------------------------------
 // Build rarity. Multiplying every above-expectation probability swung wildly;
