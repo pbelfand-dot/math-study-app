@@ -21,6 +21,25 @@ The dev server exists only because ES modules cannot load over `file://`. If you
 would rather not run anything, `npm run bundle` flattens the modules into a single
 326 kB HTML file you can double-click straight off disk — same game, no server.
 
+### The desktop app (Electron)
+
+```sh
+npm install
+npm run desktop            # run it in a real window
+npm run desktop:win        # dist/BuildAHooper-1.0.0-portable.exe
+npm run desktop:installer  # an NSIS installer instead
+```
+
+`electron-main.cjs` loads **`dist/build-a-hooper.html`**, not `web/index.html`. That
+matters: Electron's `loadFile` serves over `file://`, and Chromium blocks ES module
+imports from `file://` origins, so pointing it at `web/index.html` opens a window with
+the chrome painted and no game inside it. The `desktop` scripts run `npm run bundle`
+first so the single-file build always exists.
+
+Electron gives a real window with no browser chrome, at roughly 150 MB. The native
+launcher below is 379 kB and opens your browser instead — pick whichever trade you
+prefer; both play the identical game.
+
 ### The executable
 
 `npm run exe` produces a **366 kB** standalone Windows app: a small C launcher

@@ -1,6 +1,6 @@
 import { DRAFT_CUTOFF, SCOUT_NOISE } from './constants.js';
 import { clamp } from './roll.js';
-import { overallFor, fitFor, positionFor, buildRarityTier, hypeToPercentile } from './overall.js';
+import { potentialFor, draftOverallFor, fitFor, positionFor, buildRarityTier, hypeToPercentile } from './overall.js';
 import { titleFor } from './archetypes.js';
 import { traitsFor, traitEffects } from './traits.js';
 import { randomTeam } from './names.js';
@@ -11,14 +11,15 @@ const round1 = (v) => Math.round(v * 10) / 10;
 // ---------------------------------------------------------------------------
 // Draft
 // ---------------------------------------------------------------------------
-function runDraft(b, overall, rng) {
-  // Scout hype, not truth. This is the only thing the draft ever sees, which is
-  // why reaches and steals both have to happen.
-  const hype = overall + rng.gauss(0, SCOUT_NOISE);
+function runDraft(b, draftOvr, potential, rng) {
+  // Scouts weigh projected upside above present ability — which is why a raw
+  // nineteen-year-old goes ahead of a finished twenty-two-year-old who is better
+  // today, and why the top of a lottery is mostly unfinished players. It is
+  // still scouting and not truth, so reaches and steals both happen.
+  const hype = draftOvr * 0.35 + potential * 0.65 + rng.gauss(0, SCOUT_NOISE);
   const guaranteed = !!b.archetype?.guaranteesDraft;
 
   if (hype < DRAFT_CUTOFF && !guaranteed) {
-    // Undrafted players can still find a roster spot; most do not keep it.
     const signChance = clamp((hype - 46) / 52, 0, 0.42);
     return { drafted: false, pick: null, hype, signed: rng.chance(signChance), guaranteed: false };
   }
@@ -87,8 +88,14 @@ function boxScore(b, rating, minutes, eff, fit) {
   const scoring = (s.three + s.midrange + s.finishing + s.dunk) / 4;
 
   // Centred so a league-average rotation player lands near 20: five men on the
-  // floor have to split 100% of the possessions.
-  const usage = clamp(18 + (b.mentality - 50) * 0.16 + (scoring - 66) * 0.20 + fit * 10, 8, 36);
+  // floor have to split 100% of the possessions. The rating term matters as much
+  // as the skill term — offenses feed the best player on the floor, and without
+  // it an 81 and an 86 post identical lines once both cap out at 38 minutes.
+  const usage = clamp(
+    19.5 + (rating - 67) * 0.42 + (b.mentality - 50) * 0.13 + (scoring - 66) * 0.14 + fit * 8,
+    8,
+    36,
+  );
 
   let ts =
     0.50 +
@@ -124,16 +131,20 @@ function boxScore(b, rating, minutes, eff, fit) {
 // The sim
 // ---------------------------------------------------------------------------
 export function simulateCareer(b, rng = defaultRng) {
-  const overall = overallFor(b);
+  const potential = potentialFor(b);
+  const draftOvr = draftOverallFor(b);
+  const overall = potential; // headline number for the build = its ceiling
   const fit = fitFor(b);
   const traits = traitsFor(b);
   const eff = traitEffects(traits);
   const title = titleFor(b);
   const pos = positionFor(b.height);
-  const draft = runDraft(b, overall, rng);
+  const draft = runDraft(b, draftOvr, potential, rng);
 
   const result = {
     overall,
+    potential,
+    draftOvr,
     fit: Math.round(fit * 100) / 100,
     position: pos,
     title,
@@ -149,6 +160,7 @@ export function simulateCareer(b, rng = defaultRng) {
     teams: [],
     permanentLoss: { speed: 0, dunk: 0 },
     careerAverages: { ppg: 0, rpg: 0, apg: 0, spg: 0, bpg: 0, mpg: 0, games: 0, points: 0 },
+    peakRating: 0,
     hof: false,
     bust: false,
     madeLeague: false,
@@ -160,49 +172,56 @@ export function simulateCareer(b, rng = defaultRng) {
   }
   result.madeLeague = true;
 
-  // Development profile. The rolled build rating is the player's draft-day
-  // basketball ability. Potential is separate, so a raw rookie can become a
-  // star without every prospect following the same curve.
+  // -------------------------------------------------------------------------
+  // DEVELOPMENT
+  //
+  // A career is the story of closing the gap between draft-day ability and
+  // potential. How much of it closes is the interesting part: work ethic, fit,
+  // and — the one people forget — playing time. A prospect who never gets
+  // minutes does not develop, however high his ceiling was.
+  // -------------------------------------------------------------------------
   const we = b.mentals.workEthic;
-  const iq = b.mentals.bballIQ;
-  const coach = b.mentals.coachability;
-  const potentialBonus =
-    rng.gauss(9, 5.5) +
-    (we - 50) * 0.14 +
-    (iq - 50) * 0.06 +
-    (coach - 50) * 0.05 +
-    fit * 5;
-  const potential = clamp(overall + potentialBonus, overall, 99);
-  const bigMan = b.height >= 82;
-  const peakAge = 26.5 + (b.physicals.longevity - 50) * 0.065 + (bigMan ? 0.8 : 0) + eff.peakAge;
-  const development = clamp(
-    (0.72 + we / 115 + coach / 260 + fit * 0.35) * eff.growth,
-    0.55,
-    1.8,
+
+  // Share of the draft-to-potential gap this player actually converts. Around
+  // 0.85 typical; a grinder overshoots his projection, a coaster never arrives.
+  const realization = clamp(
+    (0.89 + (we - 50) * 0.0055 + fit * 0.12 + rng.gauss(0, 0.08)) * eff.growth,
+    0.52,
+    1.14,
   );
+  const realizedPeak = clamp(draftOvr + (potential - draftOvr) * realization, 30, 99);
+
+  const bigMan = b.height >= 82;
+  const peakAge = 26 + (b.physicals.longevity - 50) * 0.06 + (bigMan ? 1 : 0) + eff.peakAge;
 
   // Skills the build leans on. High dependence falls off a cliff.
   const dependence =
     ((b.skills.speed + b.skills.dunk) / 2) /
     ((b.skills.three + b.skills.midrange + b.mentals.bballIQ) / 3);
   const declineRate =
-    1.5 * clamp(dependence, 0.55, 2.4) * (1 - (b.physicals.longevity - 50) * 0.007) * eff.decline;
+    1.9 * clamp(dependence, 0.55, 2.4) * (1 - (b.physicals.longevity - 50) * 0.007) * eff.decline;
 
-  // The displayed build overall is the draft-day rating. Undrafted players
-  // receive a small adjustment for the harder path into a rotation.
   const state = {
-    age: 19 + rng.int(3),
-    rating: draft.drafted ? overall : overall - 2,
+    age: b.draftAge,
+    rating: draft.drafted ? draftOvr : draftOvr - 3,
     injuryHistory: 0,
     speedLoss: 0,
     dunkLoss: 0,
     peak: 0,
+    leaps: 0,
+    // Last season's minutes gate this season's development.
+    lastMinutes: 14,
   };
 
   let team = randomTeam(rng);
   result.teams.push(team);
   const maxAge = 40 + eff.careerLength;
   const tradeChance = 0.09 * eff.tradeFreq;
+
+  // Roster economics. REPLACEMENT is where a spot starts being contested;
+  // REPLACEMENT_FLOOR is where there is no spot at any price.
+  const REPLACEMENT = 66;
+  const REPLACEMENT_FLOOR = 57;
 
   let totals = { ppg: 0, rpg: 0, apg: 0, spg: 0, bpg: 0, mpg: 0, games: 0, points: 0 };
 
@@ -211,36 +230,42 @@ export function simulateCareer(b, rng = defaultRng) {
     const effSpeed = clamp(b.skills.speed - state.speedLoss, 25, 99);
     const effDunk = clamp(b.skills.dunk - state.dunkLoss, 25, 99);
 
-    // NBA-style development: meaningful early gains, smaller gains near the
-    // player's potential, and occasional breakout or stalled seasons.
-    let developmentDelta = 0;
-    if (state.age < peakAge) {
-      const headroom = Math.max(0, potential - state.rating);
-      const ageFactor =
-        state.age <= 20 ? 1.28 :
-        state.age <= 22 ? 1.12 :
-        state.age <= 24 ? 0.88 : 0.58;
-      const baseGain = Math.min(7.5, headroom * (0.13 + development * 0.075) * ageFactor);
-      const breakoutChance = clamp(0.055 + (we - 50) * 0.0014 + fit * 0.05, 0.02, 0.18);
-      const breakout = headroom >= 5 && rng.chance(breakoutChance) ? rng.gauss(2.2, 0.8) : 0;
-      const stall = rng.chance(clamp(0.10 - (we - 50) * 0.001, 0.035, 0.16)) ? rng.gauss(-1.1, 0.55) : 0;
-      developmentDelta = Math.max(-1.5, baseGain + breakout + stall + rng.gauss(0, 0.55));
-      state.rating += developmentDelta;
+    // Growth then decline. Gains are front-loaded — the second and third years
+    // are where a prospect either arrives or stops — and gated on playing time,
+    // which is why the previous season's minutes feed into this.
+    let leapt = false;
+    if (year > 0 && state.age < peakAge) {
+      const room = realizedPeak - state.rating;
+      if (room > 0) {
+        const youth = clamp(1.18 - (state.age - 19) * 0.085, 0.16, 1.18);
+        const playingTime = clamp(0.50 + state.lastMinutes / 24, 0.50, 1.30);
+        let gain = room * 0.27 * youth * playingTime;
+        // The offseason leap: a real thing, and the reason people watch young
+        // players. Rare, weighted to the years where it actually happens.
+        if (state.age <= 25 && rng.chance(0.11 * (0.6 + we / 90))) {
+          gain += Math.abs(rng.gauss(2.6, 1.7));
+          leapt = true;
+          state.leaps++;
+        }
+        state.rating += gain + rng.gauss(0.25, 0.8);
+      }
     } else {
       const past = state.age - peakAge;
-      developmentDelta = -declineRate * (0.42 + 0.28 * past);
-      state.rating += developmentDelta;
+      state.rating -= declineRate * (0.5 + 0.32 * past);
     }
     // Permanent athletic loss drags the rating with it.
     state.rating -= (state.speedLoss + state.dunkLoss) * 0.06;
     state.rating = clamp(state.rating, 10, 99);
     state.peak = Math.max(state.peak, state.rating);
+    // Checked before the season is recorded — otherwise the log shows a year
+    // played at a rating nobody would have been on a roster for.
+    if (year > 0 && state.rating < REPLACEMENT_FLOOR) break;
 
     const rating = state.rating;
     const stamina = b.physicals.stamina;
-    // 62 (the draft cutoff) is a 13-minute end-of-rotation piece; 70 is a
-    // starter; 85 plays until the coach takes him out.
-    let minutes = clamp((rating - 51) * 1.15 + (stamina - 50) * 0.09, 0, 38);
+    // On this scale: 62 is a 12-minute end-of-bench piece, 70 a starter at ~22,
+    // 80 a 35-minute focal point, 85+ plays until the coach takes him out.
+    let minutes = clamp((rating - 54) * 1.35 + (stamina - 50) * 0.09, 0, 38);
 
     const injury = injuryRoll(b, state, minutes, eff, rng);
     let games = 82;
@@ -281,22 +306,22 @@ export function simulateCareer(b, rng = defaultRng) {
     let allStar = false;
     let mvp = false;
     let ring = false;
-    // p94.7 of in-league ratings is 75; 24 of 450 get picked.
-    if (rating >= 70 && minutes >= 24 && games >= 50) {
-      allStar = rng.chance(clamp((rating - 70) / 11.5, 0.03, 0.96));
+    // All-stars live in the 80s on this scale; 24 of 450 get picked.
+    if (rating >= 76 && minutes >= 24 && games >= 50) {
+      allStar = rng.chance(clamp((rating - 76) / 11, 0.03, 0.96));
     }
     if (allStar) {
       result.awards.allStars++;
-      if (rating >= 82 && rng.chance(clamp((rating - 80) / 30, 0.03, 0.6))) result.awards.allLeague++;
+      if (rating >= 84 && rng.chance(clamp((rating - 82) / 28, 0.03, 0.6))) result.awards.allLeague++;
     }
-    if (allStar && rating >= 83 && wins >= 52 && games >= 62) {
-      mvp = rng.chance(clamp((rating - 83) / 8.5, 0.05, 0.85));
+    if (allStar && rating >= 88 && wins >= 52 && games >= 62) {
+      mvp = rng.chance(clamp((rating - 88) / 7, 0.05, 0.85));
       if (mvp) result.awards.mvps++;
     }
     if (playoffs) {
       // League-wide, one roster in thirty wins it: ~3% of player-seasons.
       const playoffStrength = clamp((wins - 41) / 32, 0, 1);
-      const p = clamp(0.012 + playoffStrength ** 2 * 0.30, 0, 0.4) * eff.titleOdds;
+      const p = clamp(0.010 + playoffStrength ** 2 * 0.22, 0, 0.35) * eff.titleOdds;
       ring = rng.chance(p);
       if (ring) result.awards.rings++;
     }
@@ -305,7 +330,6 @@ export function simulateCareer(b, rng = defaultRng) {
       age: state.age,
       team,
       rating: Math.round(rating),
-      development: round1(developmentDelta),
       games,
       minutes: round1(minutes),
       ppg: round1(box.ppg),
@@ -323,8 +347,10 @@ export function simulateCareer(b, rng = defaultRng) {
       mvp,
       ring,
       injury,
+      leapt,
     };
     result.seasons.push(season);
+    state.lastMinutes = minutes;
 
     totals.games += games;
     totals.points += box.ppg * games;
@@ -348,7 +374,7 @@ export function simulateCareer(b, rng = defaultRng) {
 
     // Careers end two ways. A few players decline until they are finished; far
     // more are simply better than nobody and get replaced by next year's rookie.
-    if (state.rating < 38) break;
+
     if (state.age > maxAge) break;
 
     // A single replacement level cannot do this job alone: set it low enough
@@ -356,10 +382,10 @@ export function simulateCareer(b, rng = defaultRng) {
     // churning; set it high enough to churn them and the shooter retires at 31
     // with the aging mechanic invisible. Pedigree splits the two — a team keeps
     // a declining former star far longer than a 24-year-old who was never good.
-    const REPLACEMENT = 63;
     if (state.rating < REPLACEMENT) {
       let stayP = clamp(1 - (REPLACEMENT - state.rating) / 11, 0.03, 0.93);
-      stayP += Math.min(0.34, Math.max(0, (state.peak - 64) * 0.03));
+      const nearEnough = clamp(1 - (REPLACEMENT - state.rating) / 12, 0, 1);
+      stayP += Math.min(0.34, Math.max(0, (state.peak - 66) * 0.028)) * nearEnough;
       if (!draft.drafted) stayP *= 0.6; // no guaranteed money, no rope
       if (draft.pick && draft.pick <= 14) stayP += 0.22; // teams sit on lottery picks
       if (draft.drafted && state.age <= 22) stayP += 0.18;
@@ -389,20 +415,21 @@ export function simulateCareer(b, rng = defaultRng) {
     result.seasons.length * 1.2 +
     (result.careerAverages.points / 1000) * 2.2;
   result.hofScore = Math.round(hofScore);
-  result.hof = hofScore >= 182;
+  result.hof = hofScore >= 215;
 
   result.peakRating = result.seasons.reduce((m, s) => Math.max(m, s.rating), 0);
   result.peakAge = Math.round(peakAge * 10) / 10;
-  result.rookieRating = overall;
-  result.potential = Math.round(potential);
-  result.ceiling = Math.round(potential); // backwards-compatible field
+  result.realizedPeak = Math.round(realizedPeak);
+  result.leaps = state.leaps;
+  result.rookieRating = result.seasons.length ? result.seasons[0].rating : null;
+  result.ceiling = Math.round(realizedPeak);
   result.dependence = Math.round(dependence * 100) / 100;
   // A bust is a promise the league paid for and did not get.
   result.bust =
     draft.drafted &&
     draft.pick <= 14 &&
     result.awards.allStars === 0 &&
-    (result.seasons.length < 6 || result.peakRating < 68);
+    (result.seasons.length < 6 || result.peakRating < 75);
 
   return result;
 }

@@ -27,7 +27,7 @@
 // ---------------------------------------------------------------------------
 export const UP_CHANCE = 0.5; // fair coin — "expected" has to mean expected
 export const UP_SCALE = 0.80; // upside spread, as a fraction of sigma
-export const DOWN_SCALE = 1.01; // downside spread — wider, so bad is likelier
+export const DOWN_SCALE = 0.92; // downside spread — still wider than up, but less punishing
 
 export const FREAK_CHANCE = 1 / 300; // one build in 300 gets a freak gene
 export const FREAK_MULT = 2.6; // freak gene multiplies SIGMA, not the value
@@ -54,6 +54,39 @@ export const SKILLS = {
 };
 
 export const SKILL_KEYS = Object.keys(SKILLS);
+
+// ---------------------------------------------------------------------------
+// SKILL CORRELATION
+//
+// Attributes were rolled independently, which produced players who do not
+// exist: a 90 three with a 30 mid-range, an elite finisher who cannot dunk.
+// Real skills travel together — shooting is one motion, rim pressure is one
+// athletic profile, and size does several jobs at once.
+//
+// Each skill loads onto shared latent factors plus a unique component. Because
+// every skill's driver stays a standard normal by construction, the marginal
+// distribution of every attribute — and therefore the whole verified 95+ chase
+// table — is completely unchanged. Only the joint shape moves.
+//
+// Implied correlations: three/mid-range 0.60, handles/playmaking 0.53,
+// dunk/finishing 0.34, rebounding/interior 0.42, interior/block 0.47.
+// ---------------------------------------------------------------------------
+export const FACTORS = ['shoot', 'athlete', 'big', 'guard', 'defense'];
+
+export const FACTOR_LOADINGS = {
+  three: { shoot: 0.80 },
+  midrange: { shoot: 0.75 },
+  finishing: { athlete: 0.45, shoot: 0.30 },
+  dunk: { athlete: 0.75 },
+  speed: { athlete: 0.55, guard: 0.25 },
+  handles: { guard: 0.75 },
+  playmaking: { guard: 0.70 },
+  perimeterD: { defense: 0.55, athlete: 0.25 },
+  interiorD: { big: 0.60, defense: 0.40 },
+  block: { big: 0.55, defense: 0.35 },
+  rebounding: { big: 0.70 },
+  post: { big: 0.65 },
+};
 
 // Class B — physical intangibles. Expected values depend on height and frame.
 export const PHYSICALS = {
@@ -119,82 +152,89 @@ export const VERIFIED_95_PLUS = {
 };
 
 // ---------------------------------------------------------------------------
-// OVERALL CALIBRATION
+// THE OVR SCALE — read it the way a basketball fan reads one.
 //
-// Overall is a percentile rank of the rolled-build population, mapped through
-// anchor points chosen to match the Basketball GM rating shape cited in the
-// spec: ~6 players/season in the 70s, one in the 80s every three years, ~7 in
-// the 90s per simulated century (~450 league players/season).
-//   P(>=70) ~ 1.3%   P(>=80) ~ 0.08%   P(>=90) ~ 0.015%
-// The p=0.80 -> 62 anchor is what makes the spec's "below ~62 goes undrafted"
-// land at roughly one build in five getting drafted.
+// This maps a build's percentile onto a rating whose bands mean what people
+// expect them to mean:
 //
-// WHAT IS BEING CALIBRATED, because there are two defensible readings and they
-// differ by ~9x. The BBGM figures are a snapshot of one league season. Matching
-// them against simulated PLAYER-SEASONS is the wrong target: a 70 plays fifteen
-// seasons and a 62 plays two, so survivorship counts good players many times
-// over, and forcing that series onto the BBGM shape would make a 70 overall a
-// 1-in-2,300 roll — a chase nobody ever completes.
+//   < 60   not a pro
+//   60-69  end of the bench, two-way, fringe roster
+//   70-79  real rotation player up to solid starter
+//   80-89  all-star
+//   90+    franchise player
 //
-// So the target here is the PER-BUILD rate: how often someone rolling builds
-// sees a 70, an 80, a 90 should match how often those ratings exist in a league
-// season. ~1.3% / ~0.08% / ~0.015%, i.e. one 70 per ~80 builds, one 80 per
-// ~1,250, one 90 per ~6,700. The richer in-league distribution that falls out of
-// this is survivorship, not inflation, and `--careers` reports it separately.
+// This replaced an earlier curve calibrated so that 70+ was the top 1.2% of all
+// builds. That was internally consistent, but it made 70 a career ceiling
+// instead of a starting point — a rolled build would enter at 62, top out at
+// 69, and the number never meant anything a viewer could translate.
 //
-// Anchors sit on the bucket BOUNDARY (69.5, not 70) because overall is rounded
-// for display, and Math.round(69.6) would otherwise smuggle an extra ~1% of
-// builds into the 70s.
+// What a build rolls is its POTENTIAL: the prime it reaches if it develops.
+// Draft-day rating is derived from it (see draftOverallFor) and is always
+// lower, by more for the high-upside prospects — which is why a nineteen-year-
+// old with a 92 ceiling still enters the league in the mid-70s.
+// ---------------------------------------------------------------------------
 export const OVERALL_ANCHORS = [
-  [0.0, 18],
-  [0.02, 25],
-  [0.15, 35],
-  [0.3, 42],
-  [0.5, 50],
-  [0.8, 61.5], // draft cutoff sits here — do not move without re-checking draft rate
-  [0.987, 69.5],
-  [0.9992, 79.5],
-  [0.99985, 89.5],
+  [0.0, 20],
+  [0.1, 32],
+  [0.3, 40],
+  [0.5, 45],
+  [0.7, 57],
+  [0.75, 62],
+  [0.8, 66],
+  [0.85, 70],
+  [0.9, 73],
+  [0.95, 77],
+  [0.98, 83],
+  [0.99, 86],
+  [0.997, 90],
+  [0.9999, 95],
   [1.0, 99],
 ];
 
 // Empirical quantiles of the raw composite, emitted by `npm run sim --calibrate`.
 // [percentile, rawValue] ascending. Regenerate whenever a constant changes.
 export const RAW_QUANTILES = [
-  [26.6275, 0],
-  [32.6865, 0.001],
-  [36.5726, 0.01],
-  [40.3273, 0.05],
-  [42.4481, 0.1],
-  [45.1140, 0.2],
-  [47.1090, 0.3],
-  [48.8472, 0.4],
-  [50.5138, 0.5],
-  [52.2109, 0.6],
-  [54.0628, 0.7],
-  [56.2783, 0.8],
-  [59.4177, 0.9],
-  [62.0895, 0.95],
-  [65.1269, 0.98],
-  [66.4260, 0.987],
-  [69.0815, 0.995],
-  [72.9400, 0.999],
-  [73.3975, 0.9992],
-  [76.8212, 0.99985],
-  [77.4740, 0.9999],
-  [81.0721, 0.99999],
-  [84.6170, 1],
+  [22.0700, 0],
+  [29.1360, 0.001],
+  [33.1225, 0.01],
+  [37.5506, 0.05],
+  [40.2561, 0.1],
+  [43.8050, 0.2],
+  [46.5461, 0.3],
+  [48.9933, 0.4],
+  [51.3545, 0.5],
+  [53.7900, 0.6],
+  [56.4473, 0.7],
+  [59.6175, 0.8],
+  [64.1170, 0.9],
+  [67.8695, 0.95],
+  [72.0775, 0.98],
+  [73.8520, 0.987],
+  [77.5034, 0.995],
+  [82.5105, 0.999],
+  [83.0692, 0.9992],
+  [87.2036, 0.99985],
+  [88.2395, 0.9999],
+  [92.6130, 0.99999],
+  [98.8430, 1],
 ];
 
-// Build-rarity score cutoffs, emitted by the same calibration pass. The score is
-// spike-weighted surprisal (see buildRarityScore), not a flat sum.
-export const BUILD_RARITY_CUTS = {
-  Uncommon: 9.323,
-  Rare: 11.494,
-  Elite: 13.631,
-  Legendary: 15.953,
-  Mythic: 18.545,
-};
+// Build tier, as percentiles of POTENTIAL.
+//
+// This used to score how far the twelve attributes strayed from what the height
+// expected — which is the soul of the roll, but as a headline it read wrong: a
+// short player with freak numbers for his size came out "Legendary" while his
+// overall sat in the 50s. Legendary has to mean a legendary player. The
+// per-attribute tiers still measure surprise against height; this one measures
+// the player.
+export const BUILD_TIER_CUTS = [
+  [0.9997, 'Mythic'],
+  [0.997, 'Legendary'],
+  [0.98, 'Elite'],
+  [0.9, 'Rare'],
+  [0.7, 'Uncommon'],
+  [0, 'Common'],
+];
 
 export const DRAFT_CUTOFF = 62; // scout hype below this goes undrafted
 export const SCOUT_NOISE = 6.5;
@@ -204,25 +244,25 @@ export const SCOUT_NOISE = 6.5;
 // Hype carries variance the overall anchors do not describe, which is why this
 // cannot be derived from OVERALL_ANCHORS. Emitted by `npm run sim -- --calibrate`.
 export const HYPE_QUANTILES = [
-  [-5.3238, 0],
-  [30.1124, 0.1],
-  [41.4259, 0.3],
-  [49.8307, 0.5],
-  [57.7877, 0.7],
-  [62.0810, 0.8],
-  [64.5030, 0.85],
-  [67.3386, 0.9],
-  [69.4853, 0.93],
-  [71.2854, 0.95],
-  [72.3844, 0.96],
-  [73.7183, 0.97],
-  [75.4889, 0.98],
-  [76.6711, 0.985],
-  [78.2568, 0.99],
-  [80.8895, 0.995],
-  [84.1440, 0.998],
-  [86.6884, 0.999],
-  [89.3953, 0.9995],
-  [95.7457, 0.9999],
-  [113.1957, 1],
+  [-3.4648, 0],
+  [28.5447, 0.1],
+  [38.4601, 0.3],
+  [46.1087, 0.5],
+  [55.7118, 0.7],
+  [61.6845, 0.8],
+  [64.9803, 0.85],
+  [68.7515, 0.9],
+  [71.4655, 0.93],
+  [73.6925, 0.95],
+  [75.0343, 0.96],
+  [76.6470, 0.97],
+  [78.7602, 0.98],
+  [80.1178, 0.985],
+  [81.9512, 0.99],
+  [84.7726, 0.995],
+  [88.0201, 0.998],
+  [90.2542, 0.999],
+  [92.2493, 0.9995],
+  [96.6102, 0.9999],
+  [107.2623, 1],
 ];

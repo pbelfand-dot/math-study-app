@@ -2,7 +2,7 @@ import {
   OVERALL_ANCHORS,
   RAW_QUANTILES,
   HYPE_QUANTILES,
-  BUILD_RARITY_CUTS,
+  BUILD_TIER_CUTS,
   RARITY_TIERS,
 } from './constants.js';
 import { clamp } from './roll.js';
@@ -21,13 +21,18 @@ export function positionFor(height) {
   return POSITIONS.find((p) => height <= p.maxHeight);
 }
 
-// Unnormalised weights; normalised at use.
+// Unnormalised weights, normalised at use. Concentrated rather than flat: a
+// point guard's rating should live and die on playmaking, handles and shooting,
+// and a centre's on interior defence and rebounding. Spreading weight evenly
+// across twelve attributes makes every position rate the same player the same
+// way, which is how a 7-footer's handle ends up mattering as much as his rim
+// protection.
 const WEIGHTS = {
-  PG: { playmaking: 18, handles: 16, speed: 12, three: 12, midrange: 9, finishing: 9, perimeterD: 10, dunk: 3, post: 1, interiorD: 2, block: 1, rebounding: 7 },
-  SG: { playmaking: 11, handles: 12, speed: 11, three: 15, midrange: 11, finishing: 10, perimeterD: 11, dunk: 6, post: 2, interiorD: 3, block: 2, rebounding: 6 },
-  WING: { playmaking: 9, handles: 9, speed: 10, three: 13, midrange: 10, finishing: 11, perimeterD: 12, dunk: 7, post: 4, interiorD: 6, block: 3, rebounding: 6 },
-  FWD: { playmaking: 6, handles: 6, speed: 8, three: 10, midrange: 8, finishing: 12, perimeterD: 9, dunk: 8, post: 8, interiorD: 11, block: 7, rebounding: 7 },
-  C: { playmaking: 4, handles: 3, speed: 5, three: 6, midrange: 6, finishing: 12, perimeterD: 5, dunk: 9, post: 11, interiorD: 15, block: 12, rebounding: 12 },
+  PG: { playmaking: 22, handles: 18, three: 14, speed: 13, perimeterD: 9, midrange: 8, finishing: 8, rebounding: 4, dunk: 2, interiorD: 2, post: 1, block: 1 },
+  SG: { three: 20, midrange: 13, handles: 11, speed: 11, perimeterD: 11, finishing: 10, playmaking: 9, dunk: 6, rebounding: 5, interiorD: 2, block: 1, post: 1 },
+  WING: { three: 16, finishing: 13, perimeterD: 13, midrange: 11, speed: 9, dunk: 8, rebounding: 8, handles: 8, playmaking: 7, interiorD: 4, block: 2, post: 1 },
+  FWD: { rebounding: 15, interiorD: 14, finishing: 13, three: 11, post: 10, dunk: 10, block: 9, midrange: 7, perimeterD: 6, speed: 3, playmaking: 1, handles: 1 },
+  C: { interiorD: 19, rebounding: 18, block: 15, finishing: 13, post: 12, dunk: 9, midrange: 5, three: 4, perimeterD: 3, speed: 1, playmaking: 1, handles: 0 },
 };
 
 export function fitFor(b) {
@@ -97,11 +102,36 @@ export function hypeToPercentile(h) {
   return interp(HYPE_QUANTILES, h);
 }
 
-export function overallFor(b) {
+// What the build is worth at its PRIME, if it develops. This is the number the
+// rolled attributes describe.
+export function potentialFor(b) {
   const raw = rawComposite(b);
   const p = rawToPercentile(raw);
   return clamp(Math.round(percentileToOverall(p)), 10, 99);
 }
+
+// What he is on draft night. Always below potential, and further below it the
+// higher the ceiling — a nineteen-year-old with star tools is further from
+// using them than a twenty-two-year-old who is already what he will be. That
+// gap is the whole reason draft classes are a gamble.
+export function draftOverallFor(b) {
+  const pot = potentialFor(b);
+  const gap = clamp((pot - 50) * 0.45 + (21 - b.draftAge) * 1.8 + b.rawness, 1, 28);
+  return clamp(Math.round(pot - gap), 20, 99);
+}
+
+// What the scouts put on the report: a potential GRADE on the attribute scale,
+// not the ceiling itself. It tracks the true ceiling but is neither equal to it
+// nor certain — scouting is a projection, and the number you are shown is the
+// projection, so a build's real prime stays a question until it is played out.
+export function potentialGrade(b) {
+  const pot = potentialFor(b);
+  const scouted = 35 + (pot - 45) * 1.35 + (b.scoutNoise ?? 0) * 4;
+  return clamp(Math.round(scouted), 25, 99);
+}
+
+// Kept as the build's headline number = its ceiling.
+export const overallFor = potentialFor;
 
 // ---------------------------------------------------------------------------
 // Build rarity. Multiplying every above-expectation probability swung wildly;
@@ -122,12 +152,7 @@ export function buildRarityScore(b) {
 }
 
 export function buildRarityTier(b) {
-  const score = buildRarityScore(b);
-  const order = ['Mythic', 'Legendary', 'Elite', 'Rare', 'Uncommon'];
-  for (const name of order) {
-    if (score >= BUILD_RARITY_CUTS[name]) {
-      return { name, score, color: RARITY_TIERS.find((t) => t.name === name).color };
-    }
-  }
-  return { name: 'Common', score, color: RARITY_TIERS[0].color };
+  const q = rawToPercentile(rawComposite(b));
+  const name = BUILD_TIER_CUTS.find(([cut]) => q >= cut)[1];
+  return { name, score: q, color: RARITY_TIERS.find((t) => t.name === name).color };
 }

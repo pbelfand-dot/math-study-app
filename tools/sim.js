@@ -3,7 +3,7 @@
 //   npm run sim                 -- rarity table, no rolled archetypes
 //   npm run sim -- --archetypes -- same table with gifts enabled
 //   npm run sim -- --both       -- before/after comparison
-//   npm run sim -- --calibrate  -- emit RAW_QUANTILES + BUILD_RARITY_CUTS
+//   npm run sim -- --calibrate  -- emit RAW_QUANTILES + HYPE_QUANTILES
 //   npm run sim -- --chase      -- the 5'10" chasing 95+ dunk check
 //   npm run sim -- --careers    -- career-outcome distribution
 //   npm run sim -- -n 2000000   -- roll count
@@ -12,7 +12,7 @@ import { SKILL_KEYS, SKILLS, VERIFIED_95_PLUS, UP_CHANCE, UP_SCALE, FREAK_CHANCE
 import { normalTail } from '../src/normal.js';
 import { rollCompleteBuild, rollStat, expectedSkill, clamp } from '../src/roll.js';
 import { makeRng, mulberry32 } from '../src/rng.js';
-import { rawComposite, overallFor, buildRarityScore, positionFor } from '../src/overall.js';
+import { rawComposite, potentialFor, draftOverallFor, positionFor } from '../src/overall.js';
 import { simulateCareer } from '../src/career.js';
 import { writeVerdict } from '../src/verdict.js';
 import { formatHeight } from '../src/roll.js';
@@ -126,16 +126,13 @@ the gene the pull is effectively impossible, with it, it is real.`);
 // ---------------------------------------------------------------------------
 function calibrate(n) {
   const raws = new Float64Array(n);
-  const rar = new Float64Array(n);
   const hype = new Float64Array(n);
   for (let i = 0; i < n; i++) {
     const b = rollCompleteBuild(rng);
     raws[i] = rawComposite(b);
-    rar[i] = buildRarityScore(b);
-    hype[i] = overallFor(b) + rng.gauss(0, SCOUT_NOISE);
+    hype[i] = potentialFor(b) * 0.5 + draftOverallFor(b) * 0.5 + rng.gauss(0, SCOUT_NOISE);
   }
   raws.sort();
-  rar.sort();
   hype.sort();
   const q = (arr, p) => arr[clamp(Math.floor(p * (arr.length - 1)), 0, arr.length - 1)];
 
@@ -153,12 +150,6 @@ function calibrate(n) {
   for (const p of hypePs) console.log(`  [${q(hype, p).toFixed(4)}, ${p}],`);
   console.log('];');
 
-  console.log('\nexport const BUILD_RARITY_CUTS = {');
-  const cuts = { Uncommon: 0.65, Rare: 0.88, Elite: 0.97, Legendary: 0.995, Mythic: 0.9995 };
-  for (const [name, p] of Object.entries(cuts)) {
-    console.log(`  ${name}: ${q(rar, p).toFixed(3)},`);
-  }
-  console.log('};');
   console.log(`\n// raw composite: min ${q(raws, 0).toFixed(1)} median ${q(raws, 0.5).toFixed(1)} max ${q(raws, 1).toFixed(1)}`);
 }
 
@@ -171,7 +162,7 @@ function overallCheck(n) {
   const all = [];
   for (let i = 0; i < n; i++) {
     const b = rollCompleteBuild(rng);
-    const ov = overallFor(b);
+    const ov = potentialFor(b);
     sum += ov;
     all.push(ov);
     if (ov >= 90) buckets['90s']++;
@@ -180,16 +171,17 @@ function overallCheck(n) {
   }
   all.sort((a, b) => a - b);
   const LEAGUE = 450; // players in a simulated season
-  console.log('\nOVERALL DISTRIBUTION vs CALIBRATION TARGET');
+  console.log('\nPOTENTIAL DISTRIBUTION across all rolled builds');
   console.log('-'.repeat(66));
-  console.log(pad('BAND', 10) + lpad('SHARE', 12) + lpad('PER SEASON', 14) + lpad('TARGET', 18));
+  console.log(pad('BAND', 22) + lpad('SHARE', 12) + lpad('ONE PER', 14));
   const rows = [
-    ['70-79', buckets['70s'] / n, '~6 / season'],
-    ['80-89', buckets['80s'] / n, '~1 per 3 seasons'],
-    ['90+', buckets['90s'] / n, '~7 per century'],
+    ['70-79 rotation/starter', buckets['70s'] / n],
+    ['80-89 all-star', buckets['80s'] / n],
+    ['90+ franchise', buckets['90s'] / n],
   ];
-  for (const [band, share, target] of rows) {
-    console.log(pad(band, 10) + lpad((share * 100).toFixed(4) + '%', 12) + lpad((share * LEAGUE).toFixed(2), 14) + lpad(target, 18));
+  for (const [band, share] of rows) {
+    console.log(pad(band, 22) + lpad((share * 100).toFixed(3) + '%', 12) +
+      lpad(share > 0 ? `${Math.round(1 / share)} builds` : '—', 14));
   }
   console.log(`\nmean overall ${(sum / n).toFixed(1)} · median ${all[Math.floor(n / 2)]} · p95 ${all[Math.floor(n * 0.95)]} · max ${all[n - 1]}`);
 }
@@ -253,12 +245,14 @@ function careerCheck(n) {
 
   // The BBGM calibration target describes ratings of players ON A ROSTER, so it
   // has to be measured over player-seasons, not over rolled builds.
+  // Targets are the shape of a real 450-man league on a 2K-style scale, which
+  // is what the OVR bands are calibrated to read as.
   console.log('\nIN-LEAGUE RATING DISTRIBUTION — per player-season');
   console.log('-'.repeat(70));
   const tot = Math.max(seasonRatings.total, 1);
-  row('rated 70-79', `${((seasonRatings.s70 / tot) * 100).toFixed(3)}%`, '1.33% (6 of 450)');
-  row('rated 80-89', `${((seasonRatings.s80 / tot) * 100).toFixed(4)}%`, '0.074% (1 per 3y)');
-  row('rated 90+', `${((seasonRatings.s90 / tot) * 100).toFixed(4)}%`, '0.016% (7 per 100y)');
+  row('rated 70-79 (rotation/starter)', `${((seasonRatings.s70 / tot) * 100).toFixed(1)}%`, '~33% (150 of 450)');
+  row('rated 80-89 (all-star)', `${((seasonRatings.s80 / tot) * 100).toFixed(2)}%`, '~10% (45 of 450)');
+  row('rated 90+ (franchise)', `${((seasonRatings.s90 / tot) * 100).toFixed(2)}%`, '~1.3% (6 of 450)');
   ratingSamples.sort((a, b) => a - b);
   const rq = (p) => ratingSamples[Math.floor(p * (ratingSamples.length - 1))] ?? 0;
   console.log(
@@ -295,7 +289,44 @@ function sampleCareers(k) {
   }
 }
 
-if (has('--sample')) {
+function progressionCheck(n) {
+  const groups = { 'top 5': [], 'lottery 6-14': [], 'first 15-30': [], 'second 31-60': [], undrafted: [] };
+  let leaps = 0, seasons = 0;
+  for (let i = 0; i < n; i++) {
+    const b = rollCompleteBuild(rng);
+    const c = simulateCareer(b, rng);
+    if (!c.seasons.length) continue;
+    const g = !c.drafted ? 'undrafted'
+      : c.pick <= 5 ? 'top 5' : c.pick <= 14 ? 'lottery 6-14'
+      : c.pick <= 30 ? 'first 15-30' : 'second 31-60';
+    groups[g].push(c);
+    leaps += c.leaps; seasons += c.seasons.length;
+  }
+  const avg = (a, f) => (a.reduce((x, c) => x + f(c), 0) / Math.max(a.length, 1)).toFixed(1);
+  console.log('\nROOKIE -> PEAK PROGRESSION, by draft slot');
+  console.log('-'.repeat(84));
+  console.log(pad('SLOT', 15) + lpad('POTENTIAL', 11) + lpad('ROOKIE', 9) + lpad('PEAK', 8) +
+    lpad('GROWTH', 9) + lpad('PEAK AGE', 10) + lpad('CAREER PPG', 12) + lpad('N', 8));
+  for (const [k, v] of Object.entries(groups)) {
+    if (!v.length) continue;
+    console.log(pad(k, 15) + lpad(avg(v, (c) => c.potential), 11) + lpad(avg(v, (c) => c.rookieRating), 9) +
+      lpad(avg(v, (c) => c.peakRating), 8) + lpad('+' + avg(v, (c) => c.peakRating - c.rookieRating), 9) +
+      lpad(avg(v, (c) => [...c.seasons].reverse().find((s) => s.rating === c.peakRating)?.age ?? 0), 10) +
+      lpad(avg(v, (c) => c.careerAverages.ppg), 12) + lpad(v.length, 8));
+  }
+  console.log(`\noffseason leaps: ${(leaps / Math.max(seasons, 1) * 100).toFixed(1)}% of player-seasons`);
+
+  // What the very best builds actually become.
+  const elite = Object.values(groups).flat().filter((c) => c.potential >= 88);
+  if (elite.length) {
+    console.log(`\n88+ potential builds (n=${elite.length}): rookie ${avg(elite, c=>c.rookieRating)} -> peak ${avg(elite, c=>c.peakRating)}` +
+      ` · ${avg(elite, c=>c.careerAverages.ppg)} ppg · ${avg(elite, c=>c.awards.allStars)} all-stars`);
+  }
+}
+
+if (has('--progression')) {
+  progressionCheck(numArg('--progression', 60000) || 60000);
+} else if (has('--sample')) {
   sampleCareers(numArg('--sample', 8) || 8);
 } else if (has('--chase')) {
   chaseCheck();

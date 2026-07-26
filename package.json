@@ -13,9 +13,10 @@
     "exe:mac": "node tools/build-exe.js --target darwin-arm64",
     "exe:linux": "node tools/build-exe.js --target linux-x64",
     "fonts": "node tools/fetch-fonts.js",
-    "desktop": "electron .",
-    "desktop:win": "electron-builder --win portable",
-    "desktop:installer": "electron-builder --win nsis"
+    "desktop": "npm run bundle && electron .",
+    "desktop:win": "npm run bundle && electron-builder --win portable",
+    "desktop:installer": "npm run bundle && electron-builder --win nsis",
+    "desktop:mac": "npm run bundle && electron-builder --mac dmg"
   },
   "main": "electron-main.cjs",
   "devDependencies": {
@@ -27,9 +28,7 @@
     "productName": "Build a Hooper",
     "files": [
       "electron-main.cjs",
-      "web/**/*",
-      "src/**/*",
-      "package.json"
+      "dist/build-a-hooper.html"
     ],
     "asar": true,
     "win": {
