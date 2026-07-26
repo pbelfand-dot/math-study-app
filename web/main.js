@@ -9,6 +9,7 @@ import { simulateCareer } from '../src/career.js';
 import { writeVerdict } from '../src/verdict.js';
 import { defaultRng, seededRng } from '../src/rng.js';
 import { randomName } from '../src/names.js';
+import { Progress } from '../src/progress.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -22,20 +23,14 @@ const tierColor = (t) => `var(--${TIER_VAR[t.name] || 't0'})`;
 const ARCH_COLOR = { Common: 't1', Rare: 't2', Epic: 't3', Legendary: 't4' };
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const STORE = 'hooper.session.v2';
-const LB = 'hooper.leaderboard.v1';
-const todaySeed = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-const load = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb; } catch { return fb; } };
-const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
+const todaySeed = Progress.todayStamp;
 
 const S = {
   b: null, beats: [], idx: 0, rerolls: 3, lastKey: null, busy: false,
   physSectionDrawn: false, done: false, simmed: false,
   quick: false, daily: false, name: '', rng: defaultRng,
-  session: load(STORE, { builds: 0, best: 0, legendary: 0 }),
+  prog: Progress.load(),
+  view: 'play',
 };
 
 // ---------------------------------------------------------------------------
@@ -63,9 +58,11 @@ const drawProg = () =>
     .join(''));
 
 function syncCounters() {
-  $('cnt').textContent = S.session.builds;
-  $('best').textContent = S.session.best || '—';
-  $('lg').textContent = S.session.legendary;
+  const p = S.prog;
+  $('cnt').textContent = p.builds;
+  $('best').textContent = p.bestGrade || '—';
+  $('lg').textContent = Progress.streakAlive(p) ? p.streak.count : 0;
+  $('badgeCount').textContent = `${Object.keys(p.achievements).length}/${Progress.ACHIEVEMENTS.length}`;
 }
 
 const stage = (html) => ($('stage').innerHTML = html);
@@ -121,10 +118,7 @@ function doStep(animate = true) {
         and you'll get named for it at the end.</div>`);
     } else {
       const col = `var(--${ARCH_COLOR[a.tier]})`;
-      if (a.tier === 'Legendary') {
-        S.session.legendary++; save(STORE, S.session); syncCounters();
-        $('stage').className = 'stage leg';
-      }
+      if (a.tier === 'Legendary') $('stage').className = 'stage leg';
       stage(`<div class="arch-tier" style="color:${col}">${a.tier} Archetype</div>
         <div class="arch-name" style="color:${col}">${esc(a.title)}</div>
         <div class="stage-sub">${esc(a.flavor)}</div>
@@ -270,10 +264,7 @@ function finish() {
   const title = titleFor(b);
   const fit = fitFor(b);
 
-  S.session.builds++;
-  if (draftOvr > S.session.best) S.session.best = draftOvr;
-  save(STORE, S.session);
-  syncCounters();
+
 
   if (b.freakGene) {
     $('freakSlot').innerHTML =
@@ -375,30 +366,26 @@ function runCareer() {
         : ''
     }
     <div class="verdict"><b>${esc(v.headline)}</b><br>${esc(v.body)}</div>
-    ${S.daily ? dailyBoard(c) : ''}
   </div>`;
+
+  // Persist: the vault entry, any achievements it unlocked, and the streak.
+  Progress.record(S.prog, c, b, {
+    name: S.name, pos: positionFor(b.height).short, height: b.height,
+    title: c.title.title, grade: potentialGrade(b), daily: S.daily,
+  });
+  if (S.daily) Progress.bumpStreak(S.prog);
+  const won = Progress.checkAchievements(S.prog, c, b);
+  Progress.save(S.prog);
+  syncCounters();
+  if (won.length) {
+    $('car').insertAdjacentHTML('afterbegin',
+      `<div class="unlocked"><h3>${won.length === 1 ? 'Achievement unlocked' : `${won.length} achievements unlocked`}</h3>
+       <div class="traits">${won.map((a) => `<span class="trait" style="border-color:var(--t4);color:var(--t4)">${esc(a.name)}<b>${esc(a.hint)}</b></span>`).join('')}</div></div>`);
+  }
 
   S.simmed = true;
   updateBtns();
   $('car').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'nearest' });
-}
-
-function dailyBoard(c) {
-  const all = load(LB, []);
-  all.push({
-    date: todaySeed(), name: S.name, ovr: c.overall, seasons: c.seasons.length,
-    allStars: c.awards.allStars, rings: c.awards.rings, score: c.hofScore || 0, hof: c.hof,
-  });
-  save(LB, all.slice(-300));
-  const today = all.filter((e) => e.date === todaySeed()).sort((x, y) => y.score - x.score);
-  return `<details class="log" open><summary>Today's seed &mdash; your runs (${today.length})</summary>
-    <div class="scroll-x"><table>
-      <thead><tr><th>#</th><th>Player</th><th>OVR</th><th>Yrs</th><th>AS</th><th>Rings</th><th>Score</th></tr></thead>
-      <tbody>${today
-        .map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.ovr}</td><td>${e.seasons}</td><td>${e.allStars}</td><td>${e.rings}</td><td>${e.score}${e.hof ? ' ★' : ''}</td></tr>`)
-        .join('')}</tbody></table></div>
-    <div class="draft-sub" style="margin-top:8px">Stored in this browser only &mdash; v1 has no backend.</div>
-  </details>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -460,5 +447,68 @@ $('daily').onclick = () => {
   newBuild();
 };
 
+
+// ---------------------------------------------------------------------------
+// Views
+// ---------------------------------------------------------------------------
+function setView(v) {
+  S.view = v;
+  for (const id of ['playView', 'vaultView', 'badgesView']) {
+    $(id).classList.toggle('hidden', id !== `${v}View`);
+  }
+  for (const [id, name] of [['navPlay', 'play'], ['navVault', 'vault'], ['navBadges', 'badges']]) {
+    $(id).setAttribute('aria-pressed', String(name === v));
+  }
+  if (v === 'vault') renderVault();
+  if (v === 'badges') renderBadges();
+}
+
+function renderVault() {
+  const p = S.prog;
+  const best = Progress.bestCareers(p, 25);
+  const rows = best.map((e, i) => `<tr>
+      <td>${i + 1}</td>
+      <td style="text-align:left">${esc(e.name)}${e.daily ? ' <span style="color:var(--led-dim)">·D</span>' : ''}</td>
+      <td style="text-align:left">${esc(e.title)}</td>
+      <td>${e.pick ?? '—'}</td>
+      <td>${e.draftOvr}&rarr;${e.peak}</td>
+      <td>${e.seasons}</td><td>${e.allStars}</td><td>${e.mvps}</td><td>${e.rings}</td>
+      <td>${e.hof ? '★' : ''}</td><td style="color:var(--hot)">${e.score}</td>
+    </tr>`).join('');
+  $('vaultView').innerHTML = `<div class="career">
+    <h2>Career vault &mdash; your best ${best.length || ''}</h2>
+    ${
+      best.length
+        ? `<div class="scroll-x"><table>
+             <thead><tr><th>#</th><th style="text-align:left">Player</th><th style="text-align:left">Title</th>
+             <th>Pick</th><th>Arc</th><th>Yrs</th><th>AS</th><th>MVP</th><th>Rings</th><th>HOF</th><th>Score</th></tr></thead>
+             <tbody>${rows}</tbody></table></div>
+           <div class="draft-sub" style="margin-top:10px">${p.builds} builds rolled &middot;
+             best streak ${p.streak.best} ${p.streak.best === 1 ? 'day' : 'days'} &middot;
+             stored in this browser only</div>`
+        : `<p class="note">Nothing here yet. Simulate a career and it lands in the vault.</p>`
+    }
+  </div>`;
+}
+
+function renderBadges() {
+  const p = S.prog;
+  const got = Object.keys(p.achievements).length;
+  $('badgesView').innerHTML = `<div class="career">
+    <h2>Achievements &mdash; ${got} of ${Progress.ACHIEVEMENTS.length}</h2>
+    <div class="badges">${Progress.ACHIEVEMENTS.map((a) => {
+      const on = !!p.achievements[a.id];
+      return `<div class="badge ${on ? 'on' : ''}">
+        <b>${esc(a.name)}</b><span>${esc(a.hint)}</span>
+      </div>`;
+    }).join('')}</div>
+  </div>`;
+}
+
+$('navPlay').onclick = () => setView('play');
+$('navVault').onclick = () => setView('vault');
+$('navBadges').onclick = () => setView('badges');
+
 syncCounters();
 newBuild();
+setView('play');

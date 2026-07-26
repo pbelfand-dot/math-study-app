@@ -17,16 +17,22 @@
         <h1>Build a Hooper<span>archetype build</span></h1>
         <div class="counter">
           BUILDS <b id="cnt">0</b><br />
-          BEST OVR <b id="best">&mdash;</b><br />
-          LEGENDARY <b id="lg">0</b>
+          BEST GRADE <b id="best">&mdash;</b><br />
+          STREAK <b id="lg">0</b>
         </div>
       </header>
 
-      <div class="modes">
-        <button class="chip" id="quick" type="button" aria-pressed="false">Quick roll</button>
-        <button class="chip" id="daily" type="button" aria-pressed="false">Daily seed</button>
-        <span class="chip plain">Height sets the target &mdash; read every number against it</span>
-      </div>
+      <nav class="modes nav">
+        <button class="chip" id="navPlay" type="button" aria-pressed="true">Play</button>
+        <button class="chip" id="navVault" type="button" aria-pressed="false">Vault</button>
+        <button class="chip" id="navBadges" type="button" aria-pressed="false">Badges <b id="badgeCount">0/20</b></button>
+      </nav>
+
+      <div id="playView">
+        <div class="modes">
+          <button class="chip" id="quick" type="button" aria-pressed="false">Quick roll</button>
+          <button class="chip" id="daily" type="button" aria-pressed="false">Daily seed</button>
+        </div>
 
       <div class="prog" id="prog"></div>
       <div id="freakSlot"></div>
@@ -40,9 +46,13 @@
         </button>
       </div>
 
-      <div class="stats" id="stats"></div>
-      <div id="ovrSlot"></div>
-      <div id="car"></div>
+        <div class="stats" id="stats"></div>
+        <div id="ovrSlot"></div>
+        <div id="car"></div>
+      </div>
+
+      <div id="vaultView" class="hidden"></div>
+      <div id="badgesView" class="hidden"></div>
     </div>
 
     <script type="module" src="main.js"></script>

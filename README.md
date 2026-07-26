@@ -8,6 +8,39 @@ A 6'0" with a 94 dunk is a freak. A 7'1" with a 94 dunk is Tuesday.
 
 Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
 
+## Play it on your phone
+
+`docs/` is an installable, offline-capable web app. Publish it free on GitHub Pages:
+
+1. Push this branch.
+2. Repo **Settings → Pages** → Source: *Deploy from a branch* → branch
+   `claude/hooper-build-simulator-t1askb`, folder `/docs` → Save.
+3. Wait a minute, then open the URL it gives you.
+
+**iPhone** — open the URL in Safari, tap Share → *Add to Home Screen*.
+**Android** — Chrome shows an *Install app* prompt, or menu → *Install app*.
+
+It then runs from the home screen with no browser chrome, works with no signal,
+and keeps your vault, badges and streak on the device. Rebuild it with
+`npm run site` after any change; the service worker cache is keyed to a hash of
+the page, so a new build replaces the old one instead of leaving people stranded
+on a stale copy.
+
+No store, no review, no developer account, no fee.
+
+## What keeps you coming back
+
+- **Career vault** — every simulated career, ranked by a score weighted toward
+  MVPs, rings and peak rather than longevity.
+- **20 achievements** — weighted toward what the roll teaches: defying your
+  height, surviving the draft, and the failure diagnoses you cannot roll.
+- **Daily streak** — the daily seed gives everyone the same build; playing it on
+  consecutive days builds a streak, and missing two days resets it.
+
+All of it is `localStorage`, so it is per-browser and per-device. There is no
+account and no backend, which is stated in the UI rather than discovered when a
+cleared cache eats a month of pulls.
+
 ## Running it
 
 ```sh
@@ -15,6 +48,8 @@ npm run dev     # http://localhost:8080
 npm run sim     # Monte Carlo harness — the rarity table
 npm run bundle  # dist/build-a-hooper.html — one self-contained file
 npm run exe     # dist/BuildAHooper.exe — standalone Windows app
+npm run site    # docs/ — installable PWA for GitHub Pages
+npm run icons   # regenerate the icon set
 ```
 
 The dev server exists only because ES modules cannot load over `file://`. If you
@@ -229,6 +264,9 @@ tools/serve.js      static dev server
 tools/bundle.js     flattens the modules into one HTML file
 tools/build-exe.js  standalone executable (Node SEA)
 tools/fetch-fonts.js  regenerates web/fonts.css
+tools/build-site.js   docs/ — PWA, manifest, service worker
+tools/make-icons.js   the icon set, rasterised with no dependencies
+src/progress.js       vault, achievements, daily streak (localStorage)
 web/                UI — scoreboard styling, fonts inlined as data URIs
 ```
 

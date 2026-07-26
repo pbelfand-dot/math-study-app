@@ -26,6 +26,7 @@ const MODULES = [
   'src/overall.js',
   'src/career.js',
   'src/verdict.js',
+  'src/progress.js',
   'web/main.js',
 ];
 
@@ -54,6 +55,19 @@ const css = (await read('web/fonts.css')) + '\n' + (await read('web/styles.css')
       if (!listed.has(file)) missing.push(`${m} imports ${spec}`);
     }
   }
+  // Namespace imports cannot survive flattening — there is no module object to
+  // bind the alias to, so every use of it becomes a ReferenceError at runtime.
+  const namespaced = [];
+  for (const m of MODULES) {
+    const src = await read(m);
+    for (const [, alias, spec] of src.matchAll(/import\s+\*\s+as\s+(\w+)\s+from\s+['"](\.[^'"]+)['"]/g)) {
+      namespaced.push(`${m}: import * as ${alias} from '${spec}' — import a named export instead`);
+    }
+  }
+  if (namespaced.length) {
+    console.error('bundle: namespace imports do not survive flattening:\n  ' + namespaced.join('\n  '));
+    process.exit(1);
+  }
   if (missing.length) {
     console.error('bundle: these imports are not in MODULES:\n  ' + missing.join('\n  '));
     process.exit(1);
@@ -71,32 +85,21 @@ if (js.includes('import ') && /^import\s/m.test(js)) {
   process.exit(1);
 }
 
+// The markup comes out of web/index.html rather than being restated here.
+// Keeping a second copy in this file meant every markup change had to be made
+// twice, and forgetting the second one produced a bundle that silently ran the
+// previous UI while the dev server showed the new one.
+const page = await read('web/index.html');
+const bodyMatch = page.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+if (!bodyMatch) {
+  console.error('bundle: could not find <body> in web/index.html');
+  process.exit(1);
+}
 const BODY = `
-<div class="wrap">
-  <header>
-    <h1>Build a Hooper<span>archetype build</span></h1>
-    <div class="counter">
-      BUILDS <b id="cnt">0</b><br />
-      BEST OVR <b id="best">&mdash;</b><br />
-      LEGENDARY <b id="lg">0</b>
-    </div>
-  </header>
-  <div class="modes">
-    <button class="chip" id="quick" type="button" aria-pressed="false">Quick roll</button>
-    <button class="chip" id="daily" type="button" aria-pressed="false">Daily seed</button>
-    <span class="chip plain">Height sets the target &mdash; read every number against it</span>
-  </div>
-  <div class="prog" id="prog"></div>
-  <div id="freakSlot"></div>
-  <div class="stage" id="stage"></div>
-  <div class="actions">
-    <button class="b-roll" id="roll" type="button">Roll height</button>
-    <button class="b-alt" id="rr" type="button" disabled>Reroll <span class="rr-count" id="rrn"></span></button>
-  </div>
-  <div class="stats" id="stats"></div>
-  <div id="ovrSlot"></div>
-  <div id="car"></div>
-</div>
+${bodyMatch[1]
+  // The stylesheet links and the module script are replaced by inlined copies.
+  .replace(/<script[^>]*type="module"[^>]*><\/script>/gi, '')
+  .trim()}
 <style>
 ${css}
 </style>

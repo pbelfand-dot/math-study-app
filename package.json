@@ -16,7 +16,9 @@
     "desktop": "npm run bundle && electron .",
     "desktop:win": "npm run bundle && electron-builder --win portable",
     "desktop:installer": "npm run bundle && electron-builder --win nsis",
-    "desktop:mac": "npm run bundle && electron-builder --mac dmg"
+    "desktop:mac": "npm run bundle && electron-builder --mac dmg",
+    "site": "node tools/build-site.js",
+    "icons": "node tools/make-icons.js"
   },
   "main": "electron-main.cjs",
   "devDependencies": {
