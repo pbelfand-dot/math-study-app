@@ -24,6 +24,8 @@ const MODULES = [
   'src/names.js',
   'src/roll.js',
   'src/overall.js',
+  'src/people.js',
+  'src/actions.js',
   'src/career.js',
   'src/verdict.js',
   'src/progress.js',
@@ -83,6 +85,40 @@ const js = parts.join('\n\n');
 
 if (js.includes('import ') && /^import\s/m.test(js)) {
   console.error('bundle: an import survived stripping — check MODULES order and syntax');
+  process.exit(1);
+}
+
+// Flattening puts every module's top level into ONE scope, so two modules that
+// each define a private `const money` helper are a SyntaxError in the bundle
+// while both work perfectly on the dev server. Catch the collision here, by
+// name and by module, instead of finding out from a blank page.
+{
+  const seen = new Map();
+  const clashes = [];
+  const DECL = /^(?:export\s+)?(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm;
+  for (const m of MODULES) {
+    const src = await read(m);
+    for (const [, name] of src.matchAll(DECL)) {
+      if (seen.has(name) && seen.get(name) !== m) clashes.push(`${name}: ${seen.get(name)} and ${m}`);
+      else seen.set(name, m);
+    }
+  }
+  if (clashes.length) {
+    console.error(
+      'bundle: these top-level names are declared in more than one module '
+        + 'and would collide once flattened into a single scope:\n  ' + clashes.join('\n  '),
+    );
+    process.exit(1);
+  }
+}
+
+// The strongest check available without a parser dependency: does the thing we
+// are about to ship actually parse?
+try {
+  // eslint-disable-next-line no-new-func
+  new Function(js);
+} catch (e) {
+  console.error(`bundle: the flattened script does not parse — ${e.message}`);
   process.exit(1);
 }
 

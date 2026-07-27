@@ -1,31 +1,34 @@
 import { SKILLS, SKILL_KEYS, PHYSICALS, MENTALS, MENTAL_KEYS } from '../src/constants.js';
 import { rollCompleteBuild, formatHeight, clamp } from '../src/roll.js';
 import { titleFor } from '../src/archetypes.js';
-import { potentialGrade, positionFor, buildRarityTier } from '../src/overall.js';
+import { potentialGrade, positionFor } from '../src/overall.js';
 import { simulateCareer } from '../src/career.js';
 import { writeVerdict } from '../src/verdict.js';
 import { defaultRng } from '../src/rng.js';
 import { randomName } from '../src/names.js';
 import { Progress } from '../src/progress.js';
+import { ROLES, teamChemistry, coachTrust, personById } from '../src/people.js';
+import {
+  CATEGORIES, availableActions, actionsForPerson, doAction, blockedReason,
+} from '../src/actions.js';
 import {
   newLife, advanceYear, overallNow, starRating, heightAt, gradeName,
-  trainingFor, slotsFor, commit, declare, returnToSchool, proBuildFrom,
-  draftProjection,
+  commit, declare, returnToSchool, proBuildFrom, draftProjection,
 } from '../src/life.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const money = (n) => `$${Math.round(n).toLocaleString()}`;
 const LABELS = {
   ...Object.fromEntries(Object.entries(SKILLS).map(([k, v]) => [k, v.label])),
   ...Object.fromEntries(Object.entries(PHYSICALS).map(([k, v]) => [k, v.label])),
   ...Object.fromEntries(Object.entries(MENTALS).map(([k, v]) => [k, v.label])),
 };
-const money = (n) => `$${Math.round(n).toLocaleString()}`;
 
-const S = { life: null, plan: [], view: 'life', prog: Progress.load(), career: null, verdict: null };
+const S = { life: null, prog: Progress.load(), career: null, verdict: null, wonBadges: null, sheet: null, sheetActions: [] };
 
 // ---------------------------------------------------------------------------
-// New life
+// New life / resume
 // ---------------------------------------------------------------------------
 function startLife() {
   const rng = defaultRng;
@@ -33,12 +36,12 @@ function startLife() {
   // height he finishes at and the ceiling on every attribute.
   const build = rollCompleteBuild(rng);
   S.life = newLife(build, randomName(rng), rng);
-  S.plan = [];
   S.career = null;
   S.verdict = null;
   S.wonBadges = null;
   Progress.saveLife(S.life);
-  render();
+  closeSheet();
+  render(true);
 }
 
 // Pick a life back up where it was left. A career that already finished is not
@@ -47,323 +50,370 @@ function resumeOrStart() {
   const saved = Progress.loadLife();
   if (!saved || saved.stage === 'pro') { startLife(); return; }
   S.life = saved;
-  S.plan = [];
-  render();
+  render(true);
 }
 
 // ---------------------------------------------------------------------------
-// Header + meters
+// Header
 // ---------------------------------------------------------------------------
-const METERS = [
-  ['health', 'Health', 'var(--health)'],
-  ['energy', 'Energy', 'var(--energy)'],
-  ['hype', 'Hype', 'var(--hype)'],
-  ['rep', 'Rep', 'var(--rep)'],
-  ['grades', 'Grades', 'var(--grades)'],
-  ['chemistry', 'Coach', 'var(--chem)'],
-];
-
-function headerHtml() {
+function idcardHtml() {
   const L = S.life;
-  const h = heightAt(L);
-  const stars = starRating(L);
   const college = L.stage === 'college';
+  const stars = starRating(L);
   const where = college ? esc(L.program.school) : esc(L.background.name);
+  const line2 = college
+    ? (() => { const p = draftProjection(L); return `<span class="proj ${p.tone}">${esc(p.label)}</span>`; })()
+    : `<span class="stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>`;
+
   return `
-    <div class="top">
-      <div class="who">
-        <div class="nm">${esc(L.name)}</div>
-        <div class="sub">
-          ${gradeName(L.age, L.stage)} &middot; ${formatHeight(h)} &middot; ${money(L.money)}
-          &middot; ${where}
-          <br />${
-            college
-              // Stars are a recruiting number. Once you are in a program nobody
-              // cares what you were rated; what matters is where you would go.
-              ? `<span class="stars">${esc(draftProjection(L).label)}</span>`
-              : `<span class="stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>`
-          }
-          <span style="color:var(--muted)"> &middot; ${esc(L.teamRole)}</span>
-        </div>
-      </div>
-      <div class="ovr-badge"><b>${overallNow(L)}</b><span>Overall</span></div>
+    <div>
+      <div class="nm">${esc(L.name)}</div>
+      <div class="sub">${gradeName(L.age, L.stage)} &middot; ${formatHeight(heightAt(L))} &middot; ${where}</div>
+      <div class="sub">${line2} &middot; ${esc(L.teamRole)} &middot; OVR ${overallNow(L)}</div>
     </div>
-    <div class="meters">
-      ${METERS.map(([k, label, col]) => {
-        const v = Math.round(L.meters[k]);
-        return `<div class="meter">
-          <div class="k">${label}</div>
-          <div class="track"><div class="fill" style="width:${clamp(v, 0, 100)}%;background:${col}"></div></div>
-          <div class="v">${v}</div>
-        </div>`;
-      }).join('')}
+    <div class="cash"><b>${money(L.money)}</b><span>Bank balance</span></div>
+    <div class="timebar">
+      <span class="k">Year left</span>
+      <span class="track"><span class="fill" style="width:${clamp(L.time, 0, 100)}%"></span></span>
+      <span class="v">${Math.round(L.time)}%</span>
     </div>`;
 }
 
+const BARS = [
+  ['happiness', 'Happiness', 'var(--happy)'],
+  ['health', 'Health', 'var(--health)'],
+  ['smarts', 'Smarts', 'var(--smarts)'],
+];
+
+function barsHtml() {
+  const L = S.life;
+  const rows = [
+    ...BARS.map(([k, label, col]) => [Math.round(L.stats[k]), label, col]),
+    [Math.round(L.meters.rep), 'Reputation', 'var(--rep)'],
+  ];
+  return rows
+    .map(([v, label, col]) => `<div class="row ${v < 25 ? 'low' : ''} ${v >= 88 ? 'full' : ''}">
+      <div class="k">${label}</div>
+      <div class="track"><div class="fill" style="width:${clamp(v, 0, 100)}%;background:${col}"></div><span class="v">${v}%</span></div>
+    </div>`)
+    .join('');
+}
+
 // ---------------------------------------------------------------------------
-// The year feed
+// The feed — oldest at the top, this year at the bottom, the way a life reads
 // ---------------------------------------------------------------------------
 function yearHtml(e) {
-  const where = e.school ? ` &middot; ${esc(e.school)}` : '';
-  return `<article class="year">
-    <header>
-      <h3>${e.grade} year${e.stage === 'college' ? ' <span class="tag">College</span>' : ''}</h3>
+  const stats = e.stats
+    ? `<div class="box">${esc(e.role)} &middot; ${e.stats.ppg} pts, ${e.stats.rpg} reb, ${e.stats.apg} ast in ${e.stats.mpg} min</div>`
+    : `<div class="box">${esc(e.role)} &mdash; no stats this year</div>`;
+  return `<article class="yr">
+    <h3>${esc(e.grade)} year${e.school ? ` &middot; ${esc(e.school)}` : ''}
       <span class="meta">${formatHeight(e.height)} &middot; OVR ${e.ovr}${
         e.stage === 'college' ? '' : ` &middot; ${'★'.repeat(e.stars)}`
-      }${where}</span>
-    </header>
-    <div class="body">
-      ${
-        e.stats
-          ? `<div class="line-stat">${e.role} &middot; ${e.stats.ppg} pts, ${e.stats.rpg} reb, ${e.stats.apg} ast in ${e.stats.mpg} min</div>`
-          : `<div class="line-stat">${esc(e.role)} &mdash; no stats this year</div>`
-      }
-      ${e.events.map((v) => `<div class="ev ${v.kind}"><span class="dot"></span><span>${esc(v.text)}</span></div>`).join('')}
-    </div>
+      }</span></h3>
+    ${stats}
+    ${e.events.map((v) => `<div class="line ${v.kind}">${esc(v.text)}</div>`).join('')}
   </article>`;
 }
 
-// ---------------------------------------------------------------------------
-// The plan — three slots, each with a real cost
-// ---------------------------------------------------------------------------
-function planHtml() {
+function feedHtml() {
   const L = S.life;
-  const slots = slotsFor(L);
-  const left = slots - S.plan.length;
-  return `<div class="panel">
-    <h2>Plan the year</h2>
-    <p class="hint">${
-      left > 0
-        ? `Pick ${left} more — you get ${slots} a year, and everything costs something.`
-        : 'Ready. Press the button to play the year.'
-    }</p>
-    <div class="opts">
-      ${trainingFor(L).map((t) => {
-        const picked = S.plan.filter((p) => p === t.id).length;
-        const gated = t.gated && L.meters.hype < t.gated;
-        const broke = t.cost > L.money;
-        const full = left <= 0 && !picked;
-        const bits = [];
-        if (t.cost) bits.push(`${broke ? '<b>' : ''}${money(t.cost)}${broke ? '</b>' : ''}`);
-        if (t.money) bits.push(`+${money(t.money)}`);
-        if (t.energy) bits.push(`${t.energy > 0 ? '+' : ''}${t.energy} energy`);
-        if (t.hype) bits.push(`+${t.hype} hype`);
-        if (t.grades) bits.push(`${t.grades > 0 ? '+' : ''}${t.grades} grades`);
-        if (t.rep) bits.push(`+${t.rep} rep`);
-        if (t.stock) bits.push(`+${t.stock} draft stock`);
-        if (t.nil) bits.push('endorsement money');
-        if (t.health) bits.push(`${t.health > 0 ? '+' : ''}${t.health} health`);
-        if (gated) bits.push('<b>needs more hype</b>');
-        return `<button class="opt" data-t="${t.id}" type="button"
-            aria-pressed="${picked ? 'true' : 'false'}" ${gated || broke || full ? 'disabled' : ''}>
-          <span class="pick">${picked ? picked : ''}</span>
-          <span class="txt">
-            <span class="t">${esc(t.name)}</span>
-            <span class="d">${esc(t.blurb)}</span>
-            <span class="cost">${bits.join(' &middot; ')}</span>
-          </span>
-        </button>`;
-      }).join('')}
-    </div>
-  </div>
-  <div class="advance">
-    <button class="big" id="advance" type="button" ${left > 0 ? 'disabled' : ''}>
-      <span class="plus">+</span> Play ${gradeName(L.age, L.stage)} year
-    </button>
-  </div>`;
+  if (S.career) return careerHtml();
+  const past = L.log.map(yearHtml).join('');
+  const now = `<article class="yr now">
+    <h3>${esc(gradeName(L.age, L.stage))} year <span class="meta">in progress</span></h3>
+    ${
+      L.yearLog.length
+        ? L.yearLog.map((v) => `<div class="line ${v.kind}">${esc(v.text)}</div>`).join('')
+        : '<div class="empty">Nothing yet. Tap the buttons below, then press + Age.</div>'
+    }
+  </article>`;
+  return past + now;
 }
 
 // ---------------------------------------------------------------------------
-// Decision: where do you go after high school
+// The sheet — one component, several contents
 // ---------------------------------------------------------------------------
-function offersHtml() {
+function openSheet(kind, arg) {
+  S.sheet = { kind, arg };
+  drawSheet();
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+}
+function closeSheet() {
+  S.sheet = null;
+  S.sheetActions = [];
+  $('sheet').classList.add('hidden');
+  $('scrim').classList.add('hidden');
+  // Emptied, not just hidden. A hidden sheet full of last screen's buttons is
+  // still in the accessibility tree and still matches a query, so it can be
+  // acted on by something that has no business finding it.
+  $('sheetBody').innerHTML = '';
+}
+
+function tagsFor(a, blocked) {
+  const t = [`<span class="tag time">${a.cost}% of the year</span>`];
+  if (a.price) t.push(`<span class="tag spend">${money(a.price)}</span>`);
+  if (blocked) t.push(`<span class="tag no">${esc(blocked)}</span>`);
+  return `<span class="tags">${t.join('')}</span>`;
+}
+
+function optRow(a, idx) {
+  const blocked = blockedReason(S.life, a);
+  return `<button class="opt" data-act="${idx}" type="button" ${blocked ? 'disabled' : ''}>
+    <span>
+      <span class="t">${esc(a.name)}</span>
+      ${a.blurb ? `<span class="d">${esc(a.blurb)}</span>` : ''}
+      ${tagsFor(a, blocked)}
+    </span>
+    <span class="go">&rsaquo;</span>
+  </button>`;
+}
+
+const AVATAR = {
+  father: '👨', mother: '👩', sibling: '🧒', coach: '📋', teammate: '🏀',
+  trainer: '🏋️', friend: '🙂', partner: '💛', agent: '📞',
+};
+const relColour = (v) => (v >= 66 ? 'var(--good)' : v >= 38 ? 'var(--warn)' : 'var(--bad)');
+
+function peopleListHtml() {
+  const L = S.life;
+  const order = ['coach', 'teammate', 'trainer', 'agent', 'mother', 'father', 'sibling', 'partner', 'friend'];
+  const sorted = [...L.people].filter((p) => p.alive)
+    .sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role));
+  let lastGroup = null;
+  return sorted.map((p) => {
+    const g = ROLES[p.role]?.group || 'Other';
+    const head = g === lastGroup ? '' : `<div class="grp">${esc(g)}</div>`;
+    lastGroup = g;
+    return `${head}<button class="who" data-person="${p.id}" type="button">
+      <span class="av">${AVATAR[p.role] || '🙂'}</span>
+      <span>
+        <span class="t">${esc(p.name)}</span>
+        <span class="d">${esc(ROLES[p.role]?.label || p.role)}</span>
+        <span class="relbar"><i style="width:${p.rel}%;background:${relColour(p.rel)}"></i></span>
+      </span>
+      <span class="go">&rsaquo;</span>
+    </button>`;
+  }).join('');
+}
+
+function drawSheet() {
+  if (!S.sheet) return;
+  const L = S.life;
+  const { kind, arg } = S.sheet;
+  const title = $('sheetTitle');
+  const hint = $('sheetHint');
+  const body = $('sheetBody');
+  $('sheetBack').classList.toggle('off', kind !== 'person');
+
+  if (kind === 'people') {
+    title.textContent = 'People';
+    hint.textContent = 'Your coach decides your minutes. Your teammates decide whether you get the ball.';
+    body.innerHTML = peopleListHtml();
+  } else if (kind === 'person') {
+    const p = personById(L, arg);
+    if (!p) { openSheet('people'); return; }
+    const acts = actionsForPerson(L, p);
+    S.sheetActions = acts;
+    title.textContent = p.name;
+    hint.textContent = `${ROLES[p.role]?.label || p.role} · relationship ${p.rel}%`;
+    body.innerHTML = acts.map(optRow).join('');
+  } else if (kind === 'stats') {
+    title.textContent = 'You';
+    hint.textContent = 'The bar is where you are. The notch is as far as your genetics go.';
+    body.innerHTML = statsSheetHtml();
+  } else if (kind === 'vault') {
+    title.textContent = 'Vault';
+    hint.textContent = 'Every finished career, and a backup you can carry off this device.';
+    body.innerHTML = vaultHtml();
+    wireBackup();
+    return;
+  } else if (kind === 'badges') {
+    title.textContent = 'Achievements';
+    hint.textContent = '';
+    body.innerHTML = badgesHtml();
+  } else {
+    const cat = CATEGORIES.find((c) => c.id === kind);
+    if (!cat) return;
+    const acts = availableActions(L, kind);
+    S.sheetActions = acts;
+    title.textContent = cat.name;
+    hint.textContent = cat.hint;
+    body.innerHTML = acts.length
+      ? acts.map(optRow).join('')
+      : '<p class="note">Nothing here for you right now. That changes as your situation does.</p>';
+  }
+  wireSheet();
+}
+
+function wireSheet() {
+  const body = $('sheetBody');
+  for (const el of body.querySelectorAll('[data-act]')) {
+    el.onclick = () => {
+      const a = S.sheetActions[Number(el.dataset.act)];
+      if (!a) return;
+      doAction(S.life, a, defaultRng);
+      Progress.saveLife(S.life);
+      render(true);
+      drawSheet(); // costs and conditions have moved — redraw in place
+    };
+  }
+  for (const el of body.querySelectorAll('[data-person]')) {
+    el.onclick = () => openSheet('person', el.dataset.person);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Decisions — offers, transfers, and whether to declare
+// ---------------------------------------------------------------------------
+function offersHtml(transfer) {
   const L = S.life;
   const stars = starRating(L);
-  return `<div class="panel">
-    <h2>Where do you go?</h2>
-    <p class="hint">Four years of high school are done — you graduate a
-      ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)} recruit. This is what came in.</p>
-    <div class="opts">
-      ${L.offers.map((o, i) => `
-        <div class="offer${o.pro ? ' risky' : ''}" style="margin-bottom:8px">
-          <div class="tier">${esc(o.tier)}</div>
-          <h4>${esc(o.school)}</h4>
-          <p>${esc(o.note)}</p>
-          ${
-            o.pro ? ''
-            : `<p class="note">Development ${'▮'.repeat(Math.round(o.development * 3))} &middot;
-                 minutes are ${o.minutesBar >= 52 ? 'hard to come by' : o.minutesBar >= 46 ? 'earned' : 'there for you'}
-                 &middot; ${o.exposure >= 1.2 ? 'on television every week' : o.exposure >= 0.8 ? 'seen enough' : 'nobody is watching'}</p>`
-          }
-          <button class="btn primary" data-offer="${i}" type="button">${o.pro ? 'Declare' : 'Commit'}</button>
-        </div>`).join('')}
-    </div>
-  </div>`;
+  return `<p class="note" style="margin-bottom:10px">${
+    transfer
+      ? 'You put your name in the portal. Here is what came back.'
+      : `Four years of high school are done — you graduate a ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)} recruit.`
+  }</p>
+  ${L.offers.map((o, i) => `
+    <div class="offer${o.pro ? ' risky' : ''}">
+      <div class="tier">${esc(o.tier)}</div>
+      <h4>${esc(o.school)}</h4>
+      <p>${esc(o.note)}</p>
+      ${
+        o.pro ? ''
+        : `<p class="note">Development ${'▮'.repeat(Math.round(o.development * 3))} &middot;
+             minutes are ${o.minutesBar >= 52 ? 'hard to come by' : o.minutesBar >= 46 ? 'earned' : 'there for you'}
+             &middot; ${o.exposure >= 1.2 ? 'on television every week' : o.exposure >= 0.8 ? 'seen enough' : 'nobody is watching'}</p>`
+      }
+      <button class="btn primary" data-offer="${i}" type="button">${o.pro ? 'Declare' : 'Commit'}</button>
+    </div>`).join('')}`;
 }
 
-// ---------------------------------------------------------------------------
-// Decision: stay in school or put your name in
-// ---------------------------------------------------------------------------
 function declareHtml() {
   const L = S.life;
   const proj = draftProjection(L);
   const forced = L.pending === 'forced';
-  return `<div class="panel">
-    <h2>${forced ? 'You are out of eligibility' : 'Declare for the draft?'}</h2>
-    <p class="hint">${
+  return `<div class="proj-banner ${proj.tone}">${esc(proj.label)}</div>
+    <p class="note" style="margin:10px 0">${
       forced
         ? 'Four years of college are done. There is nothing left to go back to.'
         : 'Leave now and you sell the years of development you have not had yet. Stay and you bank the ability, but you are that much closer to finished when they draft you.'
     }</p>
-    <div class="proj ${proj.tone}">${esc(proj.label)}</div>
-    <p class="note">That is a projection, not a promise. Nobody knows what you top out at — including the people writing it.</p>
-    <div class="row" style="margin-top:12px">
-      <button class="btn primary" id="doDeclare" type="button">Declare for the draft</button>
-      ${forced ? '' : '<button class="btn" id="doStay" type="button">Go back to school</button>'}
-    </div>
-  </div>`;
+    <p class="note" style="margin-bottom:12px">That is a projection, not a promise. Nobody knows what you top out at — including the people writing it.</p>
+    <button class="btn primary" id="doDeclare" type="button">Declare for the draft</button>
+    ${forced ? '' : '<button class="btn" id="doStay" type="button" style="margin-top:8px">Go back to school</button>'}`;
 }
 
-// ---------------------------------------------------------------------------
-// The pro career, once he leaves school
-// ---------------------------------------------------------------------------
-function runCareer() {
+function openDecision() {
   const L = S.life;
-  const rng = defaultRng;
+  const transfer = L.pending === 'transfer';
+  S.sheet = { kind: 'decision' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent =
+    L.pending === 'decision' ? 'Where do you go?' : transfer ? 'Where to?' : 'Declare?';
+  $('sheetHint').textContent = '';
+  $('sheetBody').innerHTML =
+    L.pending === 'decision' || transfer ? offersHtml(transfer) : declareHtml();
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
 
-  // The engine that projects present ability onto the genetic ceiling lives in
-  // life.js, so the Monte Carlo harness and the app hand the draft the same
-  // build. It used to live here, which meant the sweep could not see it.
-  declare(L);
-  const b = proBuildFrom(L);
-
-  const c = simulateCareer(b, rng);
-  const v = writeVerdict(c, b, rng);
-  S.career = c;
-  S.verdict = v;
-
-  Progress.record(S.prog, c, b, {
-    name: L.name, pos: positionFor(b.height).short, height: b.height,
-    title: c.title.title, grade: potentialGrade(b), daily: false,
-  });
-  const won = Progress.checkAchievements(S.prog, c, b);
-  Progress.save(S.prog);
-  Progress.saveLife(null);
-  S.wonBadges = won;
-  render();
-}
-
-function careerHtml() {
-  const c = S.career;
-  const a = c.careerAverages;
-  const line = (k, v) => `<div class="meter" style="grid-template-columns:1fr auto"><div class="k">${k}</div><div class="v">${v}</div></div>`;
-  return `<div class="panel">
-    <h2>The career</h2>
-    <h3 style="font-size:19px;margin-bottom:2px">${c.drafted ? `Pick #${c.pick}` : 'Undrafted'} &mdash; ${esc(c.teams[0] || 'nobody')}</h3>
-    <p class="note" style="margin-bottom:8px">${
-      S.life.program
-        ? `${esc(S.life.program.school)}, ${S.life.age - 18} year${S.life.age - 18 === 1 ? '' : 's'} &middot; declared at ${S.life.age}`
-        : `Declared straight out of high school at ${S.life.age}`
-    }</p>
-    <p class="hint">${esc(S.verdict.headline)}</p>
-    ${c.madeLeague ? line('Draft OVR → peak', `${c.draftOvr} → ${c.peakRating}`) : ''}
-    ${line('Seasons', c.seasons.length)}
-    ${c.madeLeague ? line('Career averages', `${a.ppg} / ${a.rpg} / ${a.apg}`) : ''}
-    ${line('All-stars', c.awards.allStars)}
-    ${line('MVPs', c.awards.mvps)}
-    ${line('Championships', c.awards.rings)}
-    ${line('Hall of fame', c.hof ? 'Inducted' : '—')}
-    <p class="note" style="margin-top:12px">${esc(S.verdict.body)}</p>
-  </div>
-  ${
-    (S.wonBadges || []).length
-      ? `<div class="panel"><h2>Unlocked</h2><div class="badges">${S.wonBadges
-          .map((b) => `<div class="badge on"><b>${esc(b.name)}</b><span>${esc(b.hint)}</span></div>`)
-          .join('')}</div></div>`
-      : ''
-  }
-  <div class="panel">
-    <h2>The hidden four</h2>
-    <p class="note" style="margin-bottom:10px">These were driving everything and you could not see them.</p>
-    <div class="attrs">
-      ${MENTAL_KEYS.map((k) => `<div class="attr">
-        <span class="k">${LABELS[k]}</span><span class="v">${S.life.mentals[k]}</span>
-      </div>`).join('')}
-    </div>
-  </div>
-  <div class="advance"><button class="big" id="again" type="button"><span class="plus">+</span> Start a new life</button></div>`;
-}
-
-// ---------------------------------------------------------------------------
-// Views
-// ---------------------------------------------------------------------------
-function render() {
-  const L = S.life;
-  if (!L) return;
-  const body =
-    S.career ? careerHtml()
-    : L.pending === 'decision' ? offersHtml()
-    : L.pending ? declareHtml()
-    : planHtml();
-
-  $('lifeView').innerHTML =
-    headerHtml() +
-    `<div class="feed">${[...L.log].reverse().map(yearHtml).join('')}</div>` +
-    body;
-
-  if (!S.career) Progress.saveLife(L);
-
-  // Wire the plan.
-  for (const el of $('lifeView').querySelectorAll('[data-t]')) {
+  for (const el of $('sheetBody').querySelectorAll('[data-offer]')) {
     el.onclick = () => {
-      const id = el.dataset.t;
-      const at = S.plan.indexOf(id);
-      if (at >= 0) S.plan.splice(at, 1);
-      else if (S.plan.length < slotsFor(S.life)) S.plan.push(id);
-      render();
-    };
-  }
-  const adv = $('advance');
-  if (adv) {
-    adv.onclick = () => {
-      advanceYear(S.life, S.plan, defaultRng);
-      S.plan = [];
-      render();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-  }
-  for (const el of $('lifeView').querySelectorAll('[data-offer]')) {
-    el.onclick = () => {
-      const offer = S.life.offers[Number(el.dataset.offer)];
+      const offer = L.offers[Number(el.dataset.offer)];
       if (offer.pro) { runCareer(); return; }
-      commit(S.life, offer);
-      S.plan = [];
-      render();
+      commit(L, offer, defaultRng);
+      Progress.saveLife(L);
+      closeSheet();
+      render(true);
     };
   }
   const dec = $('doDeclare');
   if (dec) dec.onclick = () => runCareer();
   const stay = $('doStay');
   if (stay) {
-    stay.onclick = () => {
-      returnToSchool(S.life);
-      S.plan = [];
-      render();
-    };
+    stay.onclick = () => { returnToSchool(L); Progress.saveLife(L); closeSheet(); render(); };
   }
-  const again = $('again');
-  if (again) again.onclick = startLife;
-
-  syncViews();
 }
 
-function attrsHtml() {
+// ---------------------------------------------------------------------------
+// The pro career
+// ---------------------------------------------------------------------------
+function runCareer() {
+  const L = S.life;
+  const rng = defaultRng;
+  // The engine that projects present ability onto the genetic ceiling lives in
+  // life.js, so the Monte Carlo harness and the app hand the draft the same
+  // build.
+  declare(L);
+  const b = proBuildFrom(L);
+  const c = simulateCareer(b, rng);
+
+  S.career = c;
+  S.verdict = writeVerdict(c, b, rng);
+  Progress.record(S.prog, c, b, {
+    name: L.name, pos: positionFor(b.height).short, height: b.height,
+    title: c.title.title, grade: potentialGrade(b), daily: false,
+  });
+  S.wonBadges = Progress.checkAchievements(S.prog, c, b);
+  Progress.save(S.prog);
+  Progress.saveLife(null);
+  closeSheet();
+  render(true);
+}
+
+function careerHtml() {
+  const L = S.life;
+  const c = S.career;
+  const a = c.careerAverages;
+  const line = (k, v) => `<div class="attr"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  return `${L.log.map(yearHtml).join('')}
+  <article class="yr">
+    <h3>The draft <span class="meta">age ${L.age}</span></h3>
+    <div class="box">${c.drafted ? `Pick #${c.pick}` : 'Undrafted'} &mdash; ${esc(c.teams[0] || 'nobody')}</div>
+    <div class="line">${esc(S.verdict.headline)}</div>
+    <div class="attrs" style="margin-top:8px">
+      ${c.madeLeague ? line('Draft OVR → peak', `${c.draftOvr} → ${c.peakRating}`) : ''}
+      ${line('Seasons', c.seasons.length)}
+      ${c.madeLeague ? line('Career averages', `${a.ppg} / ${a.rpg} / ${a.apg}`) : ''}
+      ${line('All-stars', c.awards.allStars)}
+      ${line('MVPs', c.awards.mvps)}
+      ${line('Championships', c.awards.rings)}
+      ${line('Hall of fame', c.hof ? 'Inducted' : '—')}
+    </div>
+    <p class="note" style="margin-top:10px">${esc(S.verdict.body)}</p>
+  </article>
+  ${
+    (S.wonBadges || []).length
+      ? `<article class="yr"><h3>Unlocked</h3><div class="badges">${S.wonBadges
+          .map((b) => `<div class="badge on"><b>${esc(b.name)}</b><span>${esc(b.hint)}</span></div>`).join('')}</div></article>`
+      : ''
+  }
+  <article class="yr">
+    <h3>The hidden four</h3>
+    <p class="note" style="margin-bottom:8px">These were driving everything and you could not see them.</p>
+    <div class="attrs">
+      ${MENTAL_KEYS.map((k) => `<div class="attr"><span class="k">${LABELS[k]}</span><span class="v">${L.mentals[k]}</span></div>`).join('')}
+    </div>
+  </article>`;
+}
+
+// ---------------------------------------------------------------------------
+// Sheet contents that are not actions
+// ---------------------------------------------------------------------------
+function statsSheetHtml() {
   const L = S.life;
   const t = titleFor(L.build);
-  return `<div class="panel">
-    <h2>Attributes &mdash; now vs your ceiling</h2>
-    <p class="hint">The bar is where you are. The notch is as far as your genetics go,
-    at your current height. Training closes the gap; nothing closes it all the way on its own.</p>
+  const mini = (k, v, col) => `<div class="attr"><span class="k">${k}</span><span class="v">${v}</span>
+    <span class="bar"><span class="now" style="width:${clamp(v, 0, 100)}%;background:${col}"></span></span></div>`;
+  return `<h3 class="sec">Basketball standing</h3>
+    <div class="attrs">
+      ${mini('Hype', Math.round(L.meters.hype), 'var(--hype)')}
+      ${mini('Grades', Math.round(L.meters.grades), 'var(--grades)')}
+      ${mini('Coach trust', Math.round(coachTrust(L)), 'var(--chem)')}
+      ${mini('Team chemistry', Math.round(teamChemistry(L)), 'var(--good)')}
+    </div>
+    <h3 class="sec">Attributes — now vs your ceiling</h3>
     <div class="attrs">
       ${SKILL_KEYS.map((k) => {
         const now = Math.round(L.attrs[k]);
@@ -371,76 +421,50 @@ function attrsHtml() {
         return `<div class="attr">
           <span class="k">${LABELS[k]}</span><span class="v">${now}</span>
           <span class="bar"><span class="now" style="width:${now}%"></span>
-            <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span>
-        </div>`;
+            <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span></div>`;
       }).join('')}
     </div>
-    <h2 style="margin-top:16px">Body</h2>
+    <h3 class="sec">Body</h3>
     <div class="attrs">
-      ${Object.keys(PHYSICALS).map((k) => `<div class="attr">
-        <span class="k">${LABELS[k]}</span><span class="v">${L.physicals[k]}</span>
-      </div>`).join('')}
+      ${Object.keys(PHYSICALS).map((k) => `<div class="attr"><span class="k">${LABELS[k]}</span><span class="v">${L.physicals[k]}</span></div>`).join('')}
     </div>
-    <h2 style="margin-top:16px">Profile</h2>
+    <h3 class="sec">Profile</h3>
     <p class="note">${esc(t.title)} &mdash; ${esc(t.flavor || '')}<br />
-    Mentality ${L.build.mentality} &middot; ${
-      L.build.mentality >= 62 ? 'score-first' : L.build.mentality <= 38 ? 'pass-first' : 'balanced'
-    }${L.build.freakGene ? ` &middot; freak gene: ${LABELS[L.build.freakGene]}` : ''}</p>
-  </div>`;
+      Mentality ${L.build.mentality} &middot; ${
+        L.build.mentality >= 62 ? 'score-first' : L.build.mentality <= 38 ? 'pass-first' : 'balanced'
+      }${L.build.freakGene ? ` &middot; freak gene: ${LABELS[L.build.freakGene]}` : ''}</p>`;
 }
 
 function vaultHtml() {
   const p = S.prog;
   const best = Progress.bestCareers(p, 25);
-  return `<div class="panel">
-    <h2>Career vault</h2>
-    ${
-      best.length
-        ? `<div class="scroll-x"><table>
-            <thead><tr><th>#</th><th>Player</th><th>Pick</th><th>Peak</th><th>Yrs</th><th>AS</th><th>Rings</th><th>Score</th></tr></thead>
-            <tbody>${best.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.pick ?? '—'}</td>
-              <td>${e.peak}</td><td>${e.seasons}</td><td>${e.allStars}</td><td>${e.rings}</td><td>${e.score}</td></tr>`).join('')}
-            </tbody></table></div>`
-        : '<p class="note">Nothing yet. Finish a life and it lands here.</p>'
-    }
-    <h2 style="margin-top:16px">Back up your progress</h2>
-    <p class="note">No account, no server. Copy this somewhere safe.</p>
-    <textarea id="backupBox" class="backup" readonly rows="3">${esc(Progress.exportProgress(p))}</textarea>
-    <div class="row" style="margin-top:9px">
-      <button class="btn" id="copyBackup" type="button">Copy backup</button>
-      <button class="btn" id="pasteBackup" type="button">Restore</button>
-    </div>
-    <div id="restoreSlot"></div>
-  </div>`;
+  return `${
+    best.length
+      ? `<div class="scroll-x"><table>
+          <thead><tr><th>#</th><th>Player</th><th>Pick</th><th>Peak</th><th>Yrs</th><th>AS</th><th>Rings</th><th>Score</th></tr></thead>
+          <tbody>${best.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.pick ?? '—'}</td>
+            <td>${e.peak}</td><td>${e.seasons}</td><td>${e.allStars}</td><td>${e.rings}</td><td>${e.score}</td></tr>`).join('')}
+          </tbody></table></div>`
+      : '<p class="note">Nothing yet. Finish a life and it lands here.</p>'
+  }
+  <h3 class="sec">Back up your progress</h3>
+  <p class="note">No account, no server. Copy this somewhere safe.</p>
+  <textarea id="backupBox" class="backup" readonly rows="3">${esc(Progress.exportProgress(p))}</textarea>
+  <div class="row2" style="margin-top:8px">
+    <button class="btn" id="copyBackup" type="button">Copy backup</button>
+    <button class="btn" id="pasteBackup" type="button">Restore</button>
+  </div>
+  <div id="restoreSlot"></div>`;
 }
 
 function badgesHtml() {
   const p = S.prog;
   const got = Object.keys(p.achievements).length;
-  return `<div class="panel">
-    <h2>Achievements &mdash; ${got} of ${Progress.ACHIEVEMENTS.length}</h2>
-    <div class="badges">${Progress.ACHIEVEMENTS.map((a) => {
+  return `<p class="note">${got} of ${Progress.ACHIEVEMENTS.length} unlocked.</p>
+    <div class="badges" style="margin-top:8px">${Progress.ACHIEVEMENTS.map((a) => {
       const on = !!p.achievements[a.id];
       return `<div class="badge ${on ? 'on' : ''}"><b>${esc(a.name)}</b><span>${esc(a.hint)}</span></div>`;
-    }).join('')}</div>
-  </div>`;
-}
-
-function syncViews() {
-  for (const [id, name] of [['lifeView', 'life'], ['attrsView', 'attrs'], ['vaultView', 'vault'], ['badgesView', 'badges']]) {
-    $(id).classList.toggle('hidden', name !== S.view);
-  }
-  for (const [id, name] of [['navLife', 'life'], ['navAttrs', 'attrs'], ['navVault', 'vault'], ['navBadges', 'badges']]) {
-    $(id).setAttribute('aria-pressed', String(name === S.view));
-  }
-}
-
-function setView(v) {
-  S.view = v;
-  if (v === 'attrs') $('attrsView').innerHTML = attrsHtml();
-  if (v === 'vault') { $('vaultView').innerHTML = vaultHtml(); wireBackup(); }
-  if (v === 'badges') $('badgesView').innerHTML = badgesHtml();
-  syncViews();
+    }).join('')}</div>`;
 }
 
 function wireBackup() {
@@ -461,38 +485,92 @@ function wireBackup() {
     $('restoreSlot').innerHTML = `
       <p class="note" style="margin-top:12px">Paste a backup, then press Restore. This replaces what is on this device.</p>
       <textarea id="restoreBox" class="backup" rows="3" placeholder="Paste backup text"></textarea>
-      <div class="row" style="margin-top:9px"><button class="btn primary" id="doRestore" type="button">Restore</button></div>
+      <button class="btn primary" id="doRestore" type="button" style="margin-top:8px">Restore</button>
       <div id="restoreMsg" class="note"></div>`;
     $('doRestore').onclick = () => {
       const r = Progress.importProgress($('restoreBox').value);
       if (!r.ok) { $('restoreMsg').innerHTML = `<span style="color:var(--bad)">${esc(r.error)}</span>`; return; }
       S.prog = r.progress;
       Progress.save(S.prog);
-      setView('vault');
+      drawSheet();
     };
   };
 }
 
-$('navLife').onclick = () => setView('life');
-$('navAttrs').onclick = () => setView('attrs');
-$('navVault').onclick = () => setView('vault');
-$('navBadges').onclick = () => setView('badges');
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
+function render(scrollToEnd = false) {
+  const L = S.life;
+  if (!L) return;
+  const over = !!S.career;
 
-// iOS buries "Add to Home Screen" in the Share sheet; shown once, dismissible.
-(function installHint() {
-  const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && 'ontouchend' in document);
-  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  if (!isIOS || standalone) return;
-  try { if (localStorage.getItem('hooper.installHint') === 'off') return; } catch { /* ignore */ }
-  $('installHint').innerHTML =
-    `<span>Install it: tap <b>Share</b>, then <b>Add to Home Screen</b>.</span>
-     <button class="btn" id="hintClose" type="button">Got it</button>`;
-  $('installHint').classList.remove('hidden');
-  $('hintClose').onclick = () => {
-    $('installHint').classList.add('hidden');
-    try { localStorage.setItem('hooper.installHint', 'off'); } catch { /* ignore */ }
-  };
-})();
+  $('idcard').innerHTML = idcardHtml();
+  $('bars').innerHTML = barsHtml();
+  $('feed').innerHTML = feedHtml();
+
+  // The + changes job depending on what the game is waiting for: play the year,
+  // answer a decision, or start again once it is all over.
+  const age = $('ageBtn');
+  age.classList.toggle('decide', !!L.pending || over);
+  age.querySelector('.lb').textContent = over ? 'New' : L.pending ? 'Decide' : 'Age';
+  age.querySelector('.plus').textContent = over ? '↻' : L.pending ? '?' : '+';
+
+  for (const el of document.querySelectorAll('[data-cat]')) {
+    el.disabled = over || !!L.pending;
+    // A category holding something urgent says so, rather than making you find
+    // out by opening all four.
+    const cat = el.dataset.cat;
+    const alert =
+      (cat === 'school' && L.meters.grades < 40) ||
+      (cat === 'train' && L.injured) ||
+      (cat === 'people' && (coachTrust(L) < 28 || teamChemistry(L) < 30));
+    el.dataset.alert = String(!over && !L.pending && !!alert);
+  }
+
+  if (scrollToEnd) requestAnimationFrame(() => { $('feed').scrollTop = $('feed').scrollHeight; });
+}
+
+// ---------------------------------------------------------------------------
+// Wiring
+// ---------------------------------------------------------------------------
+for (const el of document.querySelectorAll('[data-cat]')) {
+  el.onclick = () => openSheet(el.dataset.cat);
+}
+$('ageBtn').onclick = () => {
+  if (S.career) { startLife(); return; }
+  if (S.life.pending) { openDecision(); return; }
+  advanceYear(S.life, defaultRng);
+  Progress.saveLife(S.life);
+  closeSheet();
+  render(true);
+  if (S.life.pending) openDecision();
+};
+$('sheetClose').onclick = closeSheet;
+$('scrim').onclick = () => { if (S.sheet?.kind !== 'decision') closeSheet(); };
+$('sheetBack').onclick = () => openSheet('people');
+
+// The menu holds everything that is not a decision about this year.
+$('menuBtn').onclick = () => {
+  S.sheet = { kind: 'menu' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'Hoop Life';
+  $('sheetHint').textContent = '';
+  $('sheetBody').innerHTML = `
+    <button class="opt" id="mStats" type="button"><span><span class="t">You</span>
+      <span class="d">Attributes, standing, and how far your genetics go.</span></span><span class="go">&rsaquo;</span></button>
+    <button class="opt" id="mVault" type="button"><span><span class="t">Vault</span>
+      <span class="d">Finished careers, and your backup.</span></span><span class="go">&rsaquo;</span></button>
+    <button class="opt" id="mBadges" type="button"><span><span class="t">Achievements</span>
+      <span class="d">What you have and have not done.</span></span><span class="go">&rsaquo;</span></button>
+    <button class="opt" id="mNew" type="button"><span><span class="t">Start a new life</span>
+      <span class="d">This one ends here. It is not saved.</span></span><span class="go">&rsaquo;</span></button>`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  $('mStats').onclick = () => openSheet('stats');
+  $('mVault').onclick = () => openSheet('vault');
+  $('mBadges').onclick = () => openSheet('badges');
+  $('mNew').onclick = startLife;
+};
 
 resumeOrStart();

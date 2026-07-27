@@ -280,11 +280,11 @@ export const HYPE_QUANTILES = [
 // Offers: blue blood top ~3%, high major top ~12%, mid major top ~34%,
 // small school top ~68%.
 // ---------------------------------------------------------------------------
-export const STAR_CUTS = [46.8, 56.1, 62.7, 68.2]; // >= these read as 2, 3, 4, 5 stars
+export const STAR_CUTS = [60.0, 65.6, 70.6, 74.9]; // >= these read as 2, 3, 4, 5 stars
 
 export const RECRUIT_CUTS = {
-  blueBlood: 67.1,
-  highMajor: 61.9,
-  midMajor: 55.3,
-  smallSchool: 44.7,
+  blueBlood: 73.8,
+  highMajor: 70.0,
+  midMajor: 65.1,
+  smallSchool: 58.9,
 };

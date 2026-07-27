@@ -12,21 +12,51 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="wrap">
-      <div class="install-hint hidden" id="installHint"></div>
+    <div class="app">
+      <header class="topbar">
+        <button class="menu" id="menuBtn" type="button" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="brand">HOOP<b>LIFE</b></div>
+        <div class="menu spacer" aria-hidden="true"></div>
+      </header>
 
-      <nav class="nav">
-        <button class="chip" id="navLife" type="button" aria-pressed="true">Life</button>
-        <button class="chip" id="navAttrs" type="button" aria-pressed="false">Attributes</button>
-        <button class="chip" id="navVault" type="button" aria-pressed="false">Vault</button>
-        <button class="chip" id="navBadges" type="button" aria-pressed="false">Badges</button>
-      </nav>
+      <div class="idcard" id="idcard"></div>
 
-      <div id="lifeView"></div>
-      <div id="attrsView" class="hidden"></div>
-      <div id="vaultView" class="hidden"></div>
-      <div id="badgesView" class="hidden"></div>
+      <main class="feed" id="feed"></main>
+
+      <div class="dock-wrap">
+        <nav class="dock" id="dock">
+          <button class="dock-btn" data-cat="train" type="button">
+            <span class="ic">🏀</span><span class="lb">Train</span>
+          </button>
+          <button class="dock-btn" data-cat="school" type="button">
+            <span class="ic">🎓</span><span class="lb">School</span>
+          </button>
+          <button class="age" id="ageBtn" type="button">
+            <span class="plus">+</span><span class="lb">Age</span>
+          </button>
+          <button class="dock-btn" data-cat="people" type="button">
+            <span class="ic">👥</span><span class="lb">People</span>
+          </button>
+          <button class="dock-btn" data-cat="life" type="button">
+            <span class="ic">💵</span><span class="lb">Life</span>
+          </button>
+        </nav>
+        <div class="bars" id="bars"></div>
+      </div>
     </div>
+
+    <div class="scrim hidden" id="scrim"></div>
+    <section class="sheet hidden" id="sheet" role="dialog" aria-modal="true" aria-label="Options">
+      <div class="sheet-head">
+        <button class="back off" id="sheetBack" type="button" aria-label="Back">&lsaquo;</button>
+        <h2 id="sheetTitle"></h2>
+        <button class="close" id="sheetClose" type="button" aria-label="Close">&times;</button>
+      </div>
+      <p class="sheet-hint" id="sheetHint"></p>
+      <div class="sheet-body" id="sheetBody"></div>
+    </section>
 
     <script type="module" src="main.js"></script>
   </body>

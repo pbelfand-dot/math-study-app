@@ -2,9 +2,8 @@
 
 A basketball life simulator, played one year at a time. You start at fourteen with a
 set of **genetics you cannot see** — the height you will finish at and a ceiling on
-every attribute — and you spend the next eight years deciding what to do about it.
-Three slots a year in high school, four in college. Then the draft finds out what the
-whole thing was worth.
+every attribute — and you spend the next eight years deciding what to do about it,
+one year at a time. Then the draft finds out what the whole thing was worth.
 
 The roll engine that used to *be* the game is still here in full. It just describes
 your genetics now instead of your player: every attribute is scored against what is
@@ -14,13 +13,41 @@ A 6'0" with a 94 dunk is a freak. A 7'1" with a 94 dunk is Tuesday.
 
 Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
 
+## A year is a budget, not a checklist
+
+Every year you get **100% of a year** to spend, across four buttons around the
+`+`: **Train**, **School**, **People**, **Life**. Everything costs time, most
+things cost money, and the two budgets are separate — the camps that get you
+recruited are paid for out of a part-time job you took instead of a month in the
+gym.
+
+**Most of what you can do is hidden until it applies to you.** You do not see
+*Beg for extra credit* until your grades are failing, *Rehab the injury* until
+you are hurt, *Sign an NIL deal* until enough people know your name, *Try to
+patch things up* until a relationship has gone bad, or *Enter the transfer
+portal* until you have spent a season on a bench. Finding out an option exists
+is part of the game. A single played life surfaces around twenty of them, and
+never the same twenty.
+
+### Nothing is separable
+
+The systems feed each other on purpose, so there is no one stat to farm:
+
+| | |
+|---|---|
+| **School → basketball** | Class raises **Smarts**. Smarts is what makes watching film worth anything — a smart player learns twice as much from the same session — and film is what raises basketball IQ, which is in your overall rating. Grades also gate eligibility: fail and you sit the season, and schools stop recruiting you. |
+| **Teammates → the box score** | Team chemistry is the average of how your teammates feel about you, and it multiplies your **assists** directly. A locker room that has decided about you does not look for you on the break. |
+| **The coach → minutes** | Coach trust moves your minutes more than any other single input. Minutes are what produce stats, stats are what produce hype, and hype is what produces offers. Asking for minutes works if he already rates you and backfires if he does not. |
+| **Money → everything** | Trainers, tutors, camps, agents, specialists. Your family background sets how much you start with and how much arrives each year, so being broke is a real disadvantage — beatable with a job and some time, which is the point. |
+| **Health → the rest of it** | Physical work accumulates strain; strain drives the injury roll; an injury costs speed and dunk permanently and takes a year to rehab. |
+
 ## The shape of a life
 
 | | |
 |---|---|
-| **14–18, high school** | 3 slots a year. Train, or go to class, or get seen. AAU and elite camps cost money you may not have, and exposure is the entire recruiting path. You can be cut, ruled academically ineligible, or blow out a knee. |
+| **14–18, high school** | Train, go to class, work, or get seen. AAU and elite camps cost money you may not have, and exposure is the entire recruiting path. You can be cut, ruled academically ineligible, or blow out a knee. |
 | **graduation** | You are rated 1–5 stars against everyone else in your class and the offers that came in are the offers you get. There is always somewhere to go. Four stars or better also unlocks declaring straight out of high school, which almost nobody should take. |
-| **18–22, college** | 4 slots a year. The program's development staff, the minutes you can get, and how often you are on television all come from the school you picked. NIL money, media training, an agency, the pre-draft workout circuit. |
+| **18–22, college** | The program's development staff, the minutes you can get, and how often you are on television all come from the school you picked. A whole new locker room to win over. NIL money, media training, an agency, the pre-draft workout circuit, and the transfer portal if it is not working. |
 | **every year after the first** | Declare, or go back to school. Leaving early sells development you have not had yet; staying banks ability but you are closer to finished when they draft you. |
 | **the draft** | The existing career sim takes it from there — draft, growth, injuries, aging, awards, the Hall. |
 
@@ -260,23 +287,26 @@ shooting-and-IQ builds at `dependence <= 0.85` finish at 32.6.
 
 | | measured | note |
 |---|---|---|
-| five-star recruits | 1.8% | cuts are measured percentiles, not round numbers |
-| four-star | 8.4% | |
-| blue-blood offer in hand | 2.7% | |
-| no offer at all | 32.6% | prep year / overseas is always there |
-| genetic ceiling realised by 22 | 92% median | |
-| drafted | 18.4% | 21.4% for the raw genetics, unplayed |
-| made the league | 22.0% | 25.4% raw |
-| all-star selections per life | 0.10 | |
+| five-star recruits | 2.2% | cuts are measured percentiles, not round numbers |
+| four-star | 8.3% | |
+| blue-blood offer in hand | 4.5% | |
+| no offer at all | 28.3% | prep year / overseas is always there |
+| genetic ceiling realised by 22 | 89% median | |
+| drafted | 17.2% | 21.3% for the raw genetics, unplayed |
+| made the league | 20.6% | 25.4% raw |
+| all-star selections per life | 0.11 | |
 
 The number that matters most is the conditional one. **Of lives whose genetics were
-actually there — a true ceiling of 80 or better — 98% get drafted and each averages
-2.5 all-star selections.** A pipeline that loses gifted players is worse than one that
+actually there — a true ceiling of 80 or better — 97% get drafted and each averages
+3.0 all-star selections.** A pipeline that loses gifted players is worse than one that
 is merely stingy, and before the college stage existed this engine lost nearly all of
 them: four years of high school closed too little of the genetic gap, so the median
 build reaching the draft projected to a **35** and essentially nobody turned pro.
 
-Two knobs do the work, and both are load-bearing:
+The harness plays with a stand-in for a competent player that makes the same
+choices the UI offers: triage eligibility and health first, buy exposure, tend
+the coach and the locker room, then spend what is left in the gym. Three knobs
+do the work, and all three are load-bearing:
 
 - **Star ratings are a rank, not a score.** Five-stars are the couple-dozen best
   players in a country. Keying the rating off raw hype thresholds let anyone who could
@@ -285,6 +315,12 @@ Two knobs do the work, and both are load-bearing:
   A nineteen-year-old has more development runway ahead than a twenty-two-year-old who
   is nearly finished. Without that term, staying four years was strictly dominant and
   the one-and-done path made no sense.
+- **The training rate is set against the time budget, not against a slot count.**
+  Moving from three fixed slots to 100% of a year cut development throughput
+  roughly in half on its own, and the ceiling-realised figure fell from 92% to
+  80% before the rate was retuned to compensate. Every relationship you tend is
+  a gym session you did not take — that trade is the design, but it only works
+  if both sides pay.
 
 ## Two places the spec's own numbers do not close
 
@@ -346,8 +382,11 @@ tools/fetch-fonts.js  regenerates web/fonts.css
 tools/build-site.js   docs/ — PWA, manifest, service worker
 tools/make-icons.js   the icon set, rasterised with no dependencies
 src/progress.js       vault, achievements, daily streak, the saved life (localStorage)
-src/life.js         the year-by-year engine: growth, training, seasons, recruiting,
-                    college, the declare decision, and the handoff to the draft
+src/life.js         the year-by-year engine: growth, seasons, recruiting, college,
+                    the declare decision, and the handoff to the draft
+src/actions.js      the catalogue — what a year can be spent on, and the
+                    conditions that make each option exist at all
+src/people.js       the cast, their relationships, and what each one controls
 tools/life-sim.js   Monte Carlo for the life pipeline
 web/                UI — the year feed, the + button, fonts inlined as data URIs
 ```

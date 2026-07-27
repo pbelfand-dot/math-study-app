@@ -13,64 +13,96 @@ import { rollCompleteBuild, clamp } from '../src/roll.js';
 import { potentialFor, draftOverallFor } from '../src/overall.js';
 import { simulateCareer } from '../src/career.js';
 import { randomName } from '../src/names.js';
+import { teamChemistry, coachTrust, personIn, peopleIn } from '../src/people.js';
+import { availableActions, actionsForPerson, doAction, blockedReason } from '../src/actions.js';
 import {
-  newLife, advanceYear, overallNow, recruitScore, starRating, buildOffers,
-  commit, declare, returnToSchool, proBuildFrom, trainingFor, slotsFor,
-  GRAD_AGE, DRAFT_AGE_CAP,
+  newLife, advanceYear, overallNow, recruitScore, starRating,
+  commit, declare, returnToSchool, proBuildFrom, GRAD_AGE, DRAFT_AGE_CAP,
 } from '../src/life.js';
 
 // ---------------------------------------------------------------------------
 // A stand-in for a competent player.
 //
-// Deliberately not optimal — it does not know the hidden mentals and it does
-// not look ahead. It keeps itself eligible, healthy and seen, and otherwise
-// trains whatever it has the most room in. Balance measured against a perfect
-// player would be balance nobody experiences.
+// Deliberately not optimal — it cannot see the hidden mentals and it does not
+// look ahead. It triages first (eligibility, a body that works), then buys
+// exposure, then tends the two relationships that decide minutes, then spends
+// whatever time is left in the gym. Balance measured against a perfect player
+// would be balance nobody experiences.
 // ---------------------------------------------------------------------------
-const ATTR_SLOTS = ['shooting', 'handles', 'speed', 'post', 'weights', 'strength', 'devcoach'];
+function tryAct(life, list, id, rng) {
+  const a = list.find((x) => x.id === id);
+  if (!a || blockedReason(life, a)) return false;
+  doAction(life, a, rng);
+  return true;
+}
 
-function pickPlan(life, rng) {
-  const slots = slotsFor(life);
-  const avail = trainingFor(life);
-  const m = life.meters;
-  const plan = [];
-  const can = (id) => {
-    const t = avail.find((x) => x.id === id);
-    if (!t || plan.includes(id)) return false;
-    if (t.gated && m.hype < t.gated) return false;
-    return t.cost <= life.money - plan.reduce((a, p) => a + (avail.find((x) => x.id === p)?.cost || 0), 0);
-  };
-  const take = (id) => { if (plan.length < slots && can(id)) plan.push(id); };
+function playYear(life, rng) {
+  let guard = 0;
+  while (life.time > 0 && guard++ < 40) {
+    const train = availableActions(life, 'train');
+    const school = availableActions(life, 'school');
+    const lifeCat = availableActions(life, 'life');
+    const before = life.time;
 
-  // Triage first: eligibility, then a body that still works.
-  if (m.grades < 48) take(life.stage === 'college' ? 'classes' : 'school');
-  if (m.energy < 30 || m.health < 55) take('rest');
-  // Then be seen. Exposure is the whole recruiting path.
-  if (life.stage === 'highschool') {
-    if (m.money < 1100 && life.money < 1100) take('job');
-    take('camp');
-    take('aau');
-  } else {
-    if (life.age >= DRAFT_AGE_CAP - 1) take('summer');
-    take('media');
-    take('nil');
+    // 1. Stay eligible and stay healthy. Both are cliffs, not slopes.
+    if (life.meters.grades < 52 && (tryAct(life, school, 'tutor', rng) || tryAct(life, school, 'study', rng))) continue;
+    if (life.injured && tryAct(life, train, 'rehab', rng)) continue;
+    if (life.strain > 62 && tryAct(life, train, 'rest', rng)) continue;
+    if (life.stats.health < 58 && tryAct(life, lifeCat, 'doctor', rng)) continue;
+
+    // 2. Be seen. Exposure is the entire recruiting path, and money is what
+    //    buys it, which is why the job is in the same budget as the gym.
+    if (life.stage === 'highschool') {
+      if (life.money < 1200 && tryAct(life, lifeCat, 'job', rng)) continue;
+      if (tryAct(life, lifeCat, 'camp', rng)) continue;
+      if (tryAct(life, lifeCat, 'aau', rng)) continue;
+      if (tryAct(life, lifeCat, 'highlights', rng)) continue;
+    } else {
+      if (tryAct(life, lifeCat, 'nil', rng)) continue;
+      if (life.age >= DRAFT_AGE_CAP - 1 && tryAct(life, lifeCat, 'combine', rng)) continue;
+      if (tryAct(life, lifeCat, 'media', rng)) continue;
+      if (tryAct(life, lifeCat, 'agency', rng)) continue;
+    }
+
+    // 3. The two people who decide whether you play. A coach who does not
+    //    trust you does not play you, and minutes are what everyone sees.
+    const coach = personIn(life, 'coach');
+    if (coach && coach.rel < 68) {
+      const acts = actionsForPerson(life, coach);
+      if (tryAct(life, acts, 'extra', rng)) continue;
+      if (coach.rel < 45 && tryAct(life, acts, 'mend', rng)) continue;
+    }
+    const mate = peopleIn(life, 'teammate').sort((a, b) => a.rel - b.rel)[0];
+    if (mate && teamChemistry(life) < 62) {
+      const acts = actionsForPerson(life, mate);
+      if (tryAct(life, acts, 'runit', rng)) continue;
+      if (tryAct(life, acts, 'talk', rng)) continue;
+    }
+
+    // 4. A trainer, if it is affordable, then the gym.
+    if (tryAct(life, train, 'trainer', rng)) continue;
+    if (life.stats.smarts > 55 && tryAct(life, train, 'film', rng)) continue;
+
+    const room = (ks) => ks.reduce((a, k) => a + Math.max(0, life.build.skills[k] - life.attrs[k]), 0);
+    const gymOrder = [
+      ['shoot', room(['three', 'midrange'])],
+      ['skills', room(['handles', 'playmaking'])],
+      ['agility', room(['speed', 'perimeterD'])],
+      ['postwork', room(['post', 'interiorD', 'block'])],
+      ['gym', room(['dunk', 'finishing', 'rebounding'])],
+    ].sort((a, b) => b[1] - a[1]);
+    let spent = false;
+    for (const [id] of gymOrder) if (tryAct(life, train, id, rng)) { spent = true; break; }
+    if (spent) continue;
+
+    // 5. Anything at all, cheapest first, rather than throwing the time away.
+    const rest = [...train, ...school, ...lifeCat]
+      .filter((a) => !blockedReason(life, a))
+      .sort((a, b) => a.cost - b.cost);
+    if (rest.length) { doAction(life, rest[0], rng); continue; }
+    if (life.time === before) break; // nothing left is affordable
   }
-  // Then close the biggest gaps to the genetic ceiling.
-  const room = (ks) => ks.reduce((a, k) => a + Math.max(0, life.build.skills[k] - life.attrs[k]), 0);
-  const byRoom = [
-    ['shooting', room(['three', 'midrange'])],
-    ['handles', room(['handles', 'playmaking'])],
-    ['speed', room(['speed', 'perimeterD'])],
-    ['post', room(['post', 'interiorD', 'block'])],
-    ['weights', room(['dunk', 'finishing', 'rebounding'])],
-    ['strength', room(['dunk', 'finishing', 'rebounding', 'speed'])],
-    ['devcoach', 60],
-  ].sort((a, b) => b[1] - a[1]);
-  for (const [id] of byRoom) take(id);
-  // Anything left over goes into things that are free and never wasted.
-  for (const id of ['film', 'conditioning', 'rest']) take(id);
-  for (const t of avail) take(t.id);
-  return plan;
+  return advanceYear(life, rng);
 }
 
 const bestOffer = (offers) => {
@@ -83,8 +115,7 @@ const bestOffer = (offers) => {
 // puts in front of the user, so the sweep has to make it the same way.
 function shouldDeclare(life) {
   const b = proBuildFrom(life);
-  const hype = draftOverallFor(b) * 0.35 + potentialFor(b) * 0.65;
-  return hype >= DRAFT_CUTOFF + 8;
+  return draftOverallFor(b) * 0.35 + potentialFor(b) * 0.65 >= DRAFT_CUTOFF + 8;
 }
 
 // ---------------------------------------------------------------------------
@@ -96,7 +127,7 @@ export function playLife(rng, { stopAt = 'draft', offerPolicy = bestOffer } = {}
 
   let cutSeasons = 0;
   while (life.age < GRAD_AGE) {
-    advanceYear(life, pickPlan(life, rng), rng);
+    playYear(life, rng);
     if (!life.seasonStats) cutSeasons++;
   }
 
@@ -105,6 +136,9 @@ export function playLife(rng, { stopAt = 'draft', offerPolicy = bestOffer } = {}
     score: recruitScore(life),
     stars: starRating(life),
     hype: life.meters.hype,
+    smarts: life.stats.smarts,
+    chem: teamChemistry(life),
+    trust: coachTrust(life),
     offers: life.offers,
     bestTier: bestOffer(life.offers).tier,
     cutSeasons,
@@ -114,11 +148,12 @@ export function playLife(rng, { stopAt = 'draft', offerPolicy = bestOffer } = {}
 
   const offer = offerPolicy(life.offers);
   if (offer.pro) {
-    declare(life); // straight to the draft out of high school
+    declare(life);
   } else {
-    commit(life, offer);
+    commit(life, offer, rng);
     while (life.stage === 'college') {
-      advanceYear(life, pickPlan(life, rng), rng);
+      playYear(life, rng);
+      if (life.pending === 'transfer') { commit(life, bestOffer(life.offers), rng); continue; }
       if (life.pending === 'forced' || shouldDeclare(life)) declare(life);
       else returnToSchool(life);
     }
@@ -136,7 +171,6 @@ export function playLife(rng, { stopAt = 'draft', offerPolicy = bestOffer } = {}
       potential: potentialFor(b),
       draftOvr: draftOverallFor(b),
       collegeOvr: overallNow(life),
-      // How much of the genetic ceiling the whole path actually realised.
       realised:
         SKILL_KEYS.reduce((a, k) => a + life.attrs[k] / Math.max(1, build.skills[k]), 0) / SKILL_KEYS.length,
     },
@@ -181,6 +215,8 @@ export function pipelineCheck(n, rng) {
   const declareAges = {};
   const pots = [];
   const realised = [];
+  const chems = [];
+  const smarts = [];
   let cutSeasons = 0;
   let drafted = 0;
   let lottery = 0;
@@ -200,6 +236,8 @@ export function pipelineCheck(n, rng) {
     stars[grad.stars] = (stars[grad.stars] || 0) + 1;
     tiers[grad.bestTier] = (tiers[grad.bestTier] || 0) + 1;
     cutSeasons += grad.cutSeasons;
+    chems.push(grad.chem);
+    smarts.push(grad.smarts);
     declareAges[pro.declareAge] = (declareAges[pro.declareAge] || 0) + 1;
     pots.push(pro.potential);
     realised.push(pro.realised);
@@ -221,12 +259,12 @@ export function pipelineCheck(n, rng) {
     }
   }
   gifted.pot.sort((a, b) => a - b);
-
   pots.sort((a, b) => a - b);
   realised.sort((a, b) => a - b);
-  const starPct = Object.fromEntries(
-    Object.entries(stars).sort().map(([k, v]) => [`${k}★`, pct(v, n)]),
-  );
+  chems.sort((a, b) => a - b);
+  smarts.sort((a, b) => a - b);
+
+  const starPct = Object.fromEntries(Object.entries(stars).sort().map(([k, v]) => [`${k}★`, pct(v, n)]));
   const tierPct = Object.fromEntries(Object.entries(tiers).map(([k, v]) => [k, pct(v, n)]));
   const agePct = Object.fromEntries(Object.entries(declareAges).sort().map(([k, v]) => [k, pct(v, n)]));
 
@@ -237,6 +275,12 @@ export function pipelineCheck(n, rng) {
   console.log('age when he declares ', agePct);
   console.log(`cut/lost seasons in HS: ${(cutSeasons / n).toFixed(2)} of 4`);
   console.log(
+    `team chemistry at graduation: p25 ${q(chems, 0.25).toFixed(0)} · median ${q(chems, 0.5).toFixed(0)} · p90 ${q(chems, 0.9).toFixed(0)}`,
+  );
+  console.log(
+    `smarts at graduation:         p25 ${q(smarts, 0.25).toFixed(0)} · median ${q(smarts, 0.5).toFixed(0)} · p90 ${q(smarts, 0.9).toFixed(0)}`,
+  );
+  console.log(
     `\ngenetic ceiling realised: p25 ${(q(realised, 0.25) * 100).toFixed(0)}% · ` +
     `median ${(q(realised, 0.5) * 100).toFixed(0)}% · p90 ${(q(realised, 0.9) * 100).toFixed(0)}%`,
   );
@@ -244,9 +288,7 @@ export function pipelineCheck(n, rng) {
     `pro potential at declare: p10 ${q(pots, 0.1)} · p25 ${q(pots, 0.25)} · median ${q(pots, 0.5)} · ` +
     `p75 ${q(pots, 0.75)} · p90 ${q(pots, 0.9)} · max ${q(pots, 1)}`,
   );
-  console.log(
-    `\ndrafted ${pct(drafted, n)} · lottery ${pct(lottery, n)} · made the league ${pct(played, n)}`,
-  );
+  console.log(`\ndrafted ${pct(drafted, n)} · lottery ${pct(lottery, n)} · made the league ${pct(played, n)}`);
   console.log(
     `all-star selections per life ${(allStars / n).toFixed(2)} · ` +
     `peaked 90+ ${pct(ninety, n)} · hall of fame ${pct(hof, n)}`,

@@ -219,10 +219,17 @@ export function importProgress(text) {
 // ---------------------------------------------------------------------------
 const LIFE_KEY = 'hooper.life.v1';
 
+// Bumped whenever the shape of a life changes. A stored life from an older
+// build can satisfy every field check the loader makes and still be missing
+// something the engine now requires — the slot-based lives had no `people` and
+// no `stats` — so the version is checked first and a mismatch is discarded
+// rather than half-restored into a crash on the next render.
+const LIFE_SHAPE = 2;
+
 export function saveLife(life) {
   try {
     if (!life) localStorage.removeItem(LIFE_KEY);
-    else localStorage.setItem(LIFE_KEY, JSON.stringify(life));
+    else localStorage.setItem(LIFE_KEY, JSON.stringify({ shape: LIFE_SHAPE, life }));
   } catch {
     /* private mode or full quota — the life is still playable in memory */
   }
@@ -231,10 +238,11 @@ export function saveLife(life) {
 export function loadLife() {
   try {
     const raw = JSON.parse(localStorage.getItem(LIFE_KEY));
-    // Anything that fails these is from an older shape and is not worth
-    // resurrecting halfway; a fresh life beats a broken one.
-    if (!raw || typeof raw.age !== 'number' || !raw.build?.skills || !raw.attrs) return null;
-    return raw;
+    if (!raw || raw.shape !== LIFE_SHAPE) return null;
+    const life = raw.life;
+    if (!life || typeof life.age !== 'number' || !life.build?.skills || !life.attrs) return null;
+    if (!Array.isArray(life.people) || !life.stats || typeof life.time !== 'number') return null;
+    return life;
   } catch {
     return null;
   }
