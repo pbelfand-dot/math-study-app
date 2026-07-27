@@ -16,7 +16,14 @@ function runDraft(b, draftOvr, potential, rng) {
   // nineteen-year-old goes ahead of a finished twenty-two-year-old who is better
   // today, and why the top of a lottery is mostly unfinished players. It is
   // still scouting and not truth, so reaches and steals both happen.
-  const hype = draftOvr * 0.35 + potential * 0.65 + rng.gauss(0, SCOUT_NOISE);
+  // Three things, not two: what he is, what he might become, and what he has
+  // actually done. Production was missing entirely, which is why a genuinely
+  // productive player could go undrafted while the board looked at a number
+  // nobody watching him could see. `production` is absent on raw rolled builds
+  // (they have never played a season), and absent means neutral.
+  const production = b.production ?? 0;
+  const hype =
+    draftOvr * 0.35 + potential * 0.65 + production * 9 + rng.gauss(0, SCOUT_NOISE);
   const guaranteed = !!b.archetype?.guaranteesDraft;
 
   if (hype < DRAFT_CUTOFF && !guaranteed) {

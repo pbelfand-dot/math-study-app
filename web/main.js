@@ -424,6 +424,7 @@ function declareHtml() {
   const proj = draftProjection(L);
   const forced = L.pending === 'forced';
   return `<div class="proj-banner ${proj.tone}">${esc(proj.label)}</div>
+    ${gapsHtml(proj)}
     <p class="note" style="margin:10px 0">${
       forced
         ? 'Four years of college are done. There is nothing left to go back to.'
@@ -432,6 +433,18 @@ function declareHtml() {
     <p class="note" style="margin-bottom:12px">That is a projection, not a promise. Nobody knows what you top out at — including the people writing it.</p>
     <button class="btn primary" id="doDeclare" type="button">Declare for the draft</button>
     ${forced ? '' : '<button class="btn" id="doStay" type="button" style="margin-top:8px">Go back to school</button>'}`;
+}
+
+// What is actually standing between you and a draft pick. Shown wherever the
+// projection is, because a verdict without a reason is not information.
+function gapsHtml(proj) {
+  if (!proj.gaps?.length) {
+    return '<p class="note" style="margin-top:8px">Nothing is holding you back.</p>';
+  }
+  return `<div class="gaps">
+    <h4>What is holding you back</h4>
+    ${proj.gaps.map((g) => `<div class="gap"><b>${esc(g.k)}</b><span>${esc(g.why)}</span></div>`).join('')}
+  </div>`;
 }
 
 function openDecision() {
@@ -538,7 +551,11 @@ function statsSheetHtml() {
   const t = titleFor(L.build);
   const mini = (k, v, col) => `<div class="attr"><span class="k">${k}</span><span class="v">${v}</span>
     <span class="bar"><span class="now" style="width:${clamp(v, 0, 100)}%;background:${col}"></span></span></div>`;
-  return `<h3 class="sec">Basketball standing</h3>
+  const proj = draftProjection(L);
+  return `<h3 class="sec">Draft stock</h3>
+    <div class="proj-banner ${proj.tone}" style="font-size:14px">${esc(proj.label)}</div>
+    ${gapsHtml(proj)}
+    <h3 class="sec">Basketball standing</h3>
     <div class="attrs">
       ${mini('Hype', Math.round(L.meters.hype), 'var(--hype)')}
       ${mini('Grades', Math.round(L.meters.grades), 'var(--grades)')}

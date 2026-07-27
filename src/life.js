@@ -345,7 +345,15 @@ export function advanceYear(life, rng = defaultRng) {
       life.minutes >= star ? 'Star' : life.minutes >= starter ? 'Starter'
       : life.minutes >= rot ? 'Rotation' : 'Deep bench';
     const scoring = (life.attrs.three + life.attrs.midrange + life.attrs.finishing + life.attrs.dunk) / 4;
-    const ppg = Math.max(0, life.minutes * 0.42 * (0.5 + scoring / 110) + rng.gauss(0, 1.6));
+    // Wide on purpose, and usage-weighted. Two problems with the old line: the
+    // efficiency factor only ran from 0.77 to 1.14 across the entire attribute
+    // range, and nothing accounted for the fact that better players get the
+    // ball more. Between them, minutes decided your scoring and ability barely
+    // did — a 57 overall and a 75 overall put up the same eleven points, so
+    // PPG told you nothing about whether you were any good, and a genuinely
+    // good player in a smaller role looked like a bad one.
+    const usage = clamp(0.75 + (ovr - 52) / 80, 0.6, 1.35);
+    const ppg = Math.max(0, life.minutes * 0.42 * (0.25 + scoring / 70) * usage + rng.gauss(0, 1.4));
     const rpg = Math.max(0, life.minutes * (life.attrs.rebounding / 900 + Math.max(0, after - 72) * 0.008));
     // A team that likes you passes to you. This is the assist line, and it is
     // the clearest place the locker room shows up in a box score.
@@ -517,6 +525,25 @@ export function returnToSchool(life) {
 // ahead than a twenty-two-year-old who is close to finished. That is the real
 // trade: stay and bank ability, or leave early and sell the runway.
 // ---------------------------------------------------------------------------
+// What you have actually DONE, against what your rating says you should have
+// done, at the level you did it. Zero is exactly as expected; +1 is a player
+// whose tape is better than his measurements.
+//
+// This exists because the draft could not see production at all. A player could
+// average fifteen a game and go undrafted while a quieter one with a better
+// hidden composite went in the second round, and from the outside that reads as
+// the game ignoring everything you did.
+export function productionScore(life) {
+  const seasons = life.log.filter((y) => y.stats).slice(-2);
+  if (!seasons.length) return -0.35; // two years without a box score is its own signal
+  const per =
+    seasons.reduce((a, y) => a + y.stats.ppg + y.stats.rpg * 0.7 + y.stats.apg, 0) / seasons.length;
+  // Numbers at a blue blood count for more than the same numbers nobody saw.
+  const level = Math.sqrt(life.program?.exposure ?? 0.8);
+  const expected = 11 + (overallNow(life) - 55) * 0.32;
+  return clamp((per * level - expected) / 11, -1, 1);
+}
+
 export function proBuildFrom(life) {
   const declareAge = clamp(life.age, 18, 23);
   const runway = clamp((24 - declareAge) / 5, 0.2, 1);
@@ -548,18 +575,40 @@ export function proBuildFrom(life) {
     (life.meters.hype - 50) * 0.035 -
     (life.meters.rep - 50) * 0.03 -
     life.stock * 0.12;
+  // Attached rather than folded in, so the draft can weigh it separately and
+  // the raw-build harness (which has no seasons) is unaffected.
+  b.production = productionScore(life);
   return b;
 }
 
 // A coarse, deliberately imprecise read on where he would go if he declared
-// now. It is a projection and it is allowed to be wrong — the exact ceiling
-// stays hidden, which is the whole point.
+// now, AND what is holding him back.
+//
+// The diagnosis is the important half. Before it existed the screen said
+// "Nobody has you on a board" and stopped, so a player could go a whole life
+// without ever learning that the thing costing him the draft was minutes, or
+// grades, or a coach who had stopped picking him — and reasonably conclude the
+// game was ignoring everything he did.
 export function draftProjection(life) {
   const b = proBuildFrom(life);
-  const hype = draftOverallFor(b) * 0.35 + potentialFor(b) * 0.65 + (life.build.scoutNoise ?? 0) * 2.5;
-  if (hype >= DRAFT_CUTOFF + 16) return { label: 'Projected lottery pick', tone: 'good' };
-  if (hype >= DRAFT_CUTOFF + 8) return { label: 'Projected first round', tone: 'good' };
-  if (hype >= DRAFT_CUTOFF) return { label: 'Projected second round', tone: 'note' };
-  if (hype >= DRAFT_CUTOFF - 7) return { label: 'On the fringe — could go undrafted', tone: 'note' };
-  return { label: 'Nobody has you on a board', tone: 'bad' };
+  const ovr = overallNow(life);
+  const prod = b.production ?? 0;
+  const hype =
+    draftOverallFor(b) * 0.35 + potentialFor(b) * 0.65 + prod * 9 +
+    (life.build.scoutNoise ?? 0) * 2.5;
+
+  const gaps = [];
+  if (ovr < 62) gaps.push({ k: 'Ability', why: 'You are not good enough yet. The gym is the only fix.' });
+  if (life.lastMinutes < 18) gaps.push({ k: 'Minutes', why: 'You are not on the floor enough for anyone to judge. Coach trust decides that.' });
+  if (prod < -0.05) gaps.push({ k: 'Production', why: 'Your numbers are behind what a player of your rating should put up.' });
+  if (life.meters.hype < 45) gaps.push({ k: 'Exposure', why: 'Nobody has seen you. Camps, the circuit and highlights are what fix that.' });
+  if (life.meters.grades < 45) gaps.push({ k: 'Eligibility', why: 'Your grades are a problem before your game is.' });
+  if (life.stats.health < 55) gaps.push({ k: 'Health', why: 'Scouts do not spend picks on a body that keeps breaking.' });
+
+  const band = (label, tone) => ({ label, tone, gaps, hype: Math.round(hype) });
+  if (hype >= DRAFT_CUTOFF + 16) return band('Projected lottery pick', 'good');
+  if (hype >= DRAFT_CUTOFF + 8) return band('Projected first round', 'good');
+  if (hype >= DRAFT_CUTOFF) return band('Projected second round', 'note');
+  if (hype >= DRAFT_CUTOFF - 7) return band('On the fringe — could go undrafted', 'note');
+  return band('Nobody has you on a board', 'bad');
 }

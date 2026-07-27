@@ -72,6 +72,50 @@ four. Money buys reliability and it buys the top rung. It does not buy
 development, and the option you cannot afford is shown blocked with its price
 rather than hidden, so you can see what you are missing.
 
+## Why you did not get drafted
+
+Three things were wrong at once, and together they made a productive player
+invisible to the board.
+
+**The draft could not see production.** It weighed what you *are* and what you
+*might become*, and nothing at all for what you had actually done. Measured over
+4,000 lives, final-season scoring for undrafted players was 11.5 a game and for
+drafted players 12.8 — essentially uncorrelated. You could average fifteen and
+never appear on a board, because nobody was looking at that number. Scouts now
+weigh production as a third input, judged against what a player of your rating
+*should* be putting up, at the level you are putting it up at.
+
+**Points per game barely tracked ability.** The efficiency factor ran from 0.77
+to 1.14 across the entire attribute range, and nothing accounted for better
+players getting the ball more — so minutes decided your scoring and ability
+barely did. A 57 overall and a 75 overall both put up eleven. Scoring is now
+usage-weighted and much wider, so a good player in a smaller role still looks
+like a good player.
+
+| | before | after |
+|---|---|---|
+| PPG ↔ getting drafted, correlation | ~0.0 | **0.39** |
+| undrafted vs drafted, median final PPG | 11.5 / 12.8 | **9.3 / 12.9** |
+| share of 15+ PPG seasons that got drafted | — | **74%** |
+
+**And nothing ever told you what was missing.** The screen said "Nobody has you
+on a board" and stopped. It now names the gaps — ability, minutes, production,
+exposure, eligibility, health — each with the thing that fixes it, and it is on
+the *You* panel from age fourteen rather than appearing as a verdict at the end
+of college.
+
+That diagnosis matters because how you play swings the outcome enormously:
+
+| how you play | final OVR | PPG | drafted |
+|---|---|---|---|
+| casual — two training actions a year, never open People | 51 | 2.2 | **4.7%** |
+| engaged — train hard, ignore People | 59 | 8.0 | 18.2% |
+| complete — train, and tend the coach and the locker room | 60 | 10.7 | 19.9% |
+
+Tending two relationships is worth more draft rate than any single training
+decision, because coach trust is what buys minutes and minutes are what produce
+the tape. Nothing in the game said so before.
+
 ## Possessions
 
 Every season you played puts you in a game situation and asks what you do. Each
