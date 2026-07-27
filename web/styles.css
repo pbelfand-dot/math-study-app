@@ -84,7 +84,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .idcard {
   background: var(--surface); border-bottom: 1px solid var(--line);
   padding: 9px 14px 10px;
-  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start;
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
 }
 .idcard .nm { font-size: 16px; font-weight: 750; color: var(--deep); line-height: 1.25; }
 .idcard .sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
@@ -96,13 +96,6 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .idcard .cash b { display: block; font-size: 16px; font-weight: 750; color: var(--good); }
 .idcard .cash span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
 
-/* The year's time budget. It is the single most load-bearing number on the
-   screen, so it gets a full-width bar rather than a slot in a grid of meters. */
-.timebar { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; gap: 9px; align-items: center; }
-.timebar .k { font-size: 11px; font-weight: 650; color: var(--muted); }
-.timebar .track { height: 8px; background: #e6ebf3; border-radius: 999px; overflow: hidden; }
-.timebar .fill { height: 100%; background: var(--time); border-radius: 999px; transition: width 0.3s ease; }
-.timebar .v { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--ink-2); font-weight: 650; }
 
 /* ---------- the feed ---------- */
 .feed { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px 16px; }
@@ -220,6 +213,25 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .tag.cash { background: #dcfce7; color: #15803d; }
 .tag.spend { background: #fef3c7; color: #b45309; }
 .tag.no { background: #fee2e2; color: #b91c1c; }
+/* What a session is worth, per attribute. `dim` is the same information saying
+   there is nothing left in it. */
+.tag.gain { background: #dcfce7; color: #15803d; }
+.tag.dim { background: #eef1f6; color: var(--muted); }
+.tag.wear { background: #ffedd5; color: #c2410c; }
+
+/* A focused-training row carries its own progress bar. */
+.opt.focus .t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.opt.focus .num { font-variant-numeric: tabular-nums; color: var(--accent); }
+.opt.focus .bar {
+  display: block; height: 6px; background: #e7ebf2; border-radius: 999px;
+  position: relative; margin: 6px 0 2px;
+}
+.opt.focus .now { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.opt.focus .cap { position: absolute; top: -2px; width: 2px; height: 10px; background: var(--t0); }
+
+/* A question the year asks. */
+.choice-text { font-size: 15px; line-height: 1.55; color: var(--ink); padding: 2px 4px 12px; }
+.btn.choice { margin-bottom: 8px; text-align: left; border-color: var(--accent); color: var(--deep); background: var(--accent-soft); }
 .opt .go { font-size: 20px; color: var(--accent); }
 
 /* ---------- a person row ---------- */

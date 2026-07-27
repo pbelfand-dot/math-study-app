@@ -22,7 +22,7 @@ import { clamp } from './roll.js';
 import { potentialFor, draftOverallFor } from './overall.js';
 import { defaultRng } from './rng.js';
 import { rollCast, newRoster, teamChemistry, coachTrust, driftRelationships, personIn } from './people.js';
-import { TIME_PER_YEAR } from './actions.js';
+import { rollYearEvents } from './events.js';
 
 export const START_AGE = 14;
 export const GRAD_AGE = 18;
@@ -123,11 +123,22 @@ export function newLife(build, name, rng = defaultRng) {
     nextPersonId: 0,
     people: [],
 
+    // The hidden slider. Rolled once, never shown, and it multiplies everything
+    // training does — two players who make identical decisions for eight years
+    // do not arrive at the same place, and this is why. Revealed with the other
+    // hidden numbers only after the career is over.
+    talent: clamp(Math.round(rng.gauss(50, 18)), 5, 99),
+
     // The year in progress.
-    time: TIME_PER_YEAR,
     strain: 0,
     doneThisYear: [],
+    // Sessions spent on each attribute THIS YEAR. The fourth one is worth
+    // nothing, so grinding a single number is self-limiting without needing a
+    // rule that says so.
+    trainCounts: {},
     yearLog: [],
+    seenEvents: [],
+    pendingChoice: null,
 
     program: null,
     stock: 0, // pre-draft process: workouts, interviews, agency
@@ -353,8 +364,13 @@ export function advanceYear(life, rng = defaultRng) {
     if (college) life.stock = clamp(life.stock + (produced - 26) * 0.22, -40, 40);
   }
 
-  // 5. Events, then write the year into the log.
+  // 5. Events. The situational ones above are conditions of the simulation —
+  //    ineligibility, injury, the locker room — and fire every year they apply.
+  //    The table in events.js is the rest of a life happening to you.
   rollEvents(life, rng, out);
+  const rolled = rollYearEvents(life, rng);
+  out.push(...rolled.passive);
+  life.choice = rolled.choice;
   driftRelationships(life, rng);
 
   const entry = {
@@ -375,8 +391,8 @@ export function advanceYear(life, rng = defaultRng) {
   // 6. Reset the year and decide what comes next.
   life.lastMinutes = life.minutes;
   life.lastStats = life.seasonStats;
-  life.time = TIME_PER_YEAR;
   life.doneThisYear = [];
+  life.trainCounts = {};
   life.yearLog = [];
   life.minutesPitch = false;
 

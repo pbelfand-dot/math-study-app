@@ -14,7 +14,10 @@ import { potentialFor, draftOverallFor } from '../src/overall.js';
 import { simulateCareer } from '../src/career.js';
 import { randomName } from '../src/names.js';
 import { teamChemistry, coachTrust, personIn, peopleIn } from '../src/people.js';
-import { availableActions, actionsForPerson, doAction, blockedReason } from '../src/actions.js';
+import {
+  availableActions, actionsForPerson, doAction, blockedReason, focusActions,
+} from '../src/actions.js';
+import { CHOICES, resolveChoice } from '../src/events.js';
 import {
   newLife, advanceYear, overallNow, recruitScore, starRating,
   commit, declare, returnToSchool, proBuildFrom, GRAD_AGE, DRAFT_AGE_CAP,
@@ -36,73 +39,94 @@ function tryAct(life, list, id, rng) {
   return true;
 }
 
+// The stand-in answers the year's question the way a sensible person would:
+// take the safe branch unless the risky one is the only thing that helps. Which
+// branch is which is declared here rather than inferred, because the harness
+// has to be a fixed policy for the numbers to mean anything year to year.
+const PREFERRED = {
+  booster: 1, playthrough: 1, transferpitch: 1, party: 1, cheat: 2,
+  positionswitch: 0, agentgift: 0, sickparent: 0, reporter: 1, quitmoment: 1,
+};
+
+function answerChoice(life, rng) {
+  if (!life.choice) return;
+  const c = life.choice;
+  const pick = Math.min(PREFERRED[c.id] ?? 0, c.options.length - 1);
+  const line = resolveChoice(life, c.id, pick, rng);
+  if (line && life.log.length) life.log[life.log.length - 1].events.push(line);
+  life.choice = null;
+}
+
 function playYear(life, rng) {
-  let guard = 0;
-  while (life.time > 0 && guard++ < 40) {
-    const train = availableActions(life, 'train');
-    const school = availableActions(life, 'school');
-    const lifeCat = availableActions(life, 'life');
-    const before = life.time;
+  const train = () => availableActions(life, 'train');
+  const school = () => availableActions(life, 'school');
+  const lifeCat = () => availableActions(life, 'life');
 
-    // 1. Stay eligible and stay healthy. Both are cliffs, not slopes.
-    if (life.meters.grades < 52 && (tryAct(life, school, 'tutor', rng) || tryAct(life, school, 'study', rng))) continue;
-    if (life.injured && tryAct(life, train, 'rehab', rng)) continue;
-    if (life.strain > 62 && tryAct(life, train, 'rest', rng)) continue;
-    if (life.stats.health < 58 && tryAct(life, lifeCat, 'doctor', rng)) continue;
+  // 1. Stay eligible and stay healthy. Both are cliffs, not slopes.
+  if (life.meters.grades < 58) { tryAct(life, school(), 'tutor', rng); tryAct(life, school(), 'study', rng); }
+  if (life.injured) tryAct(life, train(), 'rehab', rng);
+  if (life.stats.health < 62) tryAct(life, lifeCat(), 'doctor', rng);
 
-    // 2. Be seen. Exposure is the entire recruiting path, and money is what
-    //    buys it, which is why the job is in the same budget as the gym.
-    if (life.stage === 'highschool') {
-      if (life.money < 1200 && tryAct(life, lifeCat, 'job', rng)) continue;
-      if (tryAct(life, lifeCat, 'camp', rng)) continue;
-      if (tryAct(life, lifeCat, 'aau', rng)) continue;
-      if (tryAct(life, lifeCat, 'highlights', rng)) continue;
-    } else {
-      if (tryAct(life, lifeCat, 'nil', rng)) continue;
-      if (life.age >= DRAFT_AGE_CAP - 1 && tryAct(life, lifeCat, 'combine', rng)) continue;
-      if (tryAct(life, lifeCat, 'media', rng)) continue;
-      if (tryAct(life, lifeCat, 'agency', rng)) continue;
-    }
-
-    // 3. The two people who decide whether you play. A coach who does not
-    //    trust you does not play you, and minutes are what everyone sees.
-    const coach = personIn(life, 'coach');
-    if (coach && coach.rel < 68) {
-      const acts = actionsForPerson(life, coach);
-      if (tryAct(life, acts, 'extra', rng)) continue;
-      if (coach.rel < 45 && tryAct(life, acts, 'mend', rng)) continue;
-    }
-    const mate = peopleIn(life, 'teammate').sort((a, b) => a.rel - b.rel)[0];
-    if (mate && teamChemistry(life) < 62) {
-      const acts = actionsForPerson(life, mate);
-      if (tryAct(life, acts, 'runit', rng)) continue;
-      if (tryAct(life, acts, 'talk', rng)) continue;
-    }
-
-    // 4. A trainer, if it is affordable, then the gym.
-    if (tryAct(life, train, 'trainer', rng)) continue;
-    if (life.stats.smarts > 55 && tryAct(life, train, 'film', rng)) continue;
-
-    const room = (ks) => ks.reduce((a, k) => a + Math.max(0, life.build.skills[k] - life.attrs[k]), 0);
-    const gymOrder = [
-      ['shoot', room(['three', 'midrange'])],
-      ['skills', room(['handles', 'playmaking'])],
-      ['agility', room(['speed', 'perimeterD'])],
-      ['postwork', room(['post', 'interiorD', 'block'])],
-      ['gym', room(['dunk', 'finishing', 'rebounding'])],
-    ].sort((a, b) => b[1] - a[1]);
-    let spent = false;
-    for (const [id] of gymOrder) if (tryAct(life, train, id, rng)) { spent = true; break; }
-    if (spent) continue;
-
-    // 5. Anything at all, cheapest first, rather than throwing the time away.
-    const rest = [...train, ...school, ...lifeCat]
-      .filter((a) => !blockedReason(life, a))
-      .sort((a, b) => a.cost - b.cost);
-    if (rest.length) { doAction(life, rest[0], rng); continue; }
-    if (life.time === before) break; // nothing left is affordable
+  // 2. Be seen. Exposure is the entire recruiting path, and money buys it.
+  if (life.stage === 'highschool') {
+    if (life.money < 1400) tryAct(life, lifeCat(), 'job', rng);
+    tryAct(life, lifeCat(), 'camp', rng);
+    tryAct(life, lifeCat(), 'aau', rng);
+    tryAct(life, lifeCat(), 'highlights', rng);
+  } else {
+    tryAct(life, lifeCat(), 'nil', rng);
+    if (life.age >= DRAFT_AGE_CAP - 1) tryAct(life, lifeCat(), 'combine', rng);
+    tryAct(life, lifeCat(), 'media', rng);
+    tryAct(life, lifeCat(), 'agency', rng);
   }
-  return advanceYear(life, rng);
+
+  // 3. The two people who decide whether you play.
+  const coach = personIn(life, 'coach');
+  if (coach) {
+    const acts = actionsForPerson(life, coach);
+    if (coach.rel < 68) tryAct(life, acts, 'extra', rng);
+    if (coach.rel < 45) tryAct(life, acts, 'mend', rng);
+  }
+  if (teamChemistry(life) < 62) {
+    const mate = peopleIn(life, 'teammate').sort((a, b) => a.rel - b.rel)[0];
+    if (mate) {
+      const acts = actionsForPerson(life, mate);
+      if (!tryAct(life, acts, 'runit', rng)) tryAct(life, acts, 'talk', rng);
+    }
+  }
+
+  // 4. A trainer, then the gym — but only as long as the body will take it.
+  //    Wear is the real budget now, so the policy stops rather than grinding
+  //    every session available and blowing a knee every other season.
+  tryAct(life, train(), 'trainer', rng);
+  if (life.stats.smarts > 55) tryAct(life, train(), 'film', rng);
+
+  const room = (ks) => ks.reduce((a, k) => a + Math.max(0, life.build.skills[k] - life.attrs[k]), 0);
+  const gymOrder = [
+    ['shoot', room(['three', 'midrange'])],
+    ['skills', room(['handles', 'playmaking'])],
+    ['agility', room(['speed', 'perimeterD'])],
+    ['postwork', room(['post', 'interiorD', 'block'])],
+    ['gym', room(['dunk', 'finishing', 'rebounding'])],
+  ].sort((a, b) => b[1] - a[1]);
+  for (const [id] of gymOrder) {
+    if (life.strain > 52) break;
+    tryAct(life, train(), id, rng);
+  }
+
+  // 5. Focused work on whatever has the most left in it, while the falloff and
+  //    the body both still say yes.
+  for (let i = 0; i < 4 && life.strain <= 58; i++) {
+    const best = focusActions(life).filter((a) => a.gain > 0.6).sort((a, b) => b.gain - a.gain)[0];
+    if (!best) break;
+    doAction(life, best, rng);
+  }
+
+  if (life.strain > 60) tryAct(life, train(), 'rest', rng);
+
+  const entry = advanceYear(life, rng);
+  answerChoice(life, rng);
+  return entry;
 }
 
 const bestOffer = (offers) => {

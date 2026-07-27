@@ -13,13 +13,16 @@ A 6'0" with a 94 dunk is a freak. A 7'1" with a 94 dunk is Tuesday.
 
 Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
 
-## A year is a budget, not a checklist
+## What a year is
 
-Every year you get **100% of a year** to spend, across four buttons around the
-`+`: **Train**, **School**, **People**, **Life**. Everything costs time, most
-things cost money, and the two budgets are separate — the camps that get you
-recruited are paid for out of a part-time job you took instead of a month in the
-gym.
+Four buttons around the `+`: **Train**, **School**, **People**, **Life**.
+Everything can be done once a year and that is the only bookkeeping. There is no
+time budget — an abstract "18% of the year" tax on every button turned each
+decision into arithmetic. What actually limits a year is the same set of things
+that limits a real one: **money**, a **body** that accumulates wear and then
+breaks, **grades** that decay while you are in the gym, and **people** who drift
+if you never turn up. Doing everything is allowed. It is a good way to blow out
+a knee.
 
 **Most of what you can do is hidden until it applies to you.** You do not see
 *Beg for extra credit* until your grades are failing, *Rehab the injury* until
@@ -28,6 +31,53 @@ patch things up* until a relationship has gone bad, or *Enter the transfer
 portal* until you have spent a season on a bench. Finding out an option exists
 is part of the game. A single played life surfaces around twenty of them, and
 never the same twenty.
+
+### Working one thing
+
+Under Train there is a list of all twelve attributes. Each row shows where the
+number is now, where your genetics let it end up, **exactly what one session
+adds**, and how many more sessions are worth taking. Those are the only
+repeatable actions in the game, and they decay hard: a second session on the
+same attribute in the same year is worth **half**, a third a **fifth**, and a
+fourth is worth **nothing at all** and says so. Grinding one number is
+self-limiting without a rule that says you cannot.
+
+The grouped sessions print the same thing. *Weight room* does not say "strength
+and explosion" and leave you to guess — it says `Dunk +2.1 · Finishing +1.3 ·
+Interior D +0.9 · Rebounding +0.3`, computed against how much room you actually
+have left in each.
+
+## Things happen to you
+
+Two kinds, in `src/events.js`, and both read your situation rather than firing at
+random — a recruiting letter needs somebody to have heard of you, a transfer
+pitch needs you to be buried, the academic scandal needs you to have been cutting
+corners.
+
+**Passive events** land in the year's log: a mixtape catches and hype jumps, a
+scout comes to a game and you go 2-for-14, your father loses a job, a teammate
+says something to a reporter that was not flattering and not wrong, you get
+made captain, you grow into your body, somebody goes through your bag.
+
+**Choice events** stop the year and ask, and there is no way out but answering.
+A booster leaves an envelope with $4,000 in it — take it, hand it back, or
+report it and watch the locker room decide about you. You roll an ankle in
+warmups before the biggest game of the season and it will probably hold. Your
+mother is ill and the season is halfway through. None of the branches are free:
+the obviously correct answer costs you something too, or it would not be a
+choice.
+
+Two to four things happen every year, and roughly two years in three ask you
+something. Verified across 2,000 simulated lives: every entry in both tables
+fires, and the once-in-a-life beats never repeat.
+
+## The slider nobody sees
+
+Every life rolls a hidden **talent** value that multiplies everything training
+ever does. It is never shown, never hinted at, and not in any panel — two
+players who make identical decisions for eight years do not arrive in the same
+place, and this is why. It is revealed with the four hidden mentals after the
+career is over, which is usually the moment the whole arc makes sense.
 
 ### Nothing is separable
 
@@ -38,8 +88,8 @@ The systems feed each other on purpose, so there is no one stat to farm:
 | **School → basketball** | Class raises **Smarts**. Smarts is what makes watching film worth anything — a smart player learns twice as much from the same session — and film is what raises basketball IQ, which is in your overall rating. Grades also gate eligibility: fail and you sit the season, and schools stop recruiting you. |
 | **Teammates → the box score** | Team chemistry is the average of how your teammates feel about you, and it multiplies your **assists** directly. A locker room that has decided about you does not look for you on the break. |
 | **The coach → minutes** | Coach trust moves your minutes more than any other single input. Minutes are what produce stats, stats are what produce hype, and hype is what produces offers. Asking for minutes works if he already rates you and backfires if he does not. |
-| **Money → everything** | Trainers, tutors, camps, agents, specialists. Your family background sets how much you start with and how much arrives each year, so being broke is a real disadvantage — beatable with a job and some time, which is the point. |
-| **Health → the rest of it** | Physical work accumulates strain; strain drives the injury roll; an injury costs speed and dunk permanently and takes a year to rehab. |
+| **Money → everything** | Trainers, tutors, camps, agents, specialists. Your family background sets how much you start with and how much arrives each year, so being broke is a real disadvantage — beatable with a job, which is the point. |
+| **The body → the limit** | Physical work accumulates wear; wear drives the injury roll; an injury costs speed and dunk permanently and takes a year to rehab. With no time budget this is the thing that stops you doing everything, and options warn you before you cross it rather than after. |
 
 ## The shape of a life
 
@@ -289,16 +339,16 @@ shooting-and-IQ builds at `dependence <= 0.85` finish at 32.6.
 |---|---|---|
 | five-star recruits | 2.2% | cuts are measured percentiles, not round numbers |
 | four-star | 8.3% | |
-| blue-blood offer in hand | 4.5% | |
-| no offer at all | 28.3% | prep year / overseas is always there |
-| genetic ceiling realised by 22 | 89% median | |
-| drafted | 17.2% | 21.3% for the raw genetics, unplayed |
-| made the league | 20.6% | 25.4% raw |
-| all-star selections per life | 0.11 | |
+| blue-blood offer in hand | 6.6% | |
+| no offer at all | 24.3% | prep year / overseas is always there |
+| genetic ceiling realised by 22 | 90% median | |
+| drafted | 15.9% | 21.3% for the raw genetics, unplayed |
+| made the league | 19.2% | 25.4% raw |
+| all-star selections per life | 0.08 | |
 
 The number that matters most is the conditional one. **Of lives whose genetics were
 actually there — a true ceiling of 80 or better — 97% get drafted and each averages
-3.0 all-star selections.** A pipeline that loses gifted players is worse than one that
+2.4 all-star selections.** A pipeline that loses gifted players is worse than one that
 is merely stingy, and before the college stage existed this engine lost nearly all of
 them: four years of high school closed too little of the genetic gap, so the median
 build reaching the draft projected to a **35** and essentially nobody turned pro.
@@ -315,12 +365,12 @@ do the work, and all three are load-bearing:
   A nineteen-year-old has more development runway ahead than a twenty-two-year-old who
   is nearly finished. Without that term, staying four years was strictly dominant and
   the one-and-done path made no sense.
-- **The training rate is set against the time budget, not against a slot count.**
-  Moving from three fixed slots to 100% of a year cut development throughput
-  roughly in half on its own, and the ceiling-realised figure fell from 92% to
-  80% before the rate was retuned to compensate. Every relationship you tend is
-  a gym session you did not take — that trade is the design, but it only works
-  if both sides pay.
+- **The training rate has to be re-measured every time the constraint changes.**
+  Three fixed slots, then a time budget, then no budget at all: each move
+  changed how many sessions a year holds, and each one moved the
+  ceiling-realised figure by eight to seventeen points before the rate was
+  retuned. Removing the budget alone took it from 89% to 97% — everything
+  became affordable — and the rate came down from 0.35 to 0.155 to put it back.
 
 ## Two places the spec's own numbers do not close
 
@@ -386,6 +436,7 @@ src/life.js         the year-by-year engine: growth, seasons, recruiting, colleg
                     the declare decision, and the handoff to the draft
 src/actions.js      the catalogue — what a year can be spent on, and the
                     conditions that make each option exist at all
+src/events.js       what happens to you: passive events and the questions
 src/people.js       the cast, their relationships, and what each one controls
 tools/life-sim.js   Monte Carlo for the life pipeline
 web/                UI — the year feed, the + button, fonts inlined as data URIs

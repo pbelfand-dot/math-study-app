@@ -10,7 +10,9 @@ import { Progress } from '../src/progress.js';
 import { ROLES, teamChemistry, coachTrust, personById } from '../src/people.js';
 import {
   CATEGORIES, availableActions, actionsForPerson, doAction, blockedReason,
+  focusActions, previewGain, sessionsLeft, strainWarning,
 } from '../src/actions.js';
+import { resolveChoice } from '../src/events.js';
 import {
   newLife, advanceYear, overallNow, starRating, heightAt, gradeName,
   commit, declare, returnToSchool, proBuildFrom, draftProjection,
@@ -51,6 +53,10 @@ function resumeOrStart() {
   if (!saved || saved.stage === 'pro') { startLife(); return; }
   S.life = saved;
   render(true);
+  // A life saved mid-question re-asks it. Otherwise the answer would be lost
+  // and the year would move on having quietly skipped a decision.
+  if (S.life.choice) openChoice();
+  else if (S.life.pending) openDecision();
 }
 
 // ---------------------------------------------------------------------------
@@ -68,15 +74,11 @@ function idcardHtml() {
   return `
     <div>
       <div class="nm">${esc(L.name)}</div>
-      <div class="sub">${gradeName(L.age, L.stage)} &middot; ${formatHeight(heightAt(L))} &middot; ${where}</div>
-      <div class="sub">${line2} &middot; ${esc(L.teamRole)} &middot; OVR ${overallNow(L)}</div>
+      <div class="sub">${gradeName(L.age, L.stage)} &middot; ${formatHeight(heightAt(L))}
+        &middot; OVR ${overallNow(L)} &middot; ${esc(L.teamRole)}</div>
+      <div class="sub">${line2} &middot; ${where}</div>
     </div>
-    <div class="cash"><b>${money(L.money)}</b><span>Bank balance</span></div>
-    <div class="timebar">
-      <span class="k">Year left</span>
-      <span class="track"><span class="fill" style="width:${clamp(L.time, 0, 100)}%"></span></span>
-      <span class="v">${Math.round(L.time)}%</span>
-    </div>`;
+    <div class="cash"><b>${money(L.money)}</b><span>Bank balance</span></div>`;
 }
 
 const BARS = [
@@ -151,11 +153,26 @@ function closeSheet() {
   $('sheetBody').innerHTML = '';
 }
 
+// What a session is worth, per attribute, computed live — so an option that
+// would move nothing says so before you spend a year on it rather than after.
+function trainTags(a) {
+  if (!a.trains) return '';
+  return Object.entries(a.trains)
+    .map(([k, w]) => [k, previewGain(S.life, k, w)])
+    .sort((x, y) => y[1] - x[1])
+    .map(([k, g]) => `<span class="tag ${g < 0.4 ? 'dim' : 'gain'}">${esc(LABELS[k])} ${g < 0.05 ? '—' : `+${g.toFixed(1)}`}</span>`)
+    .join('');
+}
+
 function tagsFor(a, blocked) {
-  const t = [`<span class="tag time">${a.cost}% of the year</span>`];
+  const t = [];
   if (a.price) t.push(`<span class="tag spend">${money(a.price)}</span>`);
+  t.push(trainTags(a));
+  const wear = strainWarning(S.life, a);
+  if (wear) t.push(`<span class="tag wear">${esc(wear)}</span>`);
   if (blocked) t.push(`<span class="tag no">${esc(blocked)}</span>`);
-  return `<span class="tags">${t.join('')}</span>`;
+  const joined = t.filter(Boolean).join('');
+  return joined ? `<span class="tags">${joined}</span>` : '';
 }
 
 function optRow(a, idx) {
@@ -165,6 +182,32 @@ function optRow(a, idx) {
       <span class="t">${esc(a.name)}</span>
       ${a.blurb ? `<span class="d">${esc(a.blurb)}</span>` : ''}
       ${tagsFor(a, blocked)}
+    </span>
+    <span class="go">&rsaquo;</span>
+  </button>`;
+}
+
+// One attribute, worked on its own. The row carries the whole picture: where it
+// is, how far your genetics let it go, what this session adds, and how many
+// more are worth taking this year.
+function focusRow(a, idx) {
+  const cap = S.life.build.skills[a.key];
+  const spent = a.gain < 0.05;
+  return `<button class="opt focus" data-act="${idx}" type="button" ${spent ? 'disabled' : ''}>
+    <span>
+      <span class="t">${esc(a.name)} <b class="num">${a.now}</b></span>
+      <span class="bar"><span class="now" style="width:${clamp(a.now, 0, 100)}%"></span>
+        <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span>
+      <span class="tags">
+        ${
+          a.maxed
+            ? '<span class="tag dim">At your genetic ceiling</span>'
+            : spent
+              ? '<span class="tag dim">Nothing left in it this year</span>'
+              : `<span class="tag gain">+${a.gain.toFixed(1)} this session</span>
+                 <span class="tag ${a.left <= 1 ? 'wear' : ''}">${a.left} more worth taking</span>`
+        }
+      </span>
     </span>
     <span class="go">&rsaquo;</span>
   </button>`;
@@ -205,7 +248,7 @@ function drawSheet() {
   const title = $('sheetTitle');
   const hint = $('sheetHint');
   const body = $('sheetBody');
-  $('sheetBack').classList.toggle('off', kind !== 'person');
+  $('sheetBack').classList.toggle('off', kind !== 'person' && kind !== 'focus');
 
   if (kind === 'people') {
     title.textContent = 'People';
@@ -233,6 +276,12 @@ function drawSheet() {
     title.textContent = 'Achievements';
     hint.textContent = '';
     body.innerHTML = badgesHtml();
+  } else if (kind === 'focus') {
+    const acts = focusActions(L);
+    S.sheetActions = acts;
+    title.textContent = 'Work one thing';
+    hint.textContent = 'A second session on the same number is worth half, a third a fifth, a fourth nothing.';
+    body.innerHTML = acts.map(focusRow).join('');
   } else {
     const cat = CATEGORIES.find((c) => c.id === kind);
     if (!cat) return;
@@ -240,9 +289,15 @@ function drawSheet() {
     S.sheetActions = acts;
     title.textContent = cat.name;
     hint.textContent = cat.hint;
-    body.innerHTML = acts.length
+    const focusEntry = kind === 'train'
+      ? `<button class="opt" data-focus="1" type="button">
+           <span><span class="t">Work one thing</span>
+           <span class="d">Pick a single attribute and grind it. Repeatable, up to a point.</span></span>
+           <span class="go">&rsaquo;</span></button>`
+      : '';
+    body.innerHTML = focusEntry + (acts.length
       ? acts.map(optRow).join('')
-      : '<p class="note">Nothing here for you right now. That changes as your situation does.</p>';
+      : (focusEntry ? '' : '<p class="note">Nothing here for you right now. That changes as your situation does.</p>'));
   }
   wireSheet();
 }
@@ -256,11 +311,47 @@ function wireSheet() {
       doAction(S.life, a, defaultRng);
       Progress.saveLife(S.life);
       render(true);
-      drawSheet(); // costs and conditions have moved — redraw in place
+      drawSheet(); // gains and conditions have moved — redraw in place
     };
   }
   for (const el of body.querySelectorAll('[data-person]')) {
     el.onclick = () => openSheet('person', el.dataset.person);
+  }
+  const f = body.querySelector('[data-focus]');
+  if (f) f.onclick = () => openSheet('focus');
+}
+
+// ---------------------------------------------------------------------------
+// A question the year asks you
+//
+// Shown after the season resolves and before anything else, because the branch
+// you pick lands in the same year's log. There is no dismiss: closing it would
+// be a free re-roll on a decision that is supposed to cost something.
+// ---------------------------------------------------------------------------
+function openChoice() {
+  const L = S.life;
+  const c = L.choice;
+  S.sheet = { kind: 'choice' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = c.title;
+  $('sheetHint').textContent = '';
+  $('sheetBody').innerHTML = `
+    <p class="choice-text">${esc(c.text)}</p>
+    ${c.options.map((label, i) => `<button class="btn choice" data-opt="${i}" type="button">${esc(label)}</button>`).join('')}`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-opt]')) {
+    el.onclick = () => {
+      const line = resolveChoice(L, c.id, Number(el.dataset.opt), defaultRng);
+      // The outcome belongs to the year that asked, so it goes on that entry
+      // rather than opening the next one with a consequence of the last.
+      if (line && L.log.length) L.log[L.log.length - 1].events.push(line);
+      L.choice = null;
+      Progress.saveLife(L);
+      closeSheet();
+      render(true);
+      if (L.pending) openDecision();
+    };
   }
 }
 
@@ -390,11 +481,14 @@ function careerHtml() {
       : ''
   }
   <article class="yr">
-    <h3>The hidden four</h3>
-    <p class="note" style="margin-bottom:8px">These were driving everything and you could not see them.</p>
+    <h3>What you could not see</h3>
+    <p class="note" style="margin-bottom:8px">These were driving everything and none of them were ever on screen.</p>
     <div class="attrs">
       ${MENTAL_KEYS.map((k) => `<div class="attr"><span class="k">${LABELS[k]}</span><span class="v">${L.mentals[k]}</span></div>`).join('')}
+      <div class="attr"><span class="k">Talent</span><span class="v">${L.talent ?? '—'}</span></div>
     </div>
+    <p class="note" style="margin-top:8px">Talent multiplied every hour you ever put in. Two players who
+    made identical decisions for eight years do not arrive in the same place, and this is why.</p>
   </article>`;
 }
 
@@ -512,12 +606,13 @@ function render(scrollToEnd = false) {
   // The + changes job depending on what the game is waiting for: play the year,
   // answer a decision, or start again once it is all over.
   const age = $('ageBtn');
-  age.classList.toggle('decide', !!L.pending || over);
-  age.querySelector('.lb').textContent = over ? 'New' : L.pending ? 'Decide' : 'Age';
-  age.querySelector('.plus').textContent = over ? '↻' : L.pending ? '?' : '+';
+  const waiting = !!L.pending || !!L.choice;
+  age.classList.toggle('decide', waiting || over);
+  age.querySelector('.lb').textContent = over ? 'New' : waiting ? 'Decide' : 'Age';
+  age.querySelector('.plus').textContent = over ? '↻' : waiting ? '?' : '+';
 
   for (const el of document.querySelectorAll('[data-cat]')) {
-    el.disabled = over || !!L.pending;
+    el.disabled = over || !!L.pending || !!L.choice;
     // A category holding something urgent says so, rather than making you find
     // out by opening all four.
     const cat = el.dataset.cat;
@@ -525,7 +620,7 @@ function render(scrollToEnd = false) {
       (cat === 'school' && L.meters.grades < 40) ||
       (cat === 'train' && L.injured) ||
       (cat === 'people' && (coachTrust(L) < 28 || teamChemistry(L) < 30));
-    el.dataset.alert = String(!over && !L.pending && !!alert);
+    el.dataset.alert = String(!over && !L.pending && !L.choice && !!alert);
   }
 
   if (scrollToEnd) requestAnimationFrame(() => { $('feed').scrollTop = $('feed').scrollHeight; });
@@ -539,16 +634,23 @@ for (const el of document.querySelectorAll('[data-cat]')) {
 }
 $('ageBtn').onclick = () => {
   if (S.career) { startLife(); return; }
+  if (S.life.choice) { openChoice(); return; }
   if (S.life.pending) { openDecision(); return; }
   advanceYear(S.life, defaultRng);
   Progress.saveLife(S.life);
   closeSheet();
   render(true);
-  if (S.life.pending) openDecision();
+  if (S.life.choice) openChoice();
+  else if (S.life.pending) openDecision();
 };
-$('sheetClose').onclick = closeSheet;
-$('scrim').onclick = () => { if (S.sheet?.kind !== 'decision') closeSheet(); };
-$('sheetBack').onclick = () => openSheet('people');
+$('sheetClose').onclick = () => {
+  if (S.sheet?.kind === 'choice') return; // answering it is the only way out
+  closeSheet();
+};
+$('scrim').onclick = () => {
+  if (S.sheet?.kind !== 'decision' && S.sheet?.kind !== 'choice') closeSheet();
+};
+$('sheetBack').onclick = () => openSheet(S.sheet?.kind === 'focus' ? 'train' : 'people');
 
 // The menu holds everything that is not a decision about this year.
 $('menuBtn').onclick = () => {

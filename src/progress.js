@@ -224,7 +224,11 @@ const LIFE_KEY = 'hooper.life.v1';
 // something the engine now requires — the slot-based lives had no `people` and
 // no `stats` — so the version is checked first and a mismatch is discarded
 // rather than half-restored into a crash on the next render.
-const LIFE_SHAPE = 2;
+//
+// The field checks below must track the current shape too. They kept testing
+// `life.time` after the time budget was removed, which silently discarded every
+// save on every load: the game looked fine and just never resumed anything.
+const LIFE_SHAPE = 3;
 
 export function saveLife(life) {
   try {
@@ -241,7 +245,7 @@ export function loadLife() {
     if (!raw || raw.shape !== LIFE_SHAPE) return null;
     const life = raw.life;
     if (!life || typeof life.age !== 'number' || !life.build?.skills || !life.attrs) return null;
-    if (!Array.isArray(life.people) || !life.stats || typeof life.time !== 'number') return null;
+    if (!Array.isArray(life.people) || !life.stats || !life.trainCounts) return null;
     return life;
   } catch {
     return null;

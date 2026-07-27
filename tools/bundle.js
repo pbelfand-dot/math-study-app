@@ -25,6 +25,7 @@ const MODULES = [
   'src/roll.js',
   'src/overall.js',
   'src/people.js',
+  'src/events.js',
   'src/actions.js',
   'src/career.js',
   'src/verdict.js',
