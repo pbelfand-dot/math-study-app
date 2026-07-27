@@ -8,10 +8,16 @@ import { defaultRng } from './rng.js';
 
 const round1 = (v) => Math.round(v * 10) / 10;
 
+// Roster economics, shared with the year-by-year pro engine. REPLACEMENT is
+// where a spot starts being contested; REPLACEMENT_FLOOR is where there is no
+// spot at any price.
+export const REPLACEMENT = 66;
+export const REPLACEMENT_FLOOR = 57;
+
 // ---------------------------------------------------------------------------
 // Draft
 // ---------------------------------------------------------------------------
-function runDraft(b, draftOvr, potential, rng) {
+export function runDraft(b, draftOvr, potential, rng) {
   // Scouts weigh projected upside above present ability — which is why a raw
   // nineteen-year-old goes ahead of a finished twenty-two-year-old who is better
   // today, and why the top of a lottery is mostly unfinished players. It is
@@ -50,13 +56,13 @@ function runDraft(b, draftOvr, potential, rng) {
 // ---------------------------------------------------------------------------
 // Injuries
 // ---------------------------------------------------------------------------
-const INJURY_KINDS = {
+export const INJURY_KINDS = {
   minor: ['ankle sprain', 'hand contusion', 'sore knee', 'hip pointer', 'strained calf'],
   major: ['stress fracture', 'torn meniscus', 'high ankle sprain', 'shoulder labrum', 'plantar fascia tear'],
   severe: ['torn ACL', 'ruptured achilles', 'micro-fracture surgery', 'compound leg fracture', 'severe back injury'],
 };
 
-function injuryRoll(b, state, minutes, eff, rng) {
+export function injuryRoll(b, state, minutes, eff, rng) {
   const dur = b.physicals.durability;
   // A tall, slight frame carries a body it was not built to carry.
   const mismatch = Math.max(0, (b.height - 78) * 0.015 - (b.frameIndex - 2) * 0.03);
@@ -94,7 +100,7 @@ function injuryRoll(b, state, minutes, eff, rng) {
 // ---------------------------------------------------------------------------
 // Production
 // ---------------------------------------------------------------------------
-function boxScore(b, rating, minutes, eff, fit) {
+export function boxScore(b, rating, minutes, eff, fit) {
   const s = b.skills;
   const iq = b.mentals.bballIQ;
   const scoring = (s.three + s.midrange + s.finishing + s.dunk) / 4;
@@ -232,9 +238,6 @@ export function simulateCareer(b, rng = defaultRng) {
 
   // Roster economics. REPLACEMENT is where a spot starts being contested;
   // REPLACEMENT_FLOOR is where there is no spot at any price.
-  const REPLACEMENT = 66;
-  const REPLACEMENT_FLOOR = 57;
-
   let totals = { ppg: 0, rpg: 0, apg: 0, spg: 0, bpg: 0, mpg: 0, games: 0, points: 0 };
 
   for (let year = 0; year < 26; year++) {

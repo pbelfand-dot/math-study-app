@@ -1,9 +1,11 @@
 import { SKILLS, SKILL_KEYS, PHYSICALS, MENTALS, MENTAL_KEYS } from '../src/constants.js';
 import { rollCompleteBuild, formatHeight, clamp } from '../src/roll.js';
 import { titleFor } from '../src/archetypes.js';
-import { potentialGrade, positionFor } from '../src/overall.js';
-import { simulateCareer } from '../src/career.js';
-import { writeVerdict } from '../src/verdict.js';
+import { potentialGrade, positionFor, buildRarityTier } from '../src/overall.js';
+import {
+  draftNight, newPro, playSeason, freeAgencyOffers, signWith, acceptTrade, retire,
+  proActions, doProAction, proMoney, careerLine,
+} from '../src/pro.js';
 import { defaultRng } from '../src/rng.js';
 import { randomName, randomTeam } from '../src/names.js';
 import { Progress } from '../src/progress.js';
@@ -121,6 +123,19 @@ const BARS = [
 
 function barsHtml() {
   const L = S.life;
+  if (S.pro) {
+    const P = S.pro;
+    const rows = [
+      [Math.round(P.morale), 'Morale', 'var(--happy)'],
+      [clamp(Math.round(100 - P.injuryHistory * 22), 0, 100), 'Body', 'var(--health)'],
+      [Math.round(P.fanLove), 'Fan love', 'var(--rep)'],
+      [clamp(Math.round((P.rating / 99) * 100), 0, 100), 'Rating', 'var(--smarts)'],
+    ];
+    return rows.map(([v, label, col]) => `<div class="row ${v < 25 ? 'low' : ''} ${v >= 88 ? 'full' : ''}">
+      <div class="k">${label}</div>
+      <div class="track"><div class="fill" style="width:${clamp(v, 0, 100)}%;background:${col}"></div><span class="v">${v}%</span></div>
+    </div>`).join('');
+  }
   const rows = [
     ...BARS.map(([k, label, col]) => [Math.round(L.stats[k]), label, col]),
     [Math.round(L.meters.rep), 'Reputation', 'var(--rep)'],
@@ -152,6 +167,7 @@ function yearHtml(e) {
 
 function feedHtml() {
   const L = S.life;
+  if (S.pro) return proFeedHtml();
   if (S.career) return careerHtml();
   const past = L.log.map(yearHtml).join('');
   const now = `<article class="yr now">
@@ -312,6 +328,29 @@ function drawSheet() {
     title.textContent = 'Achievements';
     hint.textContent = '';
     body.innerHTML = badgesHtml();
+  } else if (kind === 'train' && S.pro) {
+    const acts = proActions(S.pro);
+    S.sheetActions = acts;
+    title.textContent = 'Offseason';
+    hint.textContent = 'Four months. Money is the constraint now, not time.';
+    body.innerHTML = acts.length
+      ? acts.map((a, i) => {
+          const broke = (a.cost || 0) > S.pro.earnings;
+          return `<button class="opt" data-pro="${i}" type="button" ${broke ? 'disabled' : ''}>
+            <span><span class="t">${esc(a.name)}</span><span class="d">${esc(a.blurb)}</span>
+            <span class="tags">${a.cost ? `<span class="tag spend">${proMoney(a.cost)}</span>` : '<span class="tag gain">free</span>'}
+            ${broke ? '<span class="tag no">Cannot afford it</span>' : ''}</span></span>
+            <span class="go">&rsaquo;</span></button>`;
+        }).join('')
+      : '<p class="note">Nothing left to do but play.</p>';
+    for (const el of body.querySelectorAll('[data-pro]')) {
+      el.onclick = () => {
+        doProAction(S.pro, S.sheetActions[Number(el.dataset.pro)], defaultRng);
+        render(true);
+        drawSheet();
+      };
+    }
+    return;
   } else if (kind === 'focus') {
     const acts = focusActions(L);
     S.sheetActions = acts;
@@ -364,9 +403,9 @@ function wireSheet() {
 // because the season reads the form they produce.
 // ---------------------------------------------------------------------------
 function openGameDay() {
-  const L = S.life;
+  const L = S.pro || S.life;
   const g = L.games?.[0];
-  if (!g) { finishYear(); return; }
+  if (!g) { (S.pro ? finishSeason : finishYear)(); return; }
   S.sheet = { kind: 'gameday' };
   $('sheetBack').classList.add('off');
   $('sheetTitle').textContent = `Game ${g.no} of ${GAMES_PER_SEASON}`;
@@ -383,15 +422,37 @@ function openGameDay() {
   $('scrim').classList.remove('hidden');
   for (const el of $('sheetBody').querySelectorAll('[data-game]')) {
     el.onclick = () => {
-      const r = resolveGame(L, g.id, Number(el.dataset.game), defaultRng);
+      // A pro's possessions resolve against the same attributes, read off the
+      // life's attribute block, so the maths is identical either way.
+      const r = resolveGame(S.pro ? { ...S.life, gameForm: L.gameForm } : L, g.id, Number(el.dataset.game), defaultRng);
+      if (S.pro) S.pro.gameForm = clamp((S.pro.gameForm ?? 0) + (r?.made ? 0.18 : -0.18), -1, 1);
       L.gameLog = L.gameLog || [];
       L.gameLog.push({ made: !!r?.made, text: r?.text || '', kind: r?.kind || 'note', opponent: g.opponent });
       L.games.shift();
-      Progress.saveLife(L);
+      if (!S.pro) Progress.saveLife(L);
       if (L.games.length) openGameDay();
+      else if (S.pro) finishSeason();
       else finishYear();
     };
   }
+}
+
+// A pro season resolves the same way: games first, then the year is written.
+function finishSeason() {
+  const P = S.pro;
+  const played = P.gameLog || [];
+  playSeason(P, defaultRng);
+  if (played.length && P.seasons.length) {
+    P.seasons[P.seasons.length - 1].events.unshift(
+      ...played.map((r) => ({ kind: r.kind, text: `vs ${r.opponent} — ${r.text}` })),
+    );
+  }
+  P.gameLog = [];
+  P.games = [];
+  P.log = [];
+  closeSheet();
+  render(true);
+  if (P.pending) openProDecision();
 }
 
 // The season resolves once the games are played, so form is already set.
@@ -539,23 +600,219 @@ function openDecision() {
 // ---------------------------------------------------------------------------
 // The pro career
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Draft night
+// ---------------------------------------------------------------------------
 function runCareer() {
   const L = S.life;
-  const rng = defaultRng;
-  // The engine that projects present ability onto the genetic ceiling lives in
-  // life.js, so the Monte Carlo harness and the app hand the draft the same
-  // build.
   declare(L);
   const b = proBuildFrom(L);
-  const c = simulateCareer(b, rng);
+  S.draft = draftNight(b, L, defaultRng);
+  S.proBuild = b;
+  openDraftBoard();
+}
 
-  S.career = c;
-  S.verdict = writeVerdict(c, b, rng);
-  Progress.record(S.prog, c, b, {
-    name: L.name, pos: positionFor(b.height).short, height: b.height,
-    title: c.title.title, grade: potentialGrade(b), daily: false,
+function openDraftBoard() {
+  const d = S.draft;
+  S.sheet = { kind: 'draft' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'Draft night';
+  $('sheetHint').textContent = d.drafted
+    ? `${S.life.name} — pick ${d.pick} to the ${d.team}`
+    : d.signed ? 'Undrafted. Somebody is giving you a camp invite.' : 'Undrafted. Nobody called.';
+
+  // Show your neighbourhood of the board rather than all sixty rows: the picks
+  // either side of you are the ones that mean anything.
+  const mine = d.board.findIndex((r) => r.you);
+  const from = mine < 0 ? 0 : Math.max(0, mine - 6);
+  const rows = d.board.slice(from, from + 14);
+  $('sheetBody').innerHTML = `
+    ${d.drafted
+      ? `<div class="proj-banner good">Pick ${d.pick} &mdash; ${esc(d.team)}</div>`
+      : `<div class="proj-banner ${d.signed ? 'note' : 'bad'}">Undrafted</div>`}
+    <div class="board">
+      ${rows.map((r) => `<div class="brow ${r.you ? 'you' : ''}">
+        <span class="pk">${r.pick}</span>
+        <span class="bnm">${esc(r.name)}</span>
+        <span class="btm">${esc(r.team)}</span>
+      </div>`).join('')}
+    </div>
+    <button class="btn primary" id="toLeague" type="button" style="margin-top:12px">
+      ${d.drafted || d.signed ? 'Report to camp' : 'Try to catch on anyway'}
+    </button>`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  $('toLeague').onclick = () => {
+    if (!d.drafted && !d.signed) { endCareer(null); return; }
+    S.pro = newPro(S.proBuild, S.life, d, defaultRng);
+    Progress.saveLife(null);
+    closeSheet();
+    render(true);
+  };
+}
+
+// ---------------------------------------------------------------------------
+// The pro career
+// ---------------------------------------------------------------------------
+function proHeaderHtml() {
+  const P = S.pro;
+  const last = P.seasons[P.seasons.length - 1];
+  const a = P.totals.games
+    ? `${(P.totals.points / P.totals.games).toFixed(1)}`
+    : '—';
+  return `
+    <div>
+      <div class="nm">${esc(P.name)}</div>
+      <div class="sub">Age ${P.age} &middot; ${esc(P.pos)} &middot; OVR ${Math.round(P.rating)}
+        &middot; ${P.drafted ? `pick ${P.pick}` : 'undrafted'}</div>
+      <div class="sub"><b style="color:var(--accent)">${esc(P.team)}</b>
+        &middot; ${proMoney(P.contract.salary)}/yr, ${P.contractLeft} left</div>
+    </div>
+    <div class="stack">
+      <div class="cash ppg"><b>${last ? last.ppg.toFixed(1) : a}</b><span>PPG &middot; ${a} career</span></div>
+      <div class="cash"><b>${proMoney(P.earnings)}</b><span>Career earnings</span></div>
+    </div>`;
+}
+
+function proSeasonHtml(s) {
+  const badges = [
+    s.mvp ? 'MVP' : null, s.allStar ? 'All-Star' : null, s.ring ? 'CHAMPION' : null,
+  ].filter(Boolean);
+  return `<article class="yr">
+    <h3>Season ${s.year} &middot; ${esc(s.team)}
+      <span class="meta">age ${s.age} &middot; OVR ${s.rating} &middot; ${s.wins}-${82 - s.wins}${
+        s.playoffs ? ' &middot; playoffs' : ''
+      }</span></h3>
+    ${badges.length ? `<div class="hardware">${badges.map((x) => `<span>${x}</span>`).join('')}</div>` : ''}
+    <div class="box">${s.ppg} pts, ${s.rpg} reb, ${s.apg} ast in ${s.mpg} min &middot; ${s.games} games</div>
+    ${s.events.map((v) => `<div class="line ${v.kind}">${esc(v.text)}</div>`).join('')}
+  </article>`;
+}
+
+function proFeedHtml() {
+  const P = S.pro;
+  if (P.retired) return P.seasons.map(proSeasonHtml).join('') + retiredHtml();
+  const past = P.seasons.map(proSeasonHtml).join('');
+  const now = `<article class="yr now">
+    <h3>Season ${P.year + 1} <span class="meta">in progress &middot; ${esc(P.team)}</span></h3>
+    ${P.log.length
+      ? P.log.map((v) => `<div class="line ${v.kind}">${esc(v.text)}</div>`).join('')
+      : '<div class="empty">Offseason. Use the buttons below, then play the season.</div>'}
+  </article>`;
+  return past + now;
+}
+
+function retiredHtml() {
+  const P = S.pro;
+  const a = P.awards;
+  const line = (k, v) => `<div class="attr"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  return `<article class="yr">
+    <h3>${P.hof ? 'Hall of Fame' : 'Retired'} <span class="meta">age ${P.age}</span></h3>
+    <div class="box">${P.seasons.length} seasons &middot; ${careerLine(P)}</div>
+    <div class="attrs" style="margin-top:8px">
+      ${line('Peak rating', Math.round(P.peak))}
+      ${line('All-Star selections', a.allStars)}
+      ${line('All-League', a.allLeague)}
+      ${line('MVPs', a.mvps)}
+      ${line('Championships', a.rings)}
+      ${line('Rookie of the Year', a.roty ? 'Yes' : '—')}
+      ${line('Career earnings', proMoney(P.earnings))}
+      ${line('Hall of Fame', P.hof ? 'Inducted' : 'Not inducted')}
+    </div>
+  </article>
+  ${(S.wonBadges || []).length
+    ? `<article class="yr"><h3>Unlocked</h3><div class="badges">${S.wonBadges
+        .map((x) => `<div class="badge on"><b>${esc(x.name)}</b><span>${esc(x.hint)}</span></div>`).join('')}</div></article>`
+    : ''}
+  <article class="yr">
+    <h3>What you could not see</h3>
+    <div class="attrs">
+      ${MENTAL_KEYS.map((k) => `<div class="attr"><span class="k">${LABELS[k]}</span><span class="v">${S.life.mentals[k]}</span></div>`).join('')}
+      <div class="attr"><span class="k">Talent</span><span class="v">${S.life.talent ?? '—'}</span></div>
+    </div>
+  </article>`;
+}
+
+// Everything the pro career is waiting on, in one place.
+function openProDecision() {
+  const P = S.pro;
+  S.sheet = { kind: 'prodecision' };
+  $('sheetBack').classList.add('off');
+  $('scrim').classList.remove('hidden');
+  $('sheet').classList.remove('hidden');
+
+  if (P.pending === 'retire') {
+    $('sheetTitle').textContent = 'The end of it';
+    $('sheetHint').textContent = '';
+    $('sheetBody').innerHTML = `
+      <p class="choice-text">Nobody is offering you a roster spot worth taking. ${
+        P.seasons.length >= 12 ? 'It has been a long time.' : 'It went quickly.'
+      }</p>
+      <button class="btn primary" id="doRetire" type="button">Retire</button>`;
+    $('doRetire').onclick = () => endCareer(P);
+    return;
+  }
+  if (P.pending === 'trade') {
+    $('sheetTitle').textContent = 'Traded';
+    $('sheetHint').textContent = '';
+    $('sheetBody').innerHTML = `
+      <p class="choice-text">You found out from a phone alert, like everybody else.</p>
+      <button class="btn primary" id="doTrade" type="button">Pack</button>`;
+    $('doTrade').onclick = () => {
+      acceptTrade(P, defaultRng);
+      P.log.push({ kind: 'note', text: `Traded to the ${P.team}.` });
+      closeSheet(); render(true);
+    };
+    return;
+  }
+  // Free agency.
+  P.offers = P.offers?.length ? P.offers : freeAgencyOffers(P, defaultRng);
+  $('sheetTitle').textContent = 'Free agency';
+  $('sheetHint').textContent = 'Money, or a chance at something. Rarely both.';
+  $('sheetBody').innerHTML = P.offers.map((o, i) => `
+    <div class="offer">
+      <div class="tier">${proMoney(o.salary)} a year &middot; ${o.years} years</div>
+      <h4>${esc(o.team)}${o.stay ? ' — stay' : ''}</h4>
+      <p>${esc(o.note)}</p>
+      <p class="note">Roster ${o.strength >= 62 ? 'contender' : o.strength >= 46 ? 'playoff side' : 'rebuilding'}
+        &middot; total ${proMoney(o.salary * o.years)}</p>
+      <button class="btn primary" data-fa="${i}" type="button">Sign</button>
+    </div>`).join('');
+  for (const el of $('sheetBody').querySelectorAll('[data-fa]')) {
+    el.onclick = () => {
+      const o = P.offers[Number(el.dataset.fa)];
+      signWith(P, o);
+      P.offers = [];
+      P.log.push({ kind: 'good', text: `Signed with the ${o.team} — ${proMoney(o.salary)} a year for ${o.years}.` });
+      closeSheet(); render(true);
+    };
+  }
+}
+
+function endCareer(P) {
+  if (P) retire(P);
+  const b = S.proBuild;
+  // The vault and the achievements speak the one-shot engine's shape, so the
+  // stepped career is translated into it rather than given a second format.
+  const asCareer = {
+    drafted: S.draft.drafted, pick: S.draft.pick, madeLeague: !!P && P.seasons.length > 0,
+    draftOvr: S.draft.draftOvr, potential: S.draft.potential,
+    peakRating: P ? Math.round(P.peak) : S.draft.draftOvr,
+    seasons: P ? P.seasons : [],
+    awards: P ? P.awards : { allStars: 0, allLeague: 0, mvps: 0, rings: 0 },
+    hof: !!P?.hof,
+    teams: P ? [P.team] : [],
+    rarity: buildRarityTier(b),
+    title: { title: 'Pro', failure: null },
+    careerAverages: P ? { ppg: P.careerAverages.ppg, rpg: P.careerAverages.rpg, apg: P.careerAverages.apg, points: P.totals.points } : { ppg: 0, rpg: 0, apg: 0, points: 0 },
+  };
+  S.career = asCareer;
+  S.pro = P || S.pro;
+  Progress.record(S.prog, asCareer, b, {
+    name: S.life.name, pos: positionFor(b.height).short, height: b.height,
+    title: 'Pro', grade: potentialGrade(b), daily: false,
   });
-  S.wonBadges = Progress.checkAchievements(S.prog, c, b);
+  S.wonBadges = Progress.checkAchievements(S.prog, asCareer, b);
   Progress.save(S.prog);
   Progress.saveLife(null);
   closeSheet();
@@ -713,20 +970,35 @@ function render(scrollToEnd = false) {
   if (!L) return;
   const over = !!S.career;
 
-  $('idcard').innerHTML = idcardHtml();
+  $('idcard').innerHTML = S.pro ? proHeaderHtml() : idcardHtml();
   $('bars').innerHTML = barsHtml();
   $('feed').innerHTML = feedHtml();
 
   // The + changes job depending on what the game is waiting for: play the year,
   // answer a decision, or start again once it is all over.
   const age = $('ageBtn');
-  const waiting = !!L.pending || !!L.choices?.length || !!L.games?.length;
+  const P = S.pro;
+  const waiting = P
+    ? !!P.pending || !!P.games?.length
+    : !!L.pending || !!L.choices?.length || !!L.games?.length;
+  const playing = P ? !!P.games?.length : !!L.games?.length;
   age.classList.toggle('decide', waiting || over);
-  age.querySelector('.lb').textContent = over ? 'New' : L.games?.length ? 'Play' : waiting ? 'Decide' : 'Age';
-  age.querySelector('.plus').textContent = over ? '↻' : L.games?.length ? '▶' : waiting ? '?' : '+';
+  age.querySelector('.lb').textContent =
+    over ? 'New' : playing ? 'Play' : waiting ? 'Decide' : P ? 'Season' : 'Age';
+  age.querySelector('.plus').textContent = over ? '↻' : playing ? '▶' : waiting ? '?' : '+';
 
   for (const el of document.querySelectorAll('[data-cat]')) {
-    el.disabled = over || !!L.pending || !!L.choices?.length || !!L.games?.length;
+    el.disabled = over || waiting;
+    // In the league the four buttons collapse to one: the offseason. Basketball
+    // is the only category left that means anything, and pretending otherwise
+    // would be four screens where three of them are empty.
+    if (P) {
+      el.classList.toggle('hidden', el.dataset.cat !== 'train');
+      if (el.dataset.cat === 'train') el.querySelector('.lb').textContent = 'Offseason';
+    } else {
+      el.classList.remove('hidden');
+      if (el.dataset.cat === 'train') el.querySelector('.lb').textContent = 'Train';
+    }
     // A category holding something urgent says so, rather than making you find
     // out by opening all four.
     const cat = el.dataset.cat;
@@ -749,6 +1021,20 @@ for (const el of document.querySelectorAll('[data-cat]')) {
 $('ageBtn').onclick = () => {
   const L = S.life;
   if (S.career) { openNewLife(); return; }
+  const P = S.pro;
+  if (P) {
+    if (P.pending) { openProDecision(); return; }
+    if (P.games?.length) { openGameDay(); return; }
+    P.gameForm = 0;
+    P.gameLog = [];
+    // A pro plays unless he is not on a roster at all, so game day is keyed to
+    // the minutes his rating earns rather than a school's rotation.
+    P.games = P.rating >= 58 ? rollGameDay(S.life, defaultRng, 30) : [];
+    for (const g of P.games) g.opponent = randomTeam(defaultRng);
+    if (P.games.length) { openGameDay(); return; }
+    finishSeason();
+    return;
+  }
   if (L.games?.length) { openGameDay(); return; }
   if (L.choices?.length) { openChoice(); return; }
   if (L.pending) { openDecision(); return; }

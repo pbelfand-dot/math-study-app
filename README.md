@@ -393,6 +393,7 @@ npm run sim -- --sample 8      # readable sample builds, careers and verdicts
 npm run sim -- --calibrate     # re-emit the empirical constants
 npm run sim -- --recruit       # re-emit STAR_CUTS and RECRUIT_CUTS
 npm run sim -- --pipeline      # high school -> college -> draft, end to end
+npm run sim -- --league        # the year-by-year pro engine vs published rates
 npm run sim -- -n 2000000      # roll count
 ```
 
@@ -619,7 +620,65 @@ web/                UI — the year feed, the + button, fonts inlined as data UR
 The daily-seed leaderboard is `localStorage` only — v1 has no backend, so it is your own
 run history on today's seed rather than a global board.
 
-## The league
+## The league, year by year
+
+Getting drafted used to hand the whole professional career to one function that
+played it out in a second and printed a summary — the years you were most
+invested in were the ones you had no say over. The pro career is now stepped,
+on the same `+` button, with the same five games a season.
+
+**Draft night is a board, not a number.** Sixty picks with names on them and
+yours somewhere in it, because "Pick #34" on its own tells you nothing about
+the room you walked into. Teams pick in reverse order of how good they are, so
+a high pick lands you somewhere bad — you play more and win less, which is the
+real trade at the top of a draft.
+
+**Contracts run out.** Rookie money is slotted by pick, and being taken first
+is worth $12M a year before you have played a minute. When the deal expires,
+free agency gives you four offers with genuinely different shapes rather than a
+list sorted by salary:
+
+> **$79.4M a year, 4 years** — New York Bricklayers. *Twenty-two wins and all
+> the money in the world. You would be the whole offence.*
+> **$32.4M a year, 2 years** — San Antonio Stirrups. *They win sixty games and
+> they are offering you the taxpayer exception.*
+
+**Your team is good or bad at basketball independently of you**, and it drifts
+on its own. A great player on a bad roster still loses, which is what makes
+where you sign matter and what stops a ring from being a formality.
+
+Between seasons there is a short offseason — add something to your game (the
+only thing that raises your ceiling and therefore the only thing that beats a
+decline curve), a full body programme, surgery on the thing you have been
+playing through, an endorsement, a gym with your name on it, or a trade demand.
+Then the four bars become **Morale, Body, Fan love and Rating**, and the dock
+collapses to one button, because at this level basketball is the only category
+left that means anything.
+
+### Verified separately
+
+The stepped engine shares career.js's season maths — box scores, injuries, the
+growth and decline curves, the award thresholds — because those are calibrated
+against published rates and a second hand-written copy would drift within a
+week. But the wrapper around them is new, so it gets its own gate
+(`npm run sim -- --league`). Over 4,000 lives played through to retirement:
+
+| per player-season | measured | target |
+|---|---|---|
+| all-star selection | 5.22% | 5.3% |
+| MVP | 0.27% | 0.22% |
+| championship | 3.29% | 3.3% |
+| Hall of Fame, of those who played | 0.67% | ~0.5% |
+
+Two constants had to move for that, and both are documented where they live: the
+title curve is *higher* than the one-shot engine's, because there every team's
+record was derived from the player's own rating so good players were always on
+good teams — with an independent roster, players spread across worse teams and
+titles fell to 1.8%. And the Hall bar was measured rather than chosen; at the
+first guess it inducted 2.8% of everyone who reached the league, which is not a
+Hall of Fame, it is a long list.
+
+## The league's teams
 
 The **National Basket League**: real markets, invented clubs. Brooklyn plays as
 the Baskets, New York as the Bricklayers, Phoenix as the Sunstroke, Salt Lake as
