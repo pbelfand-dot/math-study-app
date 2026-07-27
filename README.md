@@ -47,6 +47,31 @@ and explosion" and leave you to guess — it says `Dunk +2.1 · Finishing +1.3 �
 Interior D +0.9 · Rebounding +0.3`, computed against how much room you actually
 have left in each.
 
+### Getting the body back
+
+Recovery is a ladder, not a button, and the free rungs work — you can play a
+whole life without spending anything on it. They are just slower and less
+certain:
+
+| | | |
+|---|---|---|
+| Ice it and wait | free | 45% to clear the injury. Otherwise you lost the year as well. |
+| The team physio | free | 70%, and it takes most of a season |
+| Private physiotherapy | $800 | certain |
+| Sports medicine clinic | $3,200 | certain, clears all wear, rebuilds a little speed |
+| Fly out to a specialist | $11,000 | certain, and the only thing in the game that gives back what an injury permanently took |
+
+Same shape for staying ahead of it: *Stretch and ice every night* is free and
+adds up; a *recovery therapist* is $700; an *offseason at a performance centre*
+is $5,500 and zeroes your wear.
+
+Measured over 6,000 lives, that is worth about **four and a half points of draft
+rate** between the poorest and richest backgrounds — 17.3% against 21.8% — while
+the share of your genetic ceiling you reach is **identical at 91%** across all
+four. Money buys reliability and it buys the top rung. It does not buy
+development, and the option you cannot afford is shown blocked with its price
+rather than hidden, so you can see what you are missing.
+
 ## Things happen to you
 
 Two kinds, in `src/events.js`, and both read your situation rather than firing at
@@ -88,7 +113,7 @@ The systems feed each other on purpose, so there is no one stat to farm:
 | **School → basketball** | Class raises **Smarts**. Smarts is what makes watching film worth anything — a smart player learns twice as much from the same session — and film is what raises basketball IQ, which is in your overall rating. Grades also gate eligibility: fail and you sit the season, and schools stop recruiting you. |
 | **Teammates → the box score** | Team chemistry is the average of how your teammates feel about you, and it multiplies your **assists** directly. A locker room that has decided about you does not look for you on the break. |
 | **The coach → minutes** | Coach trust moves your minutes more than any other single input. Minutes are what produce stats, stats are what produce hype, and hype is what produces offers. Asking for minutes works if he already rates you and backfires if he does not. |
-| **Money → everything** | Trainers, tutors, camps, agents, specialists. Your family background sets how much you start with and how much arrives each year, so being broke is a real disadvantage — beatable with a job, which is the point. |
+| **Money → everything** | Trainers, tutors, camps, agents, surgeons. Your family background sets how much you start with and how much arrives each year, so being broke is a real disadvantage — beatable with a job, which is the point. |
 | **The body → the limit** | Physical work accumulates wear; wear drives the injury roll; an injury costs speed and dunk permanently and takes a year to rehab. With no time budget this is the thing that stops you doing everything, and options warn you before you cross it rather than after. |
 
 ## The shape of a life

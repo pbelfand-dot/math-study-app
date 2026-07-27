@@ -239,6 +239,34 @@ export function saveLife(life) {
   }
 }
 
+// A number that went NaN once stays NaN through every later arithmetic, so a
+// save carrying one is permanently broken and would show "$NaN" forever. Repair
+// the field rather than discarding the whole life — losing eight years of
+// decisions to a bad subtraction is a worse outcome than an approximate
+// balance.
+function heal(life) {
+  const fixes = [];
+  if (!Number.isFinite(life.money)) {
+    life.money = life.background?.start ?? 500;
+    fixes.push('money');
+  }
+  if (!Number.isFinite(life.strain)) { life.strain = 0; fixes.push('strain'); }
+  if (!Number.isFinite(life.stock)) { life.stock = 0; fixes.push('stock'); }
+  for (const [k, v] of Object.entries(life.stats || {})) {
+    if (!Number.isFinite(v)) { life.stats[k] = 50; fixes.push(`stats.${k}`); }
+  }
+  for (const [k, v] of Object.entries(life.meters || {})) {
+    if (!Number.isFinite(v)) { life.meters[k] = 50; fixes.push(`meters.${k}`); }
+  }
+  for (const [k, v] of Object.entries(life.attrs || {})) {
+    if (!Number.isFinite(v)) { life.attrs[k] = 25; fixes.push(`attrs.${k}`); }
+  }
+  for (const p of life.people || []) {
+    if (!Number.isFinite(p.rel)) { p.rel = 50; fixes.push(`rel:${p.name}`); }
+  }
+  return fixes;
+}
+
 export function loadLife() {
   try {
     const raw = JSON.parse(localStorage.getItem(LIFE_KEY));
@@ -246,6 +274,8 @@ export function loadLife() {
     const life = raw.life;
     if (!life || typeof life.age !== 'number' || !life.build?.skills || !life.attrs) return null;
     if (!Array.isArray(life.people) || !life.stats || !life.trainCounts) return null;
+    const fixed = heal(life);
+    if (fixed.length) life.healed = fixed;
     return life;
   } catch {
     return null;

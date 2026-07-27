@@ -64,7 +64,13 @@ function playYear(life, rng) {
 
   // 1. Stay eligible and stay healthy. Both are cliffs, not slopes.
   if (life.meters.grades < 58) { tryAct(life, school(), 'tutor', rng); tryAct(life, school(), 'study', rng); }
-  if (life.injured) tryAct(life, train(), 'rehab', rng);
+  // Buy the best rung of the rehab ladder that is affordable, and fall back
+  // down it rather than doing nothing. This is where having money shows up.
+  if (life.injured) {
+    for (const id of ['specialist', 'clinic', 'physio', 'teamphysio', 'ricerest']) {
+      if (tryAct(life, train(), id, rng)) break;
+    }
+  }
   if (life.stats.health < 62) tryAct(life, lifeCat(), 'doctor', rng);
 
   // 2. Be seen. Exposure is the entire recruiting path, and money buys it.
@@ -122,7 +128,11 @@ function playYear(life, rng) {
     doAction(life, best, rng);
   }
 
-  if (life.strain > 60) tryAct(life, train(), 'rest', rng);
+  if (life.strain > 50) {
+    for (const id of ['offseason', 'massage', 'rest', 'stretch']) {
+      if (tryAct(life, train(), id, rng)) break;
+    }
+  }
 
   const entry = advanceYear(life, rng);
   answerChoice(life, rng);

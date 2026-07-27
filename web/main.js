@@ -52,6 +52,16 @@ function resumeOrStart() {
   const saved = Progress.loadLife();
   if (!saved || saved.stage === 'pro') { startLife(); return; }
   S.life = saved;
+  // If the save had to be repaired on the way in, say so in the year's log
+  // rather than silently changing a number the player was looking at.
+  if (saved.healed) {
+    saved.yearLog.push({
+      kind: 'note',
+      text: `A bug had corrupted your ${saved.healed.join(', ')}. It has been reset to something sensible.`,
+    });
+    delete saved.healed;
+    Progress.saveLife(saved);
+  }
   render(true);
   // A life saved mid-question re-asks it. Otherwise the answer would be lost
   // and the year would move on having quietly skipped a decision.

@@ -163,25 +163,125 @@ export const ACTIONS = [
       return { kind: 'good', text: 'Hired a private trainer. Everything in the gym counts for more now.' };
     },
   },
+  // ---- getting the body back ----------------------------------------------
+  //
+  // A ladder rather than one button. The free rungs work — you can play a whole
+  // life without spending anything here — they are just slower, less certain,
+  // and they do not give you back what an injury permanently took. What money
+  // buys is reliability and the top rung, which is the only thing that returns
+  // lost speed and explosion. That is the advantage of having it, and it is an
+  // advantage rather than a gate.
   {
-    id: 'rehab', cat: 'train', name: 'Rehab the injury', blurb: 'Slowly, properly, this time.',
+    id: 'ricerest', cat: 'train', name: 'Ice it and wait', blurb: 'No money, no plan, no guarantees.',
     price: 0,
+    show: (l) => l.injured,
+    run: (l, rng) => {
+      l.stats.health = clamp(l.stats.health + 10, 0, 100);
+      l.strain = Math.max(0, l.strain - 12);
+      if (rng.chance(0.45)) {
+        l.injured = false;
+        return { kind: 'good', text: 'You iced it, sat, and waited. It came right on its own.' };
+      }
+      return { kind: 'bad', text: 'You iced it and waited. It is still not right, and now you have lost a year as well.' };
+    },
+  },
+  {
+    id: 'teamphysio', cat: 'train', name: 'The team physio', blurb: 'Free, overworked, and better than nothing.',
+    price: 0,
+    show: (l) => l.injured && l.age >= 15,
+    run: (l, rng) => {
+      l.stats.health = clamp(l.stats.health + 15, 0, 100);
+      l.strain = Math.max(0, l.strain - 18);
+      if (rng.chance(0.70)) {
+        l.injured = false;
+        return { kind: 'good', text: 'The team physio got you back. It took most of a season.' };
+      }
+      return { kind: 'note', text: 'The physio did what he could between forty other players. It is close.' };
+    },
+  },
+  {
+    id: 'physio', cat: 'train', name: 'Private physiotherapy', blurb: 'Someone whose only patient that hour is you.',
+    price: 800,
     show: (l) => l.injured,
     run: (l) => {
       l.injured = false;
       l.stats.health = clamp(l.stats.health + 22, 0, 100);
-      l.strain = Math.max(0, l.strain - 25);
-      return { kind: 'good', text: 'Did the rehab properly. The knee feels like a knee again.' };
+      l.strain = Math.max(0, l.strain - 26);
+      return { kind: 'good', text: 'Did the rehab properly, with someone watching. The knee feels like a knee again.' };
     },
   },
+  {
+    id: 'clinic', cat: 'train', name: 'Sports medicine clinic', blurb: 'Imaging, a plan, and a date you come back.',
+    price: 3200,
+    show: (l) => l.injured && l.money >= 3200,
+    run: (l) => {
+      l.injured = false;
+      l.stats.health = clamp(l.stats.health + 32, 0, 100);
+      l.strain = 0;
+      // Rebuilds a little of what the injury took, but not all of it.
+      l.attrs.speed = clamp(l.attrs.speed + 2, 20, 99);
+      return { kind: 'good', text: 'A clinic scanned it, built a programme around it, and gave you a date. You met the date.' };
+    },
+  },
+  {
+    id: 'specialist', cat: 'train', name: 'Fly out to a specialist', blurb: 'The surgeon professionals use.',
+    price: 11000,
+    show: (l) => l.injured && l.money >= 11000,
+    run: (l) => {
+      l.injured = false;
+      l.stats.health = 100;
+      l.strain = 0;
+      // The only thing in the game that gives back what an injury permanently
+      // took. It costs what it costs for exactly that reason.
+      l.attrs.speed = clamp(l.attrs.speed + 4, 20, 99);
+      l.attrs.dunk = clamp(l.attrs.dunk + 4, 20, 99);
+      l.physicals.durability = clamp(l.physicals.durability + 3, 10, 99);
+      return { kind: 'good', text: 'You flew out to the surgeon the professionals use. You came back moving like you did before.' };
+    },
+  },
+
+  // ---- staying ahead of it ------------------------------------------------
   {
     id: 'rest', cat: 'train', name: 'Take the summer off', blurb: 'Nothing heroic. It works.',
     price: 0,
     run: (l) => {
-      l.strain = Math.max(0, l.strain - 34);
+      l.strain = Math.max(0, l.strain - 30);
       l.stats.health = clamp(l.stats.health + 12, 0, 100);
       l.stats.happiness = clamp(l.stats.happiness + 10, 0, 100);
       return { kind: 'note', text: 'Rested. Came back feeling like a person.' };
+    },
+  },
+  {
+    id: 'stretch', cat: 'train', name: 'Stretch and ice, every night', blurb: 'Free, boring, and it adds up.',
+    price: 0,
+    run: (l) => {
+      l.strain = Math.max(0, l.strain - 16);
+      l.stats.health = clamp(l.stats.health + 6, 0, 100);
+      return { kind: 'note', text: 'Stretched and iced every night all year. Nobody noticed and it worked.' };
+    },
+  },
+  {
+    id: 'massage', cat: 'train', name: 'Recovery therapist', blurb: 'Soft tissue work, once a week.',
+    price: 700,
+    show: (l) => l.money >= 700,
+    run: (l) => {
+      l.strain = Math.max(0, l.strain - 30);
+      l.stats.health = clamp(l.stats.health + 12, 0, 100);
+      l.physicals.durability = clamp(l.physicals.durability + 1, 10, 99);
+      return { kind: 'good', text: 'Weekly soft tissue work. You stopped waking up sore.' };
+    },
+  },
+  {
+    id: 'offseason', cat: 'train', name: 'Offseason at a performance centre', blurb: 'Sleep, food, load management, all of it handled.',
+    price: 5500,
+    show: (l) => l.money >= 5500,
+    run: (l) => {
+      l.strain = 0;
+      l.stats.health = clamp(l.stats.health + 26, 0, 100);
+      l.stats.happiness = clamp(l.stats.happiness + 8, 0, 100);
+      l.physicals.durability = clamp(l.physicals.durability + 3, 10, 99);
+      l.physicals.stamina = clamp(l.physicals.stamina + 3, 10, 99);
+      return { kind: 'good', text: 'Spent the offseason somewhere that handled your sleep, your food and your load. You have never felt like this.' };
     },
   },
 
@@ -484,7 +584,7 @@ export function actionsForPerson(life, p) {
 
   if (p.role === 'mother' || p.role === 'father') {
     const pot = Math.round(300 + life.background.yearly * 0.6);
-    push('askmoney', `Ask for money`, 3, (l, rng) => {
+    push('askmoney', 'Ask for money', (l, rng) => {
       p.met++;
       if (rng.chance(0.35 + p.rel / 200)) {
         const got = Math.round(pot * (0.5 + rng.random()));
@@ -559,7 +659,26 @@ export function strainWarning(life, a) {
   return null;
 }
 
+// Every action, wherever it was built, must have a numeric price and a callable
+// effect. A person action assembled with its arguments one position out passed
+// a leftover number as the effect and the effect function as the price, which
+// made `money -= <function>` produce NaN and put "$NaN" on the button — with no
+// error anywhere until the bank balance was already ruined. Checking the shape
+// at the boundary turns that into a thrown error at the call site instead.
+function assertAction(a) {
+  if (typeof a?.run !== 'function') {
+    throw new TypeError(`action "${a?.id}" has no effect function (got ${typeof a?.run})`);
+  }
+  if (a.price != null && !Number.isFinite(a.price)) {
+    throw new TypeError(`action "${a.id}" has a non-numeric price (${typeof a.price})`);
+  }
+  if (a.wear != null && !Number.isFinite(a.wear)) {
+    throw new TypeError(`action "${a.id}" has a non-numeric wear (${typeof a.wear})`);
+  }
+}
+
 export function doAction(life, a, rng) {
+  assertAction(a);
   if (blockedReason(life, a)) return null;
   life.money -= a.price || 0;
   life.strain += a.wear || 0;
@@ -567,4 +686,13 @@ export function doAction(life, a, rng) {
   life.doneThisYear.push(a.id);
   life.yearLog.push(entry);
   return entry;
+}
+
+// Every action the game can ever offer, for the harness to check in one pass.
+// Person actions are built per person rather than listed, so they only exist
+// once somebody exists to build them from.
+export function allActionsFor(life) {
+  const out = [...ACTIONS, ...focusActions(life)];
+  for (const p of life.people) if (p.alive) out.push(...actionsForPerson(life, p));
+  return out;
 }
