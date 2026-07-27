@@ -5,17 +5,17 @@ import { potentialGrade, positionFor } from '../src/overall.js';
 import { simulateCareer } from '../src/career.js';
 import { writeVerdict } from '../src/verdict.js';
 import { defaultRng } from '../src/rng.js';
-import { randomName } from '../src/names.js';
+import { randomName, randomTeam } from '../src/names.js';
 import { Progress } from '../src/progress.js';
 import { ROLES, teamChemistry, coachTrust, personById } from '../src/people.js';
 import {
   CATEGORIES, availableActions, actionsForPerson, doAction, blockedReason,
   focusActions, previewGain, sessionsLeft, strainWarning,
 } from '../src/actions.js';
-import { resolveChoice } from '../src/events.js';
+import { resolveChoice, rollGameDay, resolveGame, GAMES_PER_SEASON } from '../src/events.js';
 import {
   newLife, advanceYear, overallNow, starRating, heightAt, gradeName,
-  commit, declare, returnToSchool, proBuildFrom, draftProjection,
+  commit, declare, returnToSchool, proBuildFrom, draftProjection, projectedMinutes,
 } from '../src/life.js';
 
 const $ = (id) => document.getElementById(id);
@@ -65,7 +65,8 @@ function resumeOrStart() {
   render(true);
   // A life saved mid-question re-asks it. Otherwise the answer would be lost
   // and the year would move on having quietly skipped a decision.
-  if (S.life.choices?.length) openChoice();
+  if (S.life.games?.length) openGameDay();
+  else if (S.life.choices?.length) openChoice();
   else if (S.life.pending) openDecision();
 }
 
@@ -354,6 +355,63 @@ function wireSheet() {
   }
   const f = body.querySelector('[data-focus]');
   if (f) f.onclick = () => openSheet('focus');
+}
+
+// ---------------------------------------------------------------------------
+// Game day
+//
+// Five games, one sheet, one tap each. Shown before the season resolves,
+// because the season reads the form they produce.
+// ---------------------------------------------------------------------------
+function openGameDay() {
+  const L = S.life;
+  const g = L.games?.[0];
+  if (!g) { finishYear(); return; }
+  S.sheet = { kind: 'gameday' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = `Game ${g.no} of ${GAMES_PER_SEASON}`;
+  $('sheetHint').textContent = `vs ${g.opponent}`;
+  const form = L.gameForm ?? 0;
+  $('sheetBody').innerHTML = `
+    ${L.gameLog?.length ? `<div class="formline ${form > 0.08 ? 'good' : form < -0.08 ? 'bad' : ''}">
+      ${L.gameLog.map((r) => `<i class="${r.made ? 'hit' : 'miss'}"></i>`).join('')}
+      <span>${form > 0.25 ? 'Rolling' : form > 0.08 ? 'Going well' : form < -0.25 ? 'Nightmare season' : form < -0.08 ? 'Struggling' : 'Even'}</span>
+    </div>` : ''}
+    <p class="choice-text">${esc(g.text)}</p>
+    ${g.options.map((label, i) => `<button class="btn choice" data-game="${i}" type="button">${esc(label)}</button>`).join('')}`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-game]')) {
+    el.onclick = () => {
+      const r = resolveGame(L, g.id, Number(el.dataset.game), defaultRng);
+      L.gameLog = L.gameLog || [];
+      L.gameLog.push({ made: !!r?.made, text: r?.text || '', kind: r?.kind || 'note', opponent: g.opponent });
+      L.games.shift();
+      Progress.saveLife(L);
+      if (L.games.length) openGameDay();
+      else finishYear();
+    };
+  }
+}
+
+// The season resolves once the games are played, so form is already set.
+function finishYear() {
+  const L = S.life;
+  const played = L.gameLog || [];
+  advanceYear(L, defaultRng);
+  // The games belong in the season they were played in, at the top of it.
+  if (played.length && L.log.length) {
+    L.log[L.log.length - 1].events.unshift(
+      ...played.map((r) => ({ kind: r.kind, text: `vs ${r.opponent} — ${r.text}` })),
+    );
+  }
+  L.gameLog = [];
+  L.games = [];
+  Progress.saveLife(L);
+  closeSheet();
+  render(true);
+  if (L.choices?.length) openChoice();
+  else if (L.pending) openDecision();
 }
 
 // ---------------------------------------------------------------------------
@@ -662,13 +720,13 @@ function render(scrollToEnd = false) {
   // The + changes job depending on what the game is waiting for: play the year,
   // answer a decision, or start again once it is all over.
   const age = $('ageBtn');
-  const waiting = !!L.pending || !!L.choices?.length;
+  const waiting = !!L.pending || !!L.choices?.length || !!L.games?.length;
   age.classList.toggle('decide', waiting || over);
-  age.querySelector('.lb').textContent = over ? 'New' : waiting ? 'Decide' : 'Age';
-  age.querySelector('.plus').textContent = over ? '↻' : waiting ? '?' : '+';
+  age.querySelector('.lb').textContent = over ? 'New' : L.games?.length ? 'Play' : waiting ? 'Decide' : 'Age';
+  age.querySelector('.plus').textContent = over ? '↻' : L.games?.length ? '▶' : waiting ? '?' : '+';
 
   for (const el of document.querySelectorAll('[data-cat]')) {
-    el.disabled = over || !!L.pending || !!L.choices?.length;
+    el.disabled = over || !!L.pending || !!L.choices?.length || !!L.games?.length;
     // A category holding something urgent says so, rather than making you find
     // out by opening all four.
     const cat = el.dataset.cat;
@@ -689,22 +747,28 @@ for (const el of document.querySelectorAll('[data-cat]')) {
   el.onclick = () => openSheet(el.dataset.cat);
 }
 $('ageBtn').onclick = () => {
+  const L = S.life;
   if (S.career) { openNewLife(); return; }
-  if (S.life.choices?.length) { openChoice(); return; }
-  if (S.life.pending) { openDecision(); return; }
-  advanceYear(S.life, defaultRng);
-  Progress.saveLife(S.life);
-  closeSheet();
-  render(true);
-  if (S.life.choices?.length) openChoice();
-  else if (S.life.pending) openDecision();
+  if (L.games?.length) { openGameDay(); return; }
+  if (L.choices?.length) { openChoice(); return; }
+  if (L.pending) { openDecision(); return; }
+  // If he is going to be on the floor at all, he plays his five games before
+  // the season is written. projectedMinutes is the same function the season
+  // uses, so the two can never disagree about whether he played.
+  L.gameForm = 0;
+  L.gameLog = [];
+  const mins = projectedMinutes(L);
+  L.games = mins >= 8 ? rollGameDay(L, defaultRng, mins) : [];
+  for (const g of L.games) g.opponent = randomTeam(defaultRng);
+  if (L.games.length) { openGameDay(); return; }
+  finishYear();
 };
 $('sheetClose').onclick = () => {
-  if (S.sheet?.kind === 'choice') return; // answering it is the only way out
+  if (S.sheet?.kind === 'choice' || S.sheet?.kind === 'gameday') return; // playing it is the only way out
   closeSheet();
 };
 $('scrim').onclick = () => {
-  if (S.sheet?.kind !== 'decision' && S.sheet?.kind !== 'choice') closeSheet();
+  if (!['decision', 'choice', 'gameday'].includes(S.sheet?.kind)) closeSheet();
 };
 $('sheetBack').onclick = () => openSheet(S.sheet?.kind === 'focus' ? 'train' : 'people');
 

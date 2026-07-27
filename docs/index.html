@@ -380,6 +380,19 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .field input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 .btn.choice { margin-bottom: 8px; text-align: left; border-color: var(--accent); color: var(--deep); background: var(--accent-soft); }
+
+/* How the five games have gone so far. Five dots and a word — enough to know
+   whether you are having a season, without a second scoreboard. */
+.formline {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  padding: 8px 10px; margin-bottom: 10px; border-radius: 10px;
+  background: var(--surface-2); border: 1.5px solid var(--line);
+}
+.formline i { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); }
+.formline i.hit { background: var(--good); }
+.formline span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.formline.good span { color: var(--good); }
+.formline.bad span { color: var(--bad); }
 .opt .go { font-size: 20px; color: var(--accent); }
 
 /* ---------- a person row ---------- */
@@ -1267,21 +1280,26 @@ function traitEffects(traits) {
 }
 
 /* ===== src/names.js ===== */
-// Original league. Invented cities, invented clubs — nothing here maps to a real
-// franchise, market, or league mark.
+// The league, as parody.
+//
+// Real markets, invented clubs. City names are not anybody's trademark, and the
+// nicknames are jokes rather than thin skins over real marks — Brooklyn plays as
+// the Baskets, New York as the Bricklayers, Salt Lake as the Ragtime. Nothing
+// here is a franchise name, a logo, or a league mark, and no real player appears
+// anywhere in the game.
 
-const LEAGUE_NAME = 'The Continental Basketball Circuit';
-const LEAGUE_SHORT = 'CBC';
+const LEAGUE_NAME = 'The National Basket League';
+const LEAGUE_SHORT = 'NBL';
 
 const TEAMS = [
-  'Ashgrove Kilnmen', 'Bellwater Tide', 'Calder Foundry', 'Duskmoor Ravens',
-  'Eastport Riggers', 'Fenwick Blackbirds', 'Granite Bay Quarry', 'Halloway Hounds',
-  'Ironvale Forge', 'Juniper Flats Coyotes', 'Kestrel City Falcons', 'Loomis Mill',
-  'Marrow Creek Timber', 'Northgate Sentinels', 'Orrin Harbor Anchors', 'Pinehurst Elk',
-  'Quarrytown Hammers', 'Redlick Rattlers', 'Saltmarsh Herons', 'Thornbury Rooks',
-  'Umberfield Wolves', 'Vance Ridge Prospectors', 'Westbrook Current', 'Yarrow Valley Bison',
-  'Alder Point Lighthouse', 'Brightwell Voltage', 'Coldspur Frost', 'Draymoor Colliers',
-  'Evanhead Mariners', 'Foxglove Union',
+  'Atlanta Talons', 'Boston Shamrocks', 'Brooklyn Baskets', 'Charlotte Wasps',
+  'Chicago Steers', 'Cleveland Cavalry', 'Dallas Wranglers', 'Denver Prospectors',
+  'Detroit Motors', 'Golden Gate Guardians', 'Houston Launch', 'Indiana Speedway',
+  'Los Angeles Schooners', 'Los Angeles Lagoons', 'Memphis Kodiaks', 'Miami Swelter',
+  'Milwaukee Stags', 'Minnesota Timber', 'New Orleans Herons', 'New York Bricklayers',
+  'Oklahoma City Squall', 'Orlando Illusion', 'Philadelphia Foundry', 'Phoenix Sunstroke',
+  'Portland Trailhead', 'Sacramento Regents', 'San Antonio Stirrups', 'Seattle Rainmakers',
+  'Toronto Rapture', 'Salt Lake Ragtime', 'Washington Warlocks', 'Vancouver Timberline',
 ];
 
 const FIRST = [
@@ -2676,7 +2694,7 @@ const EVENTS = [
   },
   {
     id: 'overlooked', weight: 5,
-    when: (l) => hs(l) && l.meters.hype < 28 && l.lastMinutes > 16,
+    when: (l) => hs(l) && l.meters.hype < 38 && l.lastMinutes > 14,
     run: (l) => {
       happy(l, -7);
       return { kind: 'bad', text: 'You put up 22 a night and the local paper still spelled your name wrong.' };
@@ -3161,11 +3179,14 @@ function playOutcome(life, key, made, rng, madeText, missText) {
   return { kind: 'bad', text: missText };
 }
 
-const played = (l) => l.lastMinutes >= 8;
+// Defaults to last season, but game day passes THIS season's projection —
+// otherwise a first year has lastMinutes of 0, no play is ever eligible, and
+// game day silently does not happen at all.
+const played = (l, m = l.lastMinutes) => m >= 8;
 
 const PLAYS = [
   {
-    id: 'topofkey', weight: 10, when: played,
+    id: 'topofkey', weight: 10, when: (l, m) => played(l, m),
     title: 'Top of the key',
     text: () => 'You catch it with a foot on the line and a defender closing hard. Two seconds on the shot clock.',
     options: [
@@ -3181,7 +3202,7 @@ const PLAYS = [
     ],
   },
   {
-    id: 'transition', weight: 10, when: played,
+    id: 'transition', weight: 10, when: (l, m) => played(l, m),
     title: 'Two on one',
     text: () => 'Long rebound, you are gone, and there is one defender back with your teammate filling the lane.',
     options: [
@@ -3197,7 +3218,7 @@ const PLAYS = [
     ],
   },
   {
-    id: 'postup', weight: 8, when: (l) => played(l) && (l.adultHeight >= 77 || l.attrs.post > 45),
+    id: 'postup', weight: 8, when: (l, m) => played(l, m) && (l.adultHeight >= 77 || l.attrs.post > 45),
     title: 'On the block',
     text: () => 'You have got him sealed on the left block and the entry pass is coming.',
     options: [
@@ -3213,7 +3234,7 @@ const PLAYS = [
     ],
   },
   {
-    id: 'lastshot', weight: 9, when: played,
+    id: 'lastshot', weight: 9, when: (l, m) => played(l, m),
     title: 'Down one, six seconds',
     text: () => 'The play is drawn up for you. Everyone in the gym knows it is drawn up for you.',
     options: [
@@ -3229,7 +3250,7 @@ const PLAYS = [
     ],
   },
   {
-    id: 'iso', weight: 7, when: (l) => played(l) && l.build.mentality >= 48,
+    id: 'iso', weight: 7, when: (l, m) => played(l, m) && l.build.mentality >= 48,
     title: 'Cleared out',
     text: () => 'Coach clears the side for you. It is you and him and thirty feet of nothing.',
     options: [
@@ -3245,7 +3266,7 @@ const PLAYS = [
     ],
   },
   {
-    id: 'defense', weight: 8, when: played,
+    id: 'defense', weight: 8, when: (l, m) => played(l, m),
     title: 'Their best player',
     text: () => 'Coach puts you on their best player for the last four minutes. He has 28.',
     options: [
@@ -3261,7 +3282,7 @@ const PLAYS = [
     ],
   },
   {
-    id: 'rimprotect', weight: 7, when: (l) => played(l) && l.adultHeight >= 76,
+    id: 'rimprotect', weight: 7, when: (l, m) => played(l, m) && l.adultHeight >= 76,
     title: 'He is coming down the lane',
     text: () => 'Their guard has beaten his man and there is nothing between him and the rim except you.',
     options: [
@@ -3277,7 +3298,7 @@ const PLAYS = [
     ],
   },
   {
-    id: 'freethrows', weight: 6, when: played,
+    id: 'freethrows', weight: 6, when: (l, m) => played(l, m),
     title: 'Two shots, tie game',
     text: () => 'You get fouled with the game level and one second left. The gym is very loud.',
     options: [
@@ -3290,6 +3311,58 @@ const PLAYS = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Game day
+//
+// Five games a season, drawn from the same table the one-off possessions use,
+// so the writing and the maths are shared rather than duplicated. Each one
+// contributes to FORM, a number between -1 and +1 that the season reads.
+//
+// Form is bounded on purpose. Your rating and your minutes decide the size of
+// the season; form only moves you around inside it. Playing all five perfectly
+// with a 99 finishing does not turn ten points a game into twenty — it turns
+// ten into about twelve and a half. Playing them badly turns it into seven and
+// a half. The games are worth caring about; they are not worth more than the
+// four years you spent in the gym.
+// ---------------------------------------------------------------------------
+const GAMES_PER_SEASON = 5;
+
+function rollGameDay(life, rng, minutes = life.lastMinutes) {
+  const pool = PLAYS.filter((p) => p.when(life, minutes));
+  if (!pool.length) return [];
+  const games = [];
+  let left = [...pool];
+  for (let i = 0; i < GAMES_PER_SEASON; i++) {
+    if (!left.length) left = [...pool]; // fewer than five eligible: allow repeats
+    const p = pickWeighted(left, rng);
+    left = left.filter((x) => x.id !== p.id);
+    games.push({
+      id: p.id,
+      no: i + 1,
+      opponent: null, // filled in by the caller, which owns the league names
+      title: p.title,
+      text: p.text(life),
+      options: p.options.map((o) => o.label),
+    });
+  }
+  return games;
+}
+
+// Resolving a game returns the line AND what it did to the season, so the UI can
+// show a running form read rather than leaving you to guess.
+function resolveGame(life, id, optionIndex, rng) {
+  const p = PLAYS.find((x) => x.id === id);
+  const opt = p?.options[optionIndex];
+  if (!opt) return null;
+  const made = attempt(life, opt.key, opt.diff, rng);
+  const line = playOutcome(life, opt.key, made, rng, opt.made, opt.miss);
+  // Each of five games is worth a fifth of the swing, and the hard options are
+  // worth more than the safe ones when they come off.
+  const weight = made ? 1 + Math.max(0, opt.diff - 35) / 60 : -1;
+  life.gameForm = clamp((life.gameForm ?? 0) + (weight / GAMES_PER_SEASON) * 0.9, -1, 1);
+  return { ...line, made };
+}
 
 // ---------------------------------------------------------------------------
 // Rolling a year
@@ -3323,19 +3396,8 @@ function rollYearEvents(life, rng) {
 
   const queue = [];
 
-  // A possession first — it belongs to the season that just finished.
-  if (rng.chance(0.78)) {
-    const ppool = PLAYS.filter((p) => p.when(life));
-    if (ppool.length) {
-      const p = pickWeighted(ppool, rng);
-      queue.push({
-        kind: 'play', id: p.id, title: p.title, text: p.text(life),
-        options: p.options.map((o) => o.label),
-      });
-    }
-  }
-
-  // Then the life, if it has something to ask.
+  // No standalone possession any more — the five games cover that, and asking
+  // a sixth time in the same year was too much.
   if (rng.chance(0.55)) {
     const cpool = CHOICES.filter((c) => !seen.includes(c.id) && c.when(life));
     if (cpool.length) {
@@ -4386,6 +4448,8 @@ function newLife(build, name, rng = defaultRng) {
     // nothing, so grinding a single number is self-limiting without needing a
     // rule that says so.
     trainCounts: {},
+    gameForm: 0,
+    gameLog: [],
     yearLog: [],
     seenEvents: [],
     choices: [],
@@ -4407,6 +4471,30 @@ function newLife(build, name, rng = defaultRng) {
   };
   life.people = rollCast(life, rng);
   return life;
+}
+
+// How many minutes he is going to get. Extracted because game day has to know
+// whether he plays BEFORE the season resolves, and two copies of this formula
+// would drift apart the first time either was touched.
+//
+// Judged against the room he is actually in — a freshman is supposed to be worse
+// than a senior, and a blue blood's bench is a mid-major's starter, so the bar
+// moves with both. The coach decides the minutes and the locker room decides
+// what he does with them; both are people you chose whether or not to spend
+// time on.
+function projectedMinutes(life) {
+  const college = life.stage === 'college';
+  const bar = college
+    ? life.program.minutesBar - (life.age - 19) * 2
+    : 25 + (life.age - 15) * 3;
+  const roleScore =
+    overallNow(life) +
+    (coachTrust(life) - 50) * 0.18 +
+    (teamChemistry(life) - 50) * 0.08 +
+    (life.minutesPitch ? 3 : 0) -
+    (life.ineligible ? 100 : 0) -
+    (life.injured ? 14 : 0);
+  return clamp(Math.round((roleScore - bar) * 1.2), 0, college ? 34 : 32);
 }
 
 // Current overall on the 2K-ish scale, from present ability at present height.
@@ -4558,22 +4646,8 @@ function advanceYear(life, rng = defaultRng) {
 
   // 4. The season.
   const ovr = overallNow(life);
-  // Judged against the room you are actually in. A freshman is supposed to be
-  // worse than a senior, and a blue blood's bench is a mid-major's starter, so
-  // the bar moves with both.
-  const bar = college ? prog.minutesBar - (life.age - 19) * 2 : 25 + (life.age - 15) * 3;
   const chem = teamChemistry(life);
-  const trust = coachTrust(life);
-  // The coach decides minutes and the locker room decides what you do with
-  // them. Both are people you chose whether or not to spend time on.
-  const roleScore =
-    ovr +
-    (trust - 50) * 0.18 +
-    (chem - 50) * 0.08 +
-    (life.minutesPitch ? 3 : 0) -
-    (life.ineligible ? 100 : 0) -
-    (life.injured ? 14 : 0);
-  life.minutes = clamp(Math.round((roleScore - bar) * 1.2), 0, college ? 34 : 32);
+  life.minutes = projectedMinutes(life);
 
   if (life.ineligible) {
     life.seasonStats = null;
@@ -4601,12 +4675,21 @@ function advanceYear(life, rng = defaultRng) {
     // did — a 57 overall and a 75 overall put up the same eleven points, so
     // PPG told you nothing about whether you were any good, and a genuinely
     // good player in a smaller role looked like a bad one.
+    // How the five games you actually played went, as a number between -1 and
+    // +1. Deliberately bounded: your rating and your minutes decide the size of
+    // the season, and form moves you around inside it. A 99 finishing does not
+    // turn ten points into twenty because you tapped well — it turns ten into
+    // about twelve and a half, and tapping badly turns it into seven and a half.
+    const form = clamp(life.gameForm ?? 0, -1, 1);
     const usage = clamp(0.75 + (ovr - 52) / 80, 0.6, 1.35);
-    const ppg = Math.max(0, life.minutes * 0.42 * (0.25 + scoring / 70) * usage + rng.gauss(0, 1.4));
-    const rpg = Math.max(0, life.minutes * (life.attrs.rebounding / 900 + Math.max(0, after - 72) * 0.008));
+    const ppg = Math.max(
+      0,
+      life.minutes * 0.42 * (0.25 + scoring / 70) * usage * (1 + form * 0.25) + rng.gauss(0, 1.4),
+    );
+    const rpg = Math.max(0, life.minutes * (life.attrs.rebounding / 900 + Math.max(0, after - 72) * 0.008) * (1 + form * 0.18));
     // A team that likes you passes to you. This is the assist line, and it is
     // the clearest place the locker room shows up in a box score.
-    const apg = Math.max(0, life.minutes * (life.attrs.playmaking / 1100) * (0.6 + chem / 125));
+    const apg = Math.max(0, life.minutes * (life.attrs.playmaking / 1100) * (0.6 + chem / 125) * (1 + form * 0.30));
     life.seasonStats = {
       ppg: Math.round(ppg * 10) / 10,
       rpg: Math.round(rpg * 10) / 10,
@@ -4651,6 +4734,8 @@ function advanceYear(life, rng = defaultRng) {
   life.lastStats = life.seasonStats;
   life.doneThisYear = [];
   life.trainCounts = {};
+  life.gameForm = 0;
+  life.gameLog = [];
   life.yearLog = [];
   life.minutesPitch = false;
 
@@ -4910,7 +4995,8 @@ function resumeOrStart() {
   render(true);
   // A life saved mid-question re-asks it. Otherwise the answer would be lost
   // and the year would move on having quietly skipped a decision.
-  if (S.life.choices?.length) openChoice();
+  if (S.life.games?.length) openGameDay();
+  else if (S.life.choices?.length) openChoice();
   else if (S.life.pending) openDecision();
 }
 
@@ -5199,6 +5285,63 @@ function wireSheet() {
   }
   const f = body.querySelector('[data-focus]');
   if (f) f.onclick = () => openSheet('focus');
+}
+
+// ---------------------------------------------------------------------------
+// Game day
+//
+// Five games, one sheet, one tap each. Shown before the season resolves,
+// because the season reads the form they produce.
+// ---------------------------------------------------------------------------
+function openGameDay() {
+  const L = S.life;
+  const g = L.games?.[0];
+  if (!g) { finishYear(); return; }
+  S.sheet = { kind: 'gameday' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = `Game ${g.no} of ${GAMES_PER_SEASON}`;
+  $('sheetHint').textContent = `vs ${g.opponent}`;
+  const form = L.gameForm ?? 0;
+  $('sheetBody').innerHTML = `
+    ${L.gameLog?.length ? `<div class="formline ${form > 0.08 ? 'good' : form < -0.08 ? 'bad' : ''}">
+      ${L.gameLog.map((r) => `<i class="${r.made ? 'hit' : 'miss'}"></i>`).join('')}
+      <span>${form > 0.25 ? 'Rolling' : form > 0.08 ? 'Going well' : form < -0.25 ? 'Nightmare season' : form < -0.08 ? 'Struggling' : 'Even'}</span>
+    </div>` : ''}
+    <p class="choice-text">${esc(g.text)}</p>
+    ${g.options.map((label, i) => `<button class="btn choice" data-game="${i}" type="button">${esc(label)}</button>`).join('')}`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-game]')) {
+    el.onclick = () => {
+      const r = resolveGame(L, g.id, Number(el.dataset.game), defaultRng);
+      L.gameLog = L.gameLog || [];
+      L.gameLog.push({ made: !!r?.made, text: r?.text || '', kind: r?.kind || 'note', opponent: g.opponent });
+      L.games.shift();
+      Progress.saveLife(L);
+      if (L.games.length) openGameDay();
+      else finishYear();
+    };
+  }
+}
+
+// The season resolves once the games are played, so form is already set.
+function finishYear() {
+  const L = S.life;
+  const played = L.gameLog || [];
+  advanceYear(L, defaultRng);
+  // The games belong in the season they were played in, at the top of it.
+  if (played.length && L.log.length) {
+    L.log[L.log.length - 1].events.unshift(
+      ...played.map((r) => ({ kind: r.kind, text: `vs ${r.opponent} — ${r.text}` })),
+    );
+  }
+  L.gameLog = [];
+  L.games = [];
+  Progress.saveLife(L);
+  closeSheet();
+  render(true);
+  if (L.choices?.length) openChoice();
+  else if (L.pending) openDecision();
 }
 
 // ---------------------------------------------------------------------------
@@ -5507,13 +5650,13 @@ function render(scrollToEnd = false) {
   // The + changes job depending on what the game is waiting for: play the year,
   // answer a decision, or start again once it is all over.
   const age = $('ageBtn');
-  const waiting = !!L.pending || !!L.choices?.length;
+  const waiting = !!L.pending || !!L.choices?.length || !!L.games?.length;
   age.classList.toggle('decide', waiting || over);
-  age.querySelector('.lb').textContent = over ? 'New' : waiting ? 'Decide' : 'Age';
-  age.querySelector('.plus').textContent = over ? '↻' : waiting ? '?' : '+';
+  age.querySelector('.lb').textContent = over ? 'New' : L.games?.length ? 'Play' : waiting ? 'Decide' : 'Age';
+  age.querySelector('.plus').textContent = over ? '↻' : L.games?.length ? '▶' : waiting ? '?' : '+';
 
   for (const el of document.querySelectorAll('[data-cat]')) {
-    el.disabled = over || !!L.pending || !!L.choices?.length;
+    el.disabled = over || !!L.pending || !!L.choices?.length || !!L.games?.length;
     // A category holding something urgent says so, rather than making you find
     // out by opening all four.
     const cat = el.dataset.cat;
@@ -5534,22 +5677,28 @@ for (const el of document.querySelectorAll('[data-cat]')) {
   el.onclick = () => openSheet(el.dataset.cat);
 }
 $('ageBtn').onclick = () => {
+  const L = S.life;
   if (S.career) { openNewLife(); return; }
-  if (S.life.choices?.length) { openChoice(); return; }
-  if (S.life.pending) { openDecision(); return; }
-  advanceYear(S.life, defaultRng);
-  Progress.saveLife(S.life);
-  closeSheet();
-  render(true);
-  if (S.life.choices?.length) openChoice();
-  else if (S.life.pending) openDecision();
+  if (L.games?.length) { openGameDay(); return; }
+  if (L.choices?.length) { openChoice(); return; }
+  if (L.pending) { openDecision(); return; }
+  // If he is going to be on the floor at all, he plays his five games before
+  // the season is written. projectedMinutes is the same function the season
+  // uses, so the two can never disagree about whether he played.
+  L.gameForm = 0;
+  L.gameLog = [];
+  const mins = projectedMinutes(L);
+  L.games = mins >= 8 ? rollGameDay(L, defaultRng, mins) : [];
+  for (const g of L.games) g.opponent = randomTeam(defaultRng);
+  if (L.games.length) { openGameDay(); return; }
+  finishYear();
 };
 $('sheetClose').onclick = () => {
-  if (S.sheet?.kind === 'choice') return; // answering it is the only way out
+  if (S.sheet?.kind === 'choice' || S.sheet?.kind === 'gameday') return; // playing it is the only way out
   closeSheet();
 };
 $('scrim').onclick = () => {
-  if (S.sheet?.kind !== 'decision' && S.sheet?.kind !== 'choice') closeSheet();
+  if (!['decision', 'choice', 'gameday'].includes(S.sheet?.kind)) closeSheet();
 };
 $('sheetBack').onclick = () => openSheet(S.sheet?.kind === 'focus' ? 'train' : 'people');
 

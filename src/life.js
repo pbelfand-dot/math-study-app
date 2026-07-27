@@ -137,6 +137,8 @@ export function newLife(build, name, rng = defaultRng) {
     // nothing, so grinding a single number is self-limiting without needing a
     // rule that says so.
     trainCounts: {},
+    gameForm: 0,
+    gameLog: [],
     yearLog: [],
     seenEvents: [],
     choices: [],
@@ -158,6 +160,30 @@ export function newLife(build, name, rng = defaultRng) {
   };
   life.people = rollCast(life, rng);
   return life;
+}
+
+// How many minutes he is going to get. Extracted because game day has to know
+// whether he plays BEFORE the season resolves, and two copies of this formula
+// would drift apart the first time either was touched.
+//
+// Judged against the room he is actually in — a freshman is supposed to be worse
+// than a senior, and a blue blood's bench is a mid-major's starter, so the bar
+// moves with both. The coach decides the minutes and the locker room decides
+// what he does with them; both are people you chose whether or not to spend
+// time on.
+export function projectedMinutes(life) {
+  const college = life.stage === 'college';
+  const bar = college
+    ? life.program.minutesBar - (life.age - 19) * 2
+    : 25 + (life.age - 15) * 3;
+  const roleScore =
+    overallNow(life) +
+    (coachTrust(life) - 50) * 0.18 +
+    (teamChemistry(life) - 50) * 0.08 +
+    (life.minutesPitch ? 3 : 0) -
+    (life.ineligible ? 100 : 0) -
+    (life.injured ? 14 : 0);
+  return clamp(Math.round((roleScore - bar) * 1.2), 0, college ? 34 : 32);
 }
 
 // Current overall on the 2K-ish scale, from present ability at present height.
@@ -309,22 +335,8 @@ export function advanceYear(life, rng = defaultRng) {
 
   // 4. The season.
   const ovr = overallNow(life);
-  // Judged against the room you are actually in. A freshman is supposed to be
-  // worse than a senior, and a blue blood's bench is a mid-major's starter, so
-  // the bar moves with both.
-  const bar = college ? prog.minutesBar - (life.age - 19) * 2 : 25 + (life.age - 15) * 3;
   const chem = teamChemistry(life);
-  const trust = coachTrust(life);
-  // The coach decides minutes and the locker room decides what you do with
-  // them. Both are people you chose whether or not to spend time on.
-  const roleScore =
-    ovr +
-    (trust - 50) * 0.18 +
-    (chem - 50) * 0.08 +
-    (life.minutesPitch ? 3 : 0) -
-    (life.ineligible ? 100 : 0) -
-    (life.injured ? 14 : 0);
-  life.minutes = clamp(Math.round((roleScore - bar) * 1.2), 0, college ? 34 : 32);
+  life.minutes = projectedMinutes(life);
 
   if (life.ineligible) {
     life.seasonStats = null;
@@ -352,12 +364,21 @@ export function advanceYear(life, rng = defaultRng) {
     // did — a 57 overall and a 75 overall put up the same eleven points, so
     // PPG told you nothing about whether you were any good, and a genuinely
     // good player in a smaller role looked like a bad one.
+    // How the five games you actually played went, as a number between -1 and
+    // +1. Deliberately bounded: your rating and your minutes decide the size of
+    // the season, and form moves you around inside it. A 99 finishing does not
+    // turn ten points into twenty because you tapped well — it turns ten into
+    // about twelve and a half, and tapping badly turns it into seven and a half.
+    const form = clamp(life.gameForm ?? 0, -1, 1);
     const usage = clamp(0.75 + (ovr - 52) / 80, 0.6, 1.35);
-    const ppg = Math.max(0, life.minutes * 0.42 * (0.25 + scoring / 70) * usage + rng.gauss(0, 1.4));
-    const rpg = Math.max(0, life.minutes * (life.attrs.rebounding / 900 + Math.max(0, after - 72) * 0.008));
+    const ppg = Math.max(
+      0,
+      life.minutes * 0.42 * (0.25 + scoring / 70) * usage * (1 + form * 0.25) + rng.gauss(0, 1.4),
+    );
+    const rpg = Math.max(0, life.minutes * (life.attrs.rebounding / 900 + Math.max(0, after - 72) * 0.008) * (1 + form * 0.18));
     // A team that likes you passes to you. This is the assist line, and it is
     // the clearest place the locker room shows up in a box score.
-    const apg = Math.max(0, life.minutes * (life.attrs.playmaking / 1100) * (0.6 + chem / 125));
+    const apg = Math.max(0, life.minutes * (life.attrs.playmaking / 1100) * (0.6 + chem / 125) * (1 + form * 0.30));
     life.seasonStats = {
       ppg: Math.round(ppg * 10) / 10,
       rpg: Math.round(rpg * 10) / 10,
@@ -402,6 +423,8 @@ export function advanceYear(life, rng = defaultRng) {
   life.lastStats = life.seasonStats;
   life.doneThisYear = [];
   life.trainCounts = {};
+  life.gameForm = 0;
+  life.gameLog = [];
   life.yearLog = [];
   life.minutesPitch = false;
 

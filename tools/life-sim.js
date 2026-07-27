@@ -17,9 +17,9 @@ import { teamChemistry, coachTrust, personIn, peopleIn } from '../src/people.js'
 import {
   availableActions, actionsForPerson, doAction, blockedReason, focusActions,
 } from '../src/actions.js';
-import { CHOICES, PLAYS, resolveChoice } from '../src/events.js';
+import { CHOICES, PLAYS, resolveChoice, rollGameDay, resolveGame } from '../src/events.js';
 import {
-  newLife, advanceYear, overallNow, recruitScore, starRating,
+  newLife, advanceYear, overallNow, recruitScore, starRating, projectedMinutes,
   commit, declare, returnToSchool, proBuildFrom, GRAD_AGE, DRAFT_AGE_CAP,
 } from '../src/life.js';
 
@@ -150,6 +150,16 @@ function playYear(life, rng) {
   if (life.strain > 50) {
     for (const id of ['offseason', 'massage', 'rest', 'stretch']) {
       if (tryAct(life, train(), id, rng)) break;
+    }
+  }
+
+  // Five games, played the same way the stand-in answers a possession: the
+  // option its attributes are currently best at.
+  life.gameForm = 0;
+  const mins = projectedMinutes(life);
+  if (mins >= 8) {
+    for (const g of rollGameDay(life, rng, mins)) {
+      resolveGame(life, g.id, bestPlayOption(life, g), rng);
     }
   }
 

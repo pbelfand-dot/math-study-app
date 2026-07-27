@@ -143,7 +143,7 @@ export const EVENTS = [
   },
   {
     id: 'overlooked', weight: 5,
-    when: (l) => hs(l) && l.meters.hype < 28 && l.lastMinutes > 16,
+    when: (l) => hs(l) && l.meters.hype < 38 && l.lastMinutes > 14,
     run: (l) => {
       happy(l, -7);
       return { kind: 'bad', text: 'You put up 22 a night and the local paper still spelled your name wrong.' };
@@ -628,11 +628,14 @@ function playOutcome(life, key, made, rng, madeText, missText) {
   return { kind: 'bad', text: missText };
 }
 
-const played = (l) => l.lastMinutes >= 8;
+// Defaults to last season, but game day passes THIS season's projection —
+// otherwise a first year has lastMinutes of 0, no play is ever eligible, and
+// game day silently does not happen at all.
+const played = (l, m = l.lastMinutes) => m >= 8;
 
 export const PLAYS = [
   {
-    id: 'topofkey', weight: 10, when: played,
+    id: 'topofkey', weight: 10, when: (l, m) => played(l, m),
     title: 'Top of the key',
     text: () => 'You catch it with a foot on the line and a defender closing hard. Two seconds on the shot clock.',
     options: [
@@ -648,7 +651,7 @@ export const PLAYS = [
     ],
   },
   {
-    id: 'transition', weight: 10, when: played,
+    id: 'transition', weight: 10, when: (l, m) => played(l, m),
     title: 'Two on one',
     text: () => 'Long rebound, you are gone, and there is one defender back with your teammate filling the lane.',
     options: [
@@ -664,7 +667,7 @@ export const PLAYS = [
     ],
   },
   {
-    id: 'postup', weight: 8, when: (l) => played(l) && (l.adultHeight >= 77 || l.attrs.post > 45),
+    id: 'postup', weight: 8, when: (l, m) => played(l, m) && (l.adultHeight >= 77 || l.attrs.post > 45),
     title: 'On the block',
     text: () => 'You have got him sealed on the left block and the entry pass is coming.',
     options: [
@@ -680,7 +683,7 @@ export const PLAYS = [
     ],
   },
   {
-    id: 'lastshot', weight: 9, when: played,
+    id: 'lastshot', weight: 9, when: (l, m) => played(l, m),
     title: 'Down one, six seconds',
     text: () => 'The play is drawn up for you. Everyone in the gym knows it is drawn up for you.',
     options: [
@@ -696,7 +699,7 @@ export const PLAYS = [
     ],
   },
   {
-    id: 'iso', weight: 7, when: (l) => played(l) && l.build.mentality >= 48,
+    id: 'iso', weight: 7, when: (l, m) => played(l, m) && l.build.mentality >= 48,
     title: 'Cleared out',
     text: () => 'Coach clears the side for you. It is you and him and thirty feet of nothing.',
     options: [
@@ -712,7 +715,7 @@ export const PLAYS = [
     ],
   },
   {
-    id: 'defense', weight: 8, when: played,
+    id: 'defense', weight: 8, when: (l, m) => played(l, m),
     title: 'Their best player',
     text: () => 'Coach puts you on their best player for the last four minutes. He has 28.',
     options: [
@@ -728,7 +731,7 @@ export const PLAYS = [
     ],
   },
   {
-    id: 'rimprotect', weight: 7, when: (l) => played(l) && l.adultHeight >= 76,
+    id: 'rimprotect', weight: 7, when: (l, m) => played(l, m) && l.adultHeight >= 76,
     title: 'He is coming down the lane',
     text: () => 'Their guard has beaten his man and there is nothing between him and the rim except you.',
     options: [
@@ -744,7 +747,7 @@ export const PLAYS = [
     ],
   },
   {
-    id: 'freethrows', weight: 6, when: played,
+    id: 'freethrows', weight: 6, when: (l, m) => played(l, m),
     title: 'Two shots, tie game',
     text: () => 'You get fouled with the game level and one second left. The gym is very loud.',
     options: [
@@ -757,6 +760,58 @@ export const PLAYS = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Game day
+//
+// Five games a season, drawn from the same table the one-off possessions use,
+// so the writing and the maths are shared rather than duplicated. Each one
+// contributes to FORM, a number between -1 and +1 that the season reads.
+//
+// Form is bounded on purpose. Your rating and your minutes decide the size of
+// the season; form only moves you around inside it. Playing all five perfectly
+// with a 99 finishing does not turn ten points a game into twenty — it turns
+// ten into about twelve and a half. Playing them badly turns it into seven and
+// a half. The games are worth caring about; they are not worth more than the
+// four years you spent in the gym.
+// ---------------------------------------------------------------------------
+export const GAMES_PER_SEASON = 5;
+
+export function rollGameDay(life, rng, minutes = life.lastMinutes) {
+  const pool = PLAYS.filter((p) => p.when(life, minutes));
+  if (!pool.length) return [];
+  const games = [];
+  let left = [...pool];
+  for (let i = 0; i < GAMES_PER_SEASON; i++) {
+    if (!left.length) left = [...pool]; // fewer than five eligible: allow repeats
+    const p = pickWeighted(left, rng);
+    left = left.filter((x) => x.id !== p.id);
+    games.push({
+      id: p.id,
+      no: i + 1,
+      opponent: null, // filled in by the caller, which owns the league names
+      title: p.title,
+      text: p.text(life),
+      options: p.options.map((o) => o.label),
+    });
+  }
+  return games;
+}
+
+// Resolving a game returns the line AND what it did to the season, so the UI can
+// show a running form read rather than leaving you to guess.
+export function resolveGame(life, id, optionIndex, rng) {
+  const p = PLAYS.find((x) => x.id === id);
+  const opt = p?.options[optionIndex];
+  if (!opt) return null;
+  const made = attempt(life, opt.key, opt.diff, rng);
+  const line = playOutcome(life, opt.key, made, rng, opt.made, opt.miss);
+  // Each of five games is worth a fifth of the swing, and the hard options are
+  // worth more than the safe ones when they come off.
+  const weight = made ? 1 + Math.max(0, opt.diff - 35) / 60 : -1;
+  life.gameForm = clamp((life.gameForm ?? 0) + (weight / GAMES_PER_SEASON) * 0.9, -1, 1);
+  return { ...line, made };
+}
 
 // ---------------------------------------------------------------------------
 // Rolling a year
@@ -790,19 +845,8 @@ export function rollYearEvents(life, rng) {
 
   const queue = [];
 
-  // A possession first — it belongs to the season that just finished.
-  if (rng.chance(0.78)) {
-    const ppool = PLAYS.filter((p) => p.when(life));
-    if (ppool.length) {
-      const p = pickWeighted(ppool, rng);
-      queue.push({
-        kind: 'play', id: p.id, title: p.title, text: p.text(life),
-        options: p.options.map((o) => o.label),
-      });
-    }
-  }
-
-  // Then the life, if it has something to ask.
+  // No standalone possession any more — the five games cover that, and asking
+  // a sixth time in the same year was too much.
   if (rng.chance(0.55)) {
     const cpool = CHOICES.filter((c) => !seen.includes(c.id) && c.when(life));
     if (cpool.length) {

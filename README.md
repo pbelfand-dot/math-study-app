@@ -116,12 +116,13 @@ Tending two relationships is worth more draft rate than any single training
 decision, because coach trust is what buys minutes and minutes are what produce
 the tape. Nothing in the game said so before.
 
-## Possessions
+## Five games a season
 
-Every season you played puts you in a game situation and asks what you do. Each
-option is resolved against **the attribute it actually depends on**, so the
-numbers you spent four years training are the numbers that decide whether it
-goes in:
+Every season you are going to be on the floor for, you play **five games** —
+one sheet, one tap each, against a team from the league — before the season is
+written. Each option is resolved against **the attribute it actually depends
+on**, so the numbers you spent four years training are the numbers that decide
+whether it goes in:
 
 > **Top of the key** — You catch it with a foot on the line and a defender
 > closing hard. Two seconds on the shot clock.
@@ -145,6 +146,29 @@ Measured over 4,000 players facing the same pool:
 Taking off from the dotted line is a real gamble. Knowing what you are actually
 good at is the best play in the game, and the only way to know is to have
 looked.
+
+### Form is bounded on purpose
+
+The five games produce **form**, between −1 and +1, and the season reads it.
+Your rating and your minutes decide the *size* of the season; form only moves
+you around inside it. Measured over 2,500 identical players at each level:
+
+| form | points | assists |
+|---|---|---|
+| −1, missed everything | 2.3 | 0.3 |
+| 0 | 3.1 | 0.4 |
+| +1, made everything | 3.8 | 0.5 |
+
+That is **−26% to +23%** on scoring, and a little wider on assists. A 99
+finishing does not turn ten points a game into twenty because you tapped well —
+it turns ten into about twelve and a half, and tapping badly turns it into seven
+and a half. The games are worth caring about; they are not worth more than the
+four years you spent in the gym.
+
+The plays used to fire *after* the season, so their conditions read last year's
+minutes. Moving them in front of it meant a first season had zero recorded
+minutes, no play was ever eligible, and game day silently did not happen at all
+— the predicates now take the minutes being asked about.
 
 ## Things happen to you
 
@@ -594,6 +618,15 @@ web/                UI — the year feed, the + button, fonts inlined as data UR
 
 The daily-seed leaderboard is `localStorage` only — v1 has no backend, so it is your own
 run history on today's seed rather than a global board.
+
+## The league
+
+The **National Basket League**: real markets, invented clubs. Brooklyn plays as
+the Baskets, New York as the Bricklayers, Phoenix as the Sunstroke, Salt Lake as
+the Ragtime, San Antonio as the Stirrups. City names belong to nobody and the
+nicknames are jokes rather than thin skins over real marks — there is no
+franchise name, logo or league mark in the game, and no real player appears
+anywhere in it.
 
 No real player, team or league names are used anywhere, and none of the reference
 implementations were copied from.

@@ -252,6 +252,19 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .field input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 .btn.choice { margin-bottom: 8px; text-align: left; border-color: var(--accent); color: var(--deep); background: var(--accent-soft); }
+
+/* How the five games have gone so far. Five dots and a word — enough to know
+   whether you are having a season, without a second scoreboard. */
+.formline {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  padding: 8px 10px; margin-bottom: 10px; border-radius: 10px;
+  background: var(--surface-2); border: 1.5px solid var(--line);
+}
+.formline i { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); }
+.formline i.hit { background: var(--good); }
+.formline span { font-size: 12px; font-weight: 700; color: var(--muted); }
+.formline.good span { color: var(--good); }
+.formline.bad span { color: var(--bad); }
 .opt .go { font-size: 20px; color: var(--accent); }
 
 /* ---------- a person row ---------- */

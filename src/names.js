@@ -1,18 +1,23 @@
-// Original league. Invented cities, invented clubs — nothing here maps to a real
-// franchise, market, or league mark.
+// The league, as parody.
+//
+// Real markets, invented clubs. City names are not anybody's trademark, and the
+// nicknames are jokes rather than thin skins over real marks — Brooklyn plays as
+// the Baskets, New York as the Bricklayers, Salt Lake as the Ragtime. Nothing
+// here is a franchise name, a logo, or a league mark, and no real player appears
+// anywhere in the game.
 
-export const LEAGUE_NAME = 'The Continental Basketball Circuit';
-export const LEAGUE_SHORT = 'CBC';
+export const LEAGUE_NAME = 'The National Basket League';
+export const LEAGUE_SHORT = 'NBL';
 
 export const TEAMS = [
-  'Ashgrove Kilnmen', 'Bellwater Tide', 'Calder Foundry', 'Duskmoor Ravens',
-  'Eastport Riggers', 'Fenwick Blackbirds', 'Granite Bay Quarry', 'Halloway Hounds',
-  'Ironvale Forge', 'Juniper Flats Coyotes', 'Kestrel City Falcons', 'Loomis Mill',
-  'Marrow Creek Timber', 'Northgate Sentinels', 'Orrin Harbor Anchors', 'Pinehurst Elk',
-  'Quarrytown Hammers', 'Redlick Rattlers', 'Saltmarsh Herons', 'Thornbury Rooks',
-  'Umberfield Wolves', 'Vance Ridge Prospectors', 'Westbrook Current', 'Yarrow Valley Bison',
-  'Alder Point Lighthouse', 'Brightwell Voltage', 'Coldspur Frost', 'Draymoor Colliers',
-  'Evanhead Mariners', 'Foxglove Union',
+  'Atlanta Talons', 'Boston Shamrocks', 'Brooklyn Baskets', 'Charlotte Wasps',
+  'Chicago Steers', 'Cleveland Cavalry', 'Dallas Wranglers', 'Denver Prospectors',
+  'Detroit Motors', 'Golden Gate Guardians', 'Houston Launch', 'Indiana Speedway',
+  'Los Angeles Schooners', 'Los Angeles Lagoons', 'Memphis Kodiaks', 'Miami Swelter',
+  'Milwaukee Stags', 'Minnesota Timber', 'New Orleans Herons', 'New York Bricklayers',
+  'Oklahoma City Squall', 'Orlando Illusion', 'Philadelphia Foundry', 'Phoenix Sunstroke',
+  'Portland Trailhead', 'Sacramento Regents', 'San Antonio Stirrups', 'Seattle Rainmakers',
+  'Toronto Rapture', 'Salt Lake Ragtime', 'Washington Warlocks', 'Vancouver Timberline',
 ];
 
 const FIRST = [
