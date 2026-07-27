@@ -98,6 +98,22 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .idcard .stack { display: grid; gap: 4px; justify-items: end; }
 .idcard .cash { text-align: right; }
 .idcard .cash.ppg b { color: var(--accent); }
+
+/* The 65-game counter. The notch is the threshold; crossing it is the
+   difference between an award tier and nothing. */
+.gamesbar {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line);
+}
+.gamesbar .k { font-size: 11px; font-weight: 650; color: var(--muted); }
+.gamesbar .track {
+  flex: 1 1 90px; min-width: 70px; height: 8px; background: #e6ebf3;
+  border-radius: 999px; position: relative;
+}
+.gamesbar .fill { display: block; height: 100%; border-radius: 999px; background: var(--good); }
+.gamesbar.risk .fill { background: var(--warn); }
+.gamesbar .mark { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--ink-2); }
+.gamesbar .v { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .idcard .cash b { display: block; font-size: 16px; font-weight: 750; color: var(--good); }
 .idcard .cash span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
 

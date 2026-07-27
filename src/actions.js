@@ -578,7 +578,11 @@ export function actionsForPerson(life, p) {
   // mother, your father, your coach and everyone else at the same time.
   const push = (id, name, run, extra = {}) => {
     const key = `${p.id}:${id}`;
-    if (life.doneThisYear.includes(key)) return;
+    // `repeat` opts out of the once-a-year rule entirely. Spending time with
+    // somebody is the one thing you should always be able to do more of, and a
+    // People screen where the only universal option greys itself out after one
+    // use reads as broken even when it is working.
+    if (!extra.repeat && life.doneThisYear.includes(key)) return;
     out.push({ id, key, name, price: 0, run, person: p.id, ...extra });
   };
 
@@ -587,7 +591,7 @@ export function actionsForPerson(life, p) {
     p.met++;
     l.stats.happiness = clamp(l.stats.happiness + 2, 0, 100);
     return { kind: 'note', text: `Spent some time with ${p.name}.` };
-  });
+  }, { repeat: true });
 
   if (p.rel < 45) {
     push('mend', 'Try to patch things up', (l, rng) => {
@@ -753,8 +757,8 @@ export function doAction(life, a, rng) {
   life.strain += a.wear || 0;
   const entry = a.run(life, rng) || { kind: 'note', text: a.name };
   // `key` where one exists, so a per-person action only blocks itself and not
-  // the same-named action on somebody else.
-  life.doneThisYear.push(a.key ?? a.id);
+  // the same-named action on somebody else. Repeatable ones record nothing.
+  if (!a.repeat) life.doneThisYear.push(a.key ?? a.id);
   life.yearLog.push(entry);
   return entry;
 }

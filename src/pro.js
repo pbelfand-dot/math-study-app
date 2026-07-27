@@ -23,6 +23,49 @@ import {
   runDraft, boxScore, injuryRoll, REPLACEMENT, REPLACEMENT_FLOOR,
 } from './career.js';
 
+// ---------------------------------------------------------------------------
+// The cap
+//
+// One number that everything else is a percentage of, so the whole economy can
+// be moved by editing a single line. Figures are the shape of a modern
+// basketball CBA rather than any particular league's published table — this is
+// an invented league and the numbers are here because the STRUCTURE is what
+// makes the decisions interesting, not the exact dollars.
+// ---------------------------------------------------------------------------
+export const CAP = 165_000_000;
+export const MIN_SALARY = Math.round(CAP * 0.0082);
+
+// Max contract tiers by years of service. The jumps are the whole point: they
+// convert an AWARD into MONEY, which is what makes an award worth chasing
+// beyond a line in a summary screen.
+export const MAX_TIERS = [
+  { minYears: 10, pct: 0.35, label: '35% max' },
+  { minYears: 7, pct: 0.30, label: '30% max' },
+  { minYears: 0, pct: 0.25, label: '25% max' },
+];
+
+export const maxFor = (years, bumped) => {
+  const tier = MAX_TIERS.find((t) => years >= t.minYears);
+  // The two escalators. A player in his first six years jumps a tier by winning
+  // something; a seven-to-nine-year player jumps to the top tier the same way
+  // but only with the team that drafted him.
+  const pct = bumped ? Math.min(0.35, tier.pct + 0.05) : tier.pct;
+  return { salary: Math.round(CAP * pct), pct, label: `${Math.round(pct * 100)}% max` };
+};
+
+// Award eligibility is gated on games played. This is the mechanic the whole
+// health system hangs off: sitting to protect your knee is no longer a free
+// decision, because dropping under the threshold costs you the award, and the
+// award is what unlocks the higher max tier.
+export const GAMES_THRESHOLD = 65;
+export const GAMES_INJURY_EXCEPTION = 62;
+
+export function awardEligible(season) {
+  if (season.games >= GAMES_THRESHOLD) return true;
+  // Season-ending injury after you had already played most of the year.
+  return season.games >= GAMES_INJURY_EXCEPTION && season.seasonEnding;
+}
+
 // Prefixed: the bundler flattens every module into one scope, so a private
 // `round1` or `money` here collides with the identical one two files over.
 const pr1 = (v) => Math.round(v * 10) / 10;
@@ -124,6 +167,7 @@ export function newPro(build, life, draft, rng = defaultRng) {
     signed: draft.signed,
 
     team: draft.team,
+    draftTeam: draft.team,
     // How good the team is at basketball without you. Rebuilt every time you
     // change teams, and it drifts on its own — the roster around you is not
     // something you control and pretending otherwise makes rings meaningless.
@@ -162,8 +206,31 @@ export function newPro(build, life, draft, rng = defaultRng) {
     gameForm: 0,
     games: [],
     doneThisYear: [],
+    // How you intend to handle your body this season. This is the decision the
+    // 65-game rule exists to make expensive: managing the load protects the
+    // knee and can drop you under the award threshold, which costs you the
+    // higher max tier, which costs tens of millions.
+    loadPolicy: 'balanced',
   };
 }
+
+export const LOAD_POLICIES = {
+  full: {
+    label: 'Play everything',
+    blurb: 'Every back-to-back, every road trip. Availability is a skill.',
+    games: 1.0, risk: 1.35, wear: 'Highest re-injury risk',
+  },
+  balanced: {
+    label: 'Normal season',
+    blurb: 'Sit when the medical staff insists and not before.',
+    games: 0.95, risk: 1.0, wear: 'Ordinary risk',
+  },
+  managed: {
+    label: 'Manage the load',
+    blurb: 'Rest days, no back-to-backs, protect the body.',
+    games: 0.76, risk: 0.62, wear: 'Lowest risk — and it can cost you the 65 games',
+  },
+};
 
 // ---------------------------------------------------------------------------
 // One season
@@ -204,10 +271,18 @@ export function playSeason(pro, rng = defaultRng) {
   const rating = pro.rating;
   let minutes = clamp((rating - 54) * 1.35 + (b.physicals.stamina - 50) * 0.09, 0, 38);
 
-  const injury = injuryRoll(b, pro, minutes, eff, rng);
-  let games = 82;
+  const policy = LOAD_POLICIES[pro.loadPolicy] || LOAD_POLICIES.balanced;
+  // Load policy scales the injury multiplier the roll already takes, rather
+  // than rolling twice and keeping the second — which is what the first pass
+  // did, and it silently doubled the injury rate.
+  const injury = injuryRoll(b, pro, minutes, { ...eff, injury: eff.injury * policy.risk }, rng);
+  // Games missed to rest, before any injury. This is what can put you under 65
+  // without a single thing going wrong.
+  let games = Math.round(82 * policy.games);
+  let seasonEnding = false;
   if (injury) {
-    games = Math.max(0, 82 - injury.games);
+    seasonEnding = injury.games >= 40;
+    games = Math.max(0, games - injury.games);
     pro.injuryHistory += injury.severity === 'severe' ? 2 : injury.severity === 'major' ? 1 : 0.4;
     if (injury.severity === 'severe') {
       pro.speedLoss += Math.abs(rng.gauss(5, 2.5));
@@ -245,20 +320,36 @@ export function playSeason(pro, rng = defaultRng) {
   );
   const playoffs = wins >= 43 + rng.int(4);
 
+  // The 65-game rule. All-Star is a mid-season vote and is not gated; the
+  // end-of-season honours are, and those are the ones worth money.
+  const eligible = games >= GAMES_THRESHOLD || (games >= GAMES_INJURY_EXCEPTION && seasonEnding);
   let allStar = false;
   let mvp = false;
   let ring = false;
+  let allLeague = false;
   if (rating >= 76 && minutes >= 24 && games >= 50) {
     allStar = rng.chance(clamp((rating - 76) / 11, 0.03, 0.96));
   }
   if (allStar) {
     pro.awards.allStars++;
-    if (rating >= 84 && rng.chance(clamp((rating - 82) / 28, 0.03, 0.6))) pro.awards.allLeague++;
+    if (eligible && rating >= 84 && rng.chance(clamp((rating - 82) / 28, 0.03, 0.6))) {
+      allLeague = true;
+      pro.awards.allLeague++;
+    }
   }
-  if (allStar && rating >= 88 && wins >= 52 && games >= 62) {
+  if (allStar && eligible && rating >= 88 && wins >= 52) {
     mvp = rng.chance(clamp((rating - 88) / 7, 0.05, 0.85));
     if (mvp) pro.awards.mvps++;
   }
+  if (!eligible && rating >= 82) {
+    out.push({
+      kind: 'bad',
+      text: `${games} games. Under ${GAMES_THRESHOLD} you are not eligible for any end-of-season award, and that is the money.`,
+    });
+  }
+  // What the next contract can be worth. Held on the player so free agency can
+  // read it years later.
+  if (allLeague || mvp) pro.lastBumpYear = pro.year;
   if (playoffs) {
     const strength = clamp((wins - 41) / 32, 0, 1);
     // Higher than the one-shot engine's curve on purpose. There, every team's
@@ -293,7 +384,7 @@ export function playSeason(pro, rng = defaultRng) {
     ts: box.ts,
     wins,
     playoffs,
-    allStar, mvp, ring,
+    allStar, mvp, ring, allLeague, eligible, seasonEnding,
     salary: pro.contract.salary,
     events: out,
   };
@@ -332,6 +423,26 @@ export function playSeason(pro, rng = defaultRng) {
 // The max exists so a superstar contract feels like one, and the floor exists
 // so a fringe player is choosing between real minimums rather than nothing.
 // ---------------------------------------------------------------------------
+// Whether the last three seasons contain an end-of-season honour, which is the
+// trigger for both escalators. Awards you were ineligible for because you sat
+// do not count, which is the entire loop: the health decision was a money
+// decision and nobody told you at the time.
+export function bumpEligible(pro) {
+  return pro.seasons.slice(-3).some((s) => s.eligible && (s.mvp || s.allLeague));
+}
+
+// A supermax needs the honour AND the team that drafted you. Leaving costs you
+// the tier, which is why real players agonise over it.
+export function supermaxEligible(pro) {
+  return pro.year >= 7 && pro.year <= 9 && bumpEligible(pro) && pro.team === pro.draftTeam;
+}
+
+export function contractCeiling(pro) {
+  const bumped =
+    (pro.year <= 6 && bumpEligible(pro)) || supermaxEligible(pro);
+  return { ...maxFor(pro.year, bumped), bumped };
+}
+
 export function marketValue(pro, rng = defaultRng) {
   const r = pro.rating;
   const age = pro.age;
@@ -339,13 +450,19 @@ export function marketValue(pro, rng = defaultRng) {
     r >= 88 ? 48e6 : r >= 82 ? 38e6 : r >= 77 ? 28e6 : r >= 72 ? 18e6 :
     r >= 68 ? 10e6 : r >= 64 ? 5e6 : r >= 60 ? 2.4e6 : 1.1e6;
   const ageMult = clamp(1.15 - Math.max(0, age - 29) * 0.09, 0.35, 1.15);
-  return Math.round(base * ageMult * (0.9 + rng.random() * 0.2));
+  const raw = base * ageMult * (0.9 + rng.random() * 0.2);
+  // Nobody is paid above the tier they qualify for, and nobody below the
+  // minimum. The ceiling is where an award turns into cash.
+  return Math.round(clamp(raw, MIN_SALARY, contractCeiling(pro).salary));
 }
 
 // Four offers with genuinely different shapes, so free agency is a decision
 // rather than a list sorted by salary.
 export function freeAgencyOffers(pro, rng = defaultRng) {
   const value = marketValue(pro, rng);
+  const ceiling = contractCeiling(pro);
+  const superm = supermaxEligible(pro);
+  const cap = (n) => Math.round(Math.min(n, ceiling.salary));
   const offers = [];
   const teamsUsed = new Set([pro.team]);
   const pickTeam = () => {
@@ -361,29 +478,35 @@ export function freeAgencyOffers(pro, rng = defaultRng) {
   if (pro.fanLove > 35 || pro.rating >= 70) {
     offers.push({
       team: pro.team, stay: true,
-      salary: Math.round(value * 1.08), years: pro.age < 30 ? 4 : 2,
+      // Only your own team can offer the top tier at seven-to-nine years, and
+      // only the one that drafted you. That is the whole reason to stay.
+      salary: superm ? ceiling.salary : cap(value * 1.08),
+      years: pro.age < 30 ? 5 : 2,
       strength: pro.teamStrength,
-      note: 'They know you here. The extra year is the point.',
+      tier: superm ? ceiling.label : null,
+      note: superm
+        ? 'Only they can offer you this. One extra year and the top tier — leaving costs you both.'
+        : 'They know you here. The extra year is the point.',
     });
   }
   // A contender that cannot pay.
   offers.push({
     team: pickTeam(),
-    salary: Math.round(value * 0.55), years: 2,
+    salary: cap(value * 0.55), years: 2,
     strength: clamp(Math.round(rng.gauss(66, 5)), 55, 78),
     note: 'They win sixty games and they are offering you the taxpayer exception.',
   });
   // A rebuild that will pay anything.
   offers.push({
     team: pickTeam(),
-    salary: Math.round(value * 1.35), years: pro.age < 31 ? 4 : 3,
+    salary: cap(value * 1.35), years: pro.age < 31 ? 4 : 3,
     strength: clamp(Math.round(rng.gauss(30, 6)), 15, 45),
     note: 'Twenty-two wins and all the money in the world. You would be the whole offence.',
   });
   // The middle.
   offers.push({
     team: pickTeam(),
-    salary: value, years: 3,
+    salary: cap(value), years: 3,
     strength: clamp(Math.round(rng.gauss(50, 6)), 35, 62),
     note: 'A playoff team that needs one more piece and thinks it is you.',
   });
@@ -453,6 +576,24 @@ export const careerLine = (pro) => {
 // attached. Everything here is once a year and most of it costs something.
 // ---------------------------------------------------------------------------
 export const PRO_ACTIONS = [
+  ...Object.entries(LOAD_POLICIES).map(([id, p]) => ({
+    id: `load:${id}`,
+    name: p.label,
+    blurb: `${p.blurb} ${p.wear}.`,
+    cost: 0,
+    load: id,
+    show: (pro) => pro.loadPolicy !== id,
+    run: (pro) => {
+      pro.loadPolicy = id;
+      const est = Math.round(82 * p.games);
+      return {
+        kind: id === 'managed' ? 'note' : 'good',
+        text: `Season plan: ${p.label.toLowerCase()}. About ${est} games${
+          est < GAMES_THRESHOLD ? ` — under the ${GAMES_THRESHOLD} you need for any end-of-season award.` : '.'
+        }`,
+      };
+    },
+  })),
   {
     id: 'skillwork', name: 'Add something to your game', blurb: 'A summer on one thing you cannot do.',
     cost: 0,

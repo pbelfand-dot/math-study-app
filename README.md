@@ -655,6 +655,32 @@ Then the four bars become **Morale, Body, Fan love and Rating**, and the dock
 collapses to one button, because at this level basketball is the only category
 left that means anything.
 
+### Health is a money decision
+
+The loop the whole pro career now hangs off, and the one thing worth taking
+from a design document over everything else in it:
+
+> Sit to protect your knee → you drop under 65 games → you are ineligible for
+> any end-of-season award → you miss the tier escalator → the next contract is
+> worth **$33M less over four years**.
+
+- **The cap is one number.** Everything else is a percentage of it, so the whole
+  economy moves by editing a line.
+- **Max tiers by years of service** — 25% / 30% / 35%. A player in his first six
+  years jumps a tier by winning something; a seven-to-nine-year player jumps to
+  the top tier the same way, **but only with the team that drafted him**. Leaving
+  costs you the tier, which is why that decision should hurt.
+- **Awards are gated on 65 games played**, with an exception for a season-ending
+  injury after you had already played most of the year. All-Star is a mid-season
+  vote and stays ungated; the end-of-season honours are the ones worth money.
+- **You choose how to handle your body each year** — play everything (highest
+  re-injury risk), a normal season, or manage the load (lowest risk, about 62
+  games, and it says on the button that it costs you the threshold).
+- **The counter is on the front screen** with the threshold marked on it, plus
+  the tier your awards have currently unlocked. Without that the price of
+  sitting arrives silently at the next contract, which is not a decision, it is
+  an ambush.
+
 ### Verified separately
 
 The stepped engine shares career.js's season maths — box scores, injuries, the

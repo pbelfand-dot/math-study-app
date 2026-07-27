@@ -4,7 +4,8 @@ import { titleFor } from '../src/archetypes.js';
 import { potentialGrade, positionFor, buildRarityTier } from '../src/overall.js';
 import {
   draftNight, newPro, playSeason, freeAgencyOffers, signWith, acceptTrade, retire,
-  proActions, doProAction, proMoney, careerLine,
+  proActions, doProAction, proMoney, careerLine, contractCeiling, supermaxEligible,
+  LOAD_POLICIES, GAMES_THRESHOLD,
 } from '../src/pro.js';
 import { defaultRng } from '../src/rng.js';
 import { randomName, randomTeam, randomOpponent } from '../src/names.js';
@@ -671,7 +672,29 @@ function proHeaderHtml() {
     <div class="stack">
       <div class="cash ppg"><b>${last ? last.ppg.toFixed(1) : a}</b><span>PPG &middot; ${a} career</span></div>
       <div class="cash"><b>${proMoney(P.earnings)}</b><span>Career earnings</span></div>
-    </div>`;
+    </div>
+    ${gamesBarHtml(P)}`;
+}
+
+// The 65-game counter, and what it is currently costing you. This is the whole
+// health-into-money loop made visible — without it, sitting out is a free
+// decision whose price arrives silently at the next contract.
+function gamesBarHtml(P) {
+  const last = P.seasons[P.seasons.length - 1];
+  const plan = LOAD_POLICIES[P.loadPolicy] || LOAD_POLICIES.balanced;
+  const projected = Math.round(82 * plan.games);
+  const shown = last ? last.games : projected;
+  const ok = shown >= GAMES_THRESHOLD;
+  const ceiling = contractCeiling(P);
+  return `<div class="gamesbar ${ok ? '' : 'risk'}">
+    <span class="k">${last ? 'Games last season' : 'Games planned'}</span>
+    <span class="track"><span class="fill" style="width:${clamp((shown / 82) * 100, 0, 100)}%"></span>
+      <span class="mark" style="left:${(GAMES_THRESHOLD / 82) * 100}%"></span></span>
+    <span class="v">${shown}/82</span>
+    <span class="tag ${ok ? 'gain' : 'no'}">${ok ? 'Award eligible' : `Under ${GAMES_THRESHOLD} — not eligible`}</span>
+    <span class="tag">${ceiling.label}${ceiling.bumped ? ' — unlocked' : ''}</span>
+    ${supermaxEligible(P) ? '<span class="tag past">Supermax available, your team only</span>' : ''}
+  </div>`;
 }
 
 function proSeasonHtml(s) {
@@ -684,7 +707,9 @@ function proSeasonHtml(s) {
         s.playoffs ? ' &middot; playoffs' : ''
       }</span></h3>
     ${badges.length ? `<div class="hardware">${badges.map((x) => `<span>${x}</span>`).join('')}</div>` : ''}
-    <div class="box">${s.ppg} pts, ${s.rpg} reb, ${s.apg} ast in ${s.mpg} min &middot; ${s.games} games</div>
+    <div class="box">${s.ppg} pts, ${s.rpg} reb, ${s.apg} ast in ${s.mpg} min &middot; ${s.games} games${
+      s.eligible === false ? ' <b style="color:var(--bad)">&middot; award ineligible</b>' : ''
+    }</div>
     ${s.events.map((v) => `<div class="line ${v.kind}">${esc(v.text)}</div>`).join('')}
   </article>`;
 }
