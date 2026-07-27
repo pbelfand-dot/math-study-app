@@ -497,10 +497,10 @@ shooting-and-IQ builds at `dependence <= 0.85` finish at 32.6.
 
 | | measured | note |
 |---|---|---|
-| five-star recruits | 2.2% | cuts are measured percentiles, not round numbers |
-| four-star | 8.3% | |
-| blue-blood offer in hand | 6.6% | |
-| no offer at all | 24.3% | prep year / overseas is always there |
+| five-star recruits | 1.5% | cuts are measured percentiles, not round numbers |
+| four-star | 8.4% | |
+| blue-blood offer in hand | 5.7% | |
+| no offer at all | 23.6% | prep year / overseas is always there |
 | genetic ceiling realised by 22 | 93% median | |
 | drafted | 26.2% | 21.9% for the raw genetics, unplayed |
 | made the league | 33.3% | 29.0% raw |
@@ -677,6 +677,26 @@ good teams — with an independent roster, players spread across worse teams and
 titles fell to 1.8%. And the Hall bar was measured rather than chosen; at the
 first guess it inducted 2.8% of everyone who reached the league, which is not a
 Hall of Fame, it is a long list.
+
+## Names
+
+Nothing is drawn from a fixed list any more except the pro league.
+
+**Schools are generated from parts** — around eighty place names against eleven
+high-school forms and eleven college forms, plus a saint's name now and then.
+*Briarcliff Prep, Vance Ridge Central, Underwood Country Day, St. Jerome's,
+Western Halloway, Rockford Hills Poly, Ashcombe University.* College programmes
+are named per offer rather than picked from three strings a tier, so the school
+you commit to is one you have not seen and a transfer is not the same nine
+options again. Your own high school has a name now too; it never did.
+
+**People** come from 96 first names against 88 surnames — 8,448 combinations,
+up from 960.
+
+And the fix that prompted all of it: **game opponents are keyed to the stage.**
+They pulled from the pro league regardless, so a fifteen-year-old was playing
+the Dallas Wranglers. High school plays high schools, college plays colleges,
+and the National Basket League only appears once you are in it.
 
 ## The league's teams
 

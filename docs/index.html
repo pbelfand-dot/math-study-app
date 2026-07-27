@@ -774,13 +774,13 @@ const HYPE_QUANTILES = [
 // Offers: blue blood top ~3%, high major top ~12%, mid major top ~34%,
 // small school top ~68%.
 // ---------------------------------------------------------------------------
-const STAR_CUTS = [55.7, 62.2, 68.1, 73.4]; // >= these read as 2, 3, 4, 5 stars
+const STAR_CUTS = [64.0, 69.3, 74.1, 79.0]; // >= these read as 2, 3, 4, 5 stars
 
 const RECRUIT_CUTS = {
-  blueBlood: 72.4,
-  highMajor: 67.3,
-  midMajor: 61.5,
-  smallSchool: 54.6,
+  blueBlood: 78.0,
+  highMajor: 73.4,
+  midMajor: 68.8,
+  smallSchool: 63.2,
 };
 
 /* ===== src/rng.js ===== */
@@ -1324,17 +1324,36 @@ const TEAMS = [
 ];
 
 const FIRST = [
-  'Amari', 'Bryce', 'Cassius', 'Dorian', 'Elias', 'Fabian', 'Gideon', 'Hollis',
-  'Isaiah', 'Jarrell', 'Kendrick', 'Lennox', 'Marquis', 'Nasir', 'Omari', 'Prosper',
-  'Quentin', 'Rashad', 'Solomon', 'Tobias', 'Ulysses', 'Vance', 'Wendell', 'Xavier',
-  'Yusuf', 'Zaire', 'Ambrose', 'Beckett', 'Cyrus', 'Demetrius', 'Ezekiel', 'Finnian',
+  'Amari', 'Ambrose', 'Anders', 'Arlo', 'Beckett', 'Bryce', 'Caleb', 'Callum',
+  'Cassius', 'Cyrus', 'Damari', 'Darius', 'Demetrius', 'Desmond', 'Devonte',
+  'Dorian', 'Eamon', 'Elias', 'Emmett', 'Ezekiel', 'Fabian', 'Finnian', 'Gideon',
+  'Grayson', 'Hollis', 'Hugo', 'Ibrahim', 'Isaiah', 'Jabari', 'Jamal', 'Jarrell',
+  'Jaxon', 'Jericho', 'Josiah', 'Kai', 'Kendrick', 'Keon', 'Khalil', 'Kwame',
+  'Lennox', 'Lorenzo', 'Malachi', 'Marquis', 'Mateo', 'Micah', 'Nasir', 'Nikolai',
+  'Obadiah', 'Octavio', 'Omari', 'Orion', 'Prosper', 'Quentin', 'Rafael', 'Rashad',
+  'Remy', 'Rondell', 'Roman', 'Samir', 'Santiago', 'Shepherd', 'Silas', 'Solomon',
+  'Sterling', 'Tariq', 'Thaddeus', 'Theo', 'Tobias', 'Trevon', 'Ulysses', 'Uriah',
+  'Vance', 'Vaughn', 'Wendell', 'Wilder', 'Xavier', 'Yusuf', 'Zaire', 'Zephyr',
+  'Abel', 'Bodhi', 'Corbin', 'Dashiell', 'Emory', 'Foster', 'Griffin', 'Hendrix',
+  'Idris', 'Jonah', 'Kingston', 'Lucian', 'Maddox', 'Nehemiah', 'Osiris', 'Phineas',
 ];
 
 const LAST = [
-  'Ashworth', 'Bellamy', 'Cardwell', 'Draper', 'Ellery', 'Fenmore', 'Garrick', 'Hastings',
-  'Ivers', 'Jessup', 'Kingsley', 'Larkin', 'Merrow', 'Nightingale', 'Orlander', 'Pryce',
-  'Quillon', 'Rutherford', 'Sable', 'Thistlewood', 'Underhill', 'Vasquez-Orr', 'Whitlock',
-  'Yarborough', 'Ziegler', 'Brackenbury', 'Coldwater', 'Dunmore', 'Everhart', 'Fairweather',
+  'Ashworth', 'Bellamy', 'Blackwood', 'Bracken', 'Brackenbury', 'Callaway',
+  'Cardwell', 'Carrington', 'Chadwick', 'Coldwater', 'Cormier', 'Crenshaw',
+  'Draper', 'Dunmore', 'Eastwood', 'Ellery', 'Everhart', 'Fairweather',
+  'Fenmore', 'Fortier', 'Galloway', 'Garrick', 'Grimaldi', 'Hargrove',
+  'Hastings', 'Hollingsworth', 'Ivers', 'Jessup', 'Kingsley', 'Larkin',
+  'Lockwood', 'Maddox', 'Marchetti', 'Merrow', 'Nightingale', 'Okonkwo',
+  'Orlander', 'Pemberton', 'Prescott', 'Pryce', 'Quillon', 'Radcliffe',
+  'Rutherford', 'Sable', 'Sinclair', 'Stroud', 'Thistlewood', 'Toussaint',
+  'Underhill', 'Vasquez-Orr', 'Vandermeer', 'Wakefield', 'Whitlock', 'Winslow',
+  'Yarborough', 'Ziegler', 'Abernathy', 'Ballinger', 'Cavanaugh', 'Delacroix',
+  'Emerson', 'Fairbanks', 'Grayson', 'Hollister', 'Ironside', 'Jamison',
+  'Kirkpatrick', 'Lattimore', 'Montrose', 'Northcott', 'Oyelaran', 'Pennington',
+  'Quinlan', 'Ravenscroft', 'Somerset', 'Thackeray', 'Uxbridge', 'Verity',
+  'Wentworth', 'Yarrow', 'Adeyemi', 'Brightwater', 'Castellan', 'Dunhill',
+  'Ellsworth', 'Fitzgerald', 'Goodwin', 'Harrelson', 'Islington', 'Jerivan',
 ];
 
 function randomName(rng) {
@@ -1343,6 +1362,86 @@ function randomName(rng) {
 
 function randomTeam(rng) {
   return rng.pick(TEAMS);
+}
+
+// ---------------------------------------------------------------------------
+// Schools
+//
+// Generated from parts rather than picked from a list, because a list runs out.
+// Three tiers of place name feed a set of forms, which is enough to make a
+// school you have not seen before every time — and it keeps the pro league's
+// names where they belong, which is the pro league. A fifteen-year-old playing
+// the Dallas Wranglers is not a fixture, it is a bug.
+// ---------------------------------------------------------------------------
+const PLACES = [
+  'Alder', 'Ashford', 'Bellwater', 'Birchwood', 'Brackenridge', 'Briarcliff',
+  'Calder', 'Cedar Falls', 'Coldspur', 'Copperfield', 'Cranleigh', 'Darrow',
+  'Delta', 'Draymoor', 'Duskmoor', 'Eastport', 'Elmridge', 'Evanhead',
+  'Fairweather', 'Fenwick', 'Foxglove', 'Glenmara', 'Granite Bay', 'Halloway',
+  'Harlow', 'Hawthorne', 'Ironvale', 'Ironwood', 'Junction', 'Juniper Flats',
+  'Kestrel', 'Kingsmere', 'Larkspur', 'Loomis', 'Marrow Creek', 'Meadowvale',
+  'Northgate', 'Oakhurst', 'Orrin Harbor', 'Pinehurst', 'Quarrytown', 'Redlick',
+  'Ridgeline', 'Rockford Hills', 'Saltmarsh', 'Shalefield', 'Silverbrook',
+  'Stonebridge', 'Thornbury', 'Umberfield', 'Vance Ridge', 'Wexford',
+  'Westbrook', 'Whitmore', 'Willowbank', 'Yarrow Valley', 'Ashcombe',
+  'Brightwell', 'Carrowmore', 'Dunmoor', 'Everglade', 'Fernhill', 'Gallowbay',
+  'Hartsfield', 'Innisfree', 'Jasper Bend', 'Kirkstone', 'Lambert', 'Maplecrest',
+  'Norwood', 'Oakvale', 'Pemberton', 'Quill River', 'Rosemont', 'Stanhope',
+  'Tarrow', 'Underwood', 'Vinemount', 'Wrenfield',
+];
+
+const SAINTS = [
+  'Aubrey', 'Brannon', 'Cuthbert', 'Delaney', 'Edmund', 'Finnian', 'Gideon',
+  'Hilda', 'Ignatius', 'Jerome', 'Kilian', 'Loyola', 'Malachy', 'Nolan',
+  'Oswald', 'Perpetua', 'Quentin', 'Rafferty', 'Sebastian', 'Thaddeus',
+];
+
+// High school. The suffix carries most of the character — a Country Day and a
+// Central are not the same school even in the same town.
+const HS_FORMS = [
+  (p) => `${p} High`,
+  (p) => `${p} High`,
+  (p) => `${p} Central`,
+  (p) => `${p} Prep`,
+  (p) => `${p} Academy`,
+  (p) => `${p} Country Day`,
+  (p) => `${p} East`,
+  (p) => `${p} West`,
+  (p) => `${p} North`,
+  (p) => `${p} South`,
+  (p) => `${p} Technical`,
+];
+
+const COLLEGE_FORMS = [
+  (p) => `${p} State`,
+  (p) => `${p} State`,
+  (p) => `${p} University`,
+  (p) => `University of ${p}`,
+  (p) => `${p} Tech`,
+  (p) => `${p} A&M`,
+  (p) => `${p} College`,
+  (p) => `${p} Poly`,
+  (p) => `Western ${p}`,
+  (p) => `Eastern ${p}`,
+  (p) => `${p} Baptist`,
+];
+
+function randomHighSchool(rng) {
+  if (rng.chance(0.12)) return `St. ${rng.pick(SAINTS)}'s`;
+  return rng.pick(HS_FORMS)(rng.pick(PLACES));
+}
+
+function randomCollege(rng) {
+  if (rng.chance(0.1)) return `St. ${rng.pick(SAINTS)}`;
+  return rng.pick(COLLEGE_FORMS)(rng.pick(PLACES));
+}
+
+// Whoever you are actually playing this season. The pro league only ever shows
+// up once you are in it.
+function randomOpponent(stage, rng) {
+  if (stage === 'pro') return randomTeam(rng);
+  if (stage === 'college') return randomCollege(rng);
+  return randomHighSchool(rng);
 }
 
 /* ===== src/roll.js ===== */
@@ -4899,6 +4998,7 @@ const Progress = {
 
 
 
+
 const START_AGE = 14;
 const GRAD_AGE = 18;
 const DRAFT_AGE_CAP = 22;
@@ -4994,6 +5094,9 @@ function newLife(build, name, rng = defaultRng) {
     },
 
     background,
+    // The school he actually attends. It was never named, so high-school years
+    // in the log had nowhere to say where they happened.
+    school: randomHighSchool(rng),
     money: background.start + rng.int(400),
     nextPersonId: 0,
     people: [],
@@ -5281,7 +5384,7 @@ function advanceYear(life, rng = defaultRng) {
     age: life.age,
     stage: stageAtStart,
     grade: playedGrade,
-    school: college ? prog.school : null,
+    school: college ? prog.school : life.school,
     height: after,
     ovr: overallNow(life),
     stars: starRating(life),
@@ -5330,17 +5433,20 @@ function advanceYear(life, rng = defaultRng) {
 // not round numbers — before they were measured, eighteen percent of every
 // class was getting a blue-blood offer.
 // ---------------------------------------------------------------------------
+// Programme tiers. The NAME is generated per offer rather than drawn from three
+// fixed strings a tier, so the school you commit to is one you have not seen
+// before — and a rebuild after a transfer is not the same nine options again.
 const PROGRAMS = [
-  { tier: 'Blue blood', names: ['Kingsmere', 'Ashford State', 'Vance University'],
+  { tier: 'Blue blood',
     min: RECRUIT_CUTS.blueBlood, dev: 1.30, minutesBar: 54, exposure: 1.6,
     note: 'You would be the fourth-best player in your own recruiting class.' },
-  { tier: 'High major', names: ['Northgate A&M', 'Loomis Tech', 'St. Brannon'],
+  { tier: 'High major',
     min: RECRUIT_CUTS.highMajor, dev: 1.18, minutesBar: 49, exposure: 1.25,
     note: 'You will have to earn it, but the staff develops people.' },
-  { tier: 'Mid major', names: ['Cedar Falls', 'Harlow College', 'Pinehurst'],
+  { tier: 'Mid major',
     min: RECRUIT_CUTS.midMajor, dev: 1.05, minutesBar: 44, exposure: 0.85,
     note: 'A real role as a freshman, and the ball in your hands.' },
-  { tier: 'Small school', names: ['Delta Poly', 'Ironwood College', 'Junction State'],
+  { tier: 'Small school',
     min: RECRUIT_CUTS.smallSchool, dev: 0.92, minutesBar: 38, exposure: 0.5,
     note: 'They promise the ball from day one. Nobody is watching.' },
 ];
@@ -5356,7 +5462,7 @@ function buildOffers(life, rng = defaultRng, { transfer = false } = {}) {
     if (transfer && life.program && p.tier === life.program.tier && rng.chance(0.5)) continue;
     offers.push({
       tier: p.tier,
-      school: rng.pick(p.names),
+      school: randomCollege(rng),
       development: p.dev,
       minutesBar: p.minutesBar,
       exposure: p.exposure,
@@ -5570,7 +5676,7 @@ function idcardHtml() {
   const L = S.life;
   const college = L.stage === 'college';
   const stars = starRating(L);
-  const where = college ? esc(L.program.school) : esc(L.background.name);
+  const where = college ? esc(L.program.school) : esc(L.school || L.background.name);
   const line2 = college
     ? (() => { const p = draftProjection(L); return `<span class="proj ${p.tone}">${esc(p.label)}</span>`; })()
     : `<span class="stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>`;
@@ -6521,7 +6627,7 @@ $('ageBtn').onclick = () => {
     // A pro plays unless he is not on a roster at all, so game day is keyed to
     // the minutes his rating earns rather than a school's rotation.
     P.games = P.rating >= 58 ? rollGameDay(S.life, defaultRng, 30) : [];
-    for (const g of P.games) g.opponent = randomTeam(defaultRng);
+    for (const g of P.games) g.opponent = randomOpponent('pro', defaultRng);
     if (P.games.length) { openGameDay(); return; }
     finishSeason();
     return;
@@ -6536,7 +6642,9 @@ $('ageBtn').onclick = () => {
   L.gameLog = [];
   const mins = projectedMinutes(L);
   L.games = mins >= 8 ? rollGameDay(L, defaultRng, mins) : [];
-  for (const g of L.games) g.opponent = randomTeam(defaultRng);
+  // Keyed to the stage. The pro league only ever shows up once you are in it —
+  // this pulled from it regardless, so a fifteen-year-old played the Wranglers.
+  for (const g of L.games) g.opponent = randomOpponent(L.stage, defaultRng);
   if (L.games.length) { openGameDay(); return; }
   finishYear();
 };

@@ -7,7 +7,7 @@ import {
   proActions, doProAction, proMoney, careerLine,
 } from '../src/pro.js';
 import { defaultRng } from '../src/rng.js';
-import { randomName, randomTeam } from '../src/names.js';
+import { randomName, randomTeam, randomOpponent } from '../src/names.js';
 import { Progress } from '../src/progress.js';
 import { ROLES, teamChemistry, coachTrust, personById } from '../src/people.js';
 import {
@@ -79,7 +79,7 @@ function idcardHtml() {
   const L = S.life;
   const college = L.stage === 'college';
   const stars = starRating(L);
-  const where = college ? esc(L.program.school) : esc(L.background.name);
+  const where = college ? esc(L.program.school) : esc(L.school || L.background.name);
   const line2 = college
     ? (() => { const p = draftProjection(L); return `<span class="proj ${p.tone}">${esc(p.label)}</span>`; })()
     : `<span class="stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>`;
@@ -1030,7 +1030,7 @@ $('ageBtn').onclick = () => {
     // A pro plays unless he is not on a roster at all, so game day is keyed to
     // the minutes his rating earns rather than a school's rotation.
     P.games = P.rating >= 58 ? rollGameDay(S.life, defaultRng, 30) : [];
-    for (const g of P.games) g.opponent = randomTeam(defaultRng);
+    for (const g of P.games) g.opponent = randomOpponent('pro', defaultRng);
     if (P.games.length) { openGameDay(); return; }
     finishSeason();
     return;
@@ -1045,7 +1045,9 @@ $('ageBtn').onclick = () => {
   L.gameLog = [];
   const mins = projectedMinutes(L);
   L.games = mins >= 8 ? rollGameDay(L, defaultRng, mins) : [];
-  for (const g of L.games) g.opponent = randomTeam(defaultRng);
+  // Keyed to the stage. The pro league only ever shows up once you are in it —
+  // this pulled from it regardless, so a fifteen-year-old played the Wranglers.
+  for (const g of L.games) g.opponent = randomOpponent(L.stage, defaultRng);
   if (L.games.length) { openGameDay(); return; }
   finishYear();
 };

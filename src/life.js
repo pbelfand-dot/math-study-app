@@ -22,6 +22,7 @@ import { clamp } from './roll.js';
 import { potentialFor, draftOverallFor } from './overall.js';
 import { defaultRng } from './rng.js';
 import { rollCast, newRoster, teamChemistry, coachTrust, driftRelationships, personIn } from './people.js';
+import { randomHighSchool, randomCollege } from './names.js';
 import { rollYearEvents } from './events.js';
 import { effectiveCeiling } from './actions.js';
 
@@ -120,6 +121,9 @@ export function newLife(build, name, rng = defaultRng) {
     },
 
     background,
+    // The school he actually attends. It was never named, so high-school years
+    // in the log had nowhere to say where they happened.
+    school: randomHighSchool(rng),
     money: background.start + rng.int(400),
     nextPersonId: 0,
     people: [],
@@ -407,7 +411,7 @@ export function advanceYear(life, rng = defaultRng) {
     age: life.age,
     stage: stageAtStart,
     grade: playedGrade,
-    school: college ? prog.school : null,
+    school: college ? prog.school : life.school,
     height: after,
     ovr: overallNow(life),
     stars: starRating(life),
@@ -456,17 +460,20 @@ export function advanceYear(life, rng = defaultRng) {
 // not round numbers — before they were measured, eighteen percent of every
 // class was getting a blue-blood offer.
 // ---------------------------------------------------------------------------
+// Programme tiers. The NAME is generated per offer rather than drawn from three
+// fixed strings a tier, so the school you commit to is one you have not seen
+// before — and a rebuild after a transfer is not the same nine options again.
 const PROGRAMS = [
-  { tier: 'Blue blood', names: ['Kingsmere', 'Ashford State', 'Vance University'],
+  { tier: 'Blue blood',
     min: RECRUIT_CUTS.blueBlood, dev: 1.30, minutesBar: 54, exposure: 1.6,
     note: 'You would be the fourth-best player in your own recruiting class.' },
-  { tier: 'High major', names: ['Northgate A&M', 'Loomis Tech', 'St. Brannon'],
+  { tier: 'High major',
     min: RECRUIT_CUTS.highMajor, dev: 1.18, minutesBar: 49, exposure: 1.25,
     note: 'You will have to earn it, but the staff develops people.' },
-  { tier: 'Mid major', names: ['Cedar Falls', 'Harlow College', 'Pinehurst'],
+  { tier: 'Mid major',
     min: RECRUIT_CUTS.midMajor, dev: 1.05, minutesBar: 44, exposure: 0.85,
     note: 'A real role as a freshman, and the ball in your hands.' },
-  { tier: 'Small school', names: ['Delta Poly', 'Ironwood College', 'Junction State'],
+  { tier: 'Small school',
     min: RECRUIT_CUTS.smallSchool, dev: 0.92, minutesBar: 38, exposure: 0.5,
     note: 'They promise the ball from day one. Nobody is watching.' },
 ];
@@ -482,7 +489,7 @@ export function buildOffers(life, rng = defaultRng, { transfer = false } = {}) {
     if (transfer && life.program && p.tier === life.program.tier && rng.chance(0.5)) continue;
     offers.push({
       tier: p.tier,
-      school: rng.pick(p.names),
+      school: randomCollege(rng),
       development: p.dev,
       minutesBar: p.minutesBar,
       exposure: p.exposure,
