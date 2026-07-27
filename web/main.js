@@ -189,7 +189,7 @@ function closeSheet() {
 function trainTags(a) {
   if (!a.trains) return '';
   return Object.entries(a.trains)
-    .map(([k, w]) => [k, previewGain(S.life, k, w)])
+    .map(([k, w]) => [k, previewGain(S.life, k, w, a.mult ?? 1)])
     .sort((x, y) => y[1] - x[1])
     .map(([k, g]) => `<span class="tag ${g < 0.4 ? 'dim' : 'gain'}">${esc(LABELS[k])} ${g < 0.05 ? '—' : `+${g.toFixed(1)}`}</span>`)
     .join('');

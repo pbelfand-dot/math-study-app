@@ -1867,8 +1867,12 @@ function previewGain(life, key, weight = 1, mult = 1) {
   return room * trainRate(life, mult) * weight * falloffFor(life, key);
 }
 
+// Returns what it actually moved, per attribute. Callers use it to say so: a
+// session whose result is invisible is a session the player assumes did
+// nothing, and paying $900 for "A summer of extra work" with no number attached
+// is indistinguishable from paying $900 for nothing.
 function trainSkills(life, weights, mult = 1) {
-  const moved = [];
+  const moved = {};
   for (const [k, w] of Object.entries(weights)) {
     const gain = previewGain(life, k, w, mult);
     life.trainCounts[k] = (life.trainCounts[k] || 0) + 1;
@@ -1876,11 +1880,19 @@ function trainSkills(life, weights, mult = 1) {
     // the headroom above the rolled ceiling.
     life.lifetimeTraining = life.lifetimeTraining || {};
     life.lifetimeTraining[k] = (life.lifetimeTraining[k] || 0) + w;
-    if (gain <= 0) continue;
+    if (gain <= 0.02) continue;
     life.attrs[k] = clamp(life.attrs[k] + gain, 20, 99);
-    moved.push(k);
+    moved[k] = gain;
   }
   return moved;
+}
+
+// "Dunk +2.3, Handles +1.1" — the sentence a training result should end with.
+function gainSummary(moved) {
+  const parts = Object.entries(moved)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, g]) => `${SKILLS[k].label} +${g.toFixed(1)}`);
+  return parts.length ? parts.join(', ') : null;
 }
 
 const weakest = (life, n) =>
@@ -2326,7 +2338,13 @@ function focusActions(life) {
 // ---------------------------------------------------------------------------
 function actionsForPerson(life, p) {
   const out = [];
-  const push = (id, name, run, price = 0) => out.push({ id, name, price, run, person: p.id });
+  // Person actions are once a year like everything else. They were not filtered
+  // at all, so "Ask for money" and the trainer's summer could be repeated
+  // without limit inside a single year.
+  const push = (id, name, run, extra = {}) => {
+    if (life.doneThisYear.includes(id)) return;
+    out.push({ id, name, price: 0, run, person: p.id, ...extra });
+  };
 
   push('talk', 'Spend time together', (l, rng) => {
     nudge(p, 4 + rng.int(5));
@@ -2348,12 +2366,13 @@ function actionsForPerson(life, p) {
   }
 
   if (p.role === 'teammate') {
+    const gymWeights = Object.fromEntries(weakest(life, 2).map((k) => [k, 0.45]));
     push('runit', 'Get in the gym together', (l, rng) => {
       p.met++;
       nudge(p, 7 + rng.int(6));
-      trainSkills(l, Object.fromEntries(weakest(l, 2).map((k) => [k, 0.45])));
-      return { kind: 'note', text: `Worked out with ${p.name}. Both of you got better.` };
-    });
+      const got = gainSummary(trainSkills(l, gymWeights));
+      return { kind: 'note', text: `Worked out with ${p.name}.${got ? ` ${got}.` : ''}` };
+    }, { trains: gymWeights, wear: 6 });
     if (p.rel < 35) {
       push('confront', 'Have it out with him', (l, rng) => {
         p.met++;
@@ -2381,12 +2400,13 @@ function actionsForPerson(life, p) {
       nudge(p, -9);
       return { kind: 'bad', text: 'You asked for minutes. He did not take it well.' };
     });
+    const afterWeights = Object.fromEntries(weakest(life, 3).map((k) => [k, 0.4]));
     push('extra', 'Stay after every practice', (l, rng) => {
       p.met++;
       nudge(p, 9 + rng.int(6));
-      trainSkills(l, Object.fromEntries(weakest(l, 3).map((k) => [k, 0.4])));
-      return { kind: 'good', text: 'Last one out of the gym, all year. He noticed.' };
-    });
+      const got = gainSummary(trainSkills(l, afterWeights));
+      return { kind: 'good', text: `Last one out of the gym, all year. He noticed.${got ? ` ${got}.` : ''}` };
+    }, { trains: afterWeights, wear: 8 });
   }
 
   if (p.role === 'mother' || p.role === 'father') {
@@ -2404,13 +2424,19 @@ function actionsForPerson(life, p) {
   }
 
   if (p.role === 'trainer') {
+    // The one you PAY for, so it has to be the one that most obviously works:
+    // more attributes, a heavier weight on each, and its own multiplier on top
+    // of the flat bonus a trainer already gives every session in the gym.
+    const sessionWeights = Object.fromEntries(weakest(life, 4).map((k, i) => [k, i === 0 ? 1.15 : 0.9]));
     push('session', 'Extra sessions all summer', (l) => {
       p.met++;
       nudge(p, 5);
-      trainSkills(l, Object.fromEntries(weakest(l, 3).map((k) => [k, 0.8])), 1.15);
-      l.strain += 12;  // declared inline: person actions are built, not listed
-      return { kind: 'good', text: `A summer of extra work with ${p.name}.` };
-    }, 900);
+      const got = gainSummary(trainSkills(l, sessionWeights, 1.25));
+      return {
+        kind: 'good',
+        text: `A summer of extra work with ${p.name}.${got ? ` ${got}.` : ' Nothing left in those this year.'}`,
+      };
+    }, { price: 900, trains: sessionWeights, mult: 1.25, wear: 12 });
   }
 
   if (p.role === 'agent') {
@@ -5008,7 +5034,7 @@ function closeSheet() {
 function trainTags(a) {
   if (!a.trains) return '';
   return Object.entries(a.trains)
-    .map(([k, w]) => [k, previewGain(S.life, k, w)])
+    .map(([k, w]) => [k, previewGain(S.life, k, w, a.mult ?? 1)])
     .sort((x, y) => y[1] - x[1])
     .map(([k, g]) => `<span class="tag ${g < 0.4 ? 'dim' : 'gain'}">${esc(LABELS[k])} ${g < 0.05 ? '—' : `+${g.toFixed(1)}`}</span>`)
     .join('');
