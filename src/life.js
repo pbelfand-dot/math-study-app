@@ -23,6 +23,7 @@ import { potentialFor, draftOverallFor } from './overall.js';
 import { defaultRng } from './rng.js';
 import { rollCast, newRoster, teamChemistry, coachTrust, driftRelationships, personIn } from './people.js';
 import { rollYearEvents } from './events.js';
+import { effectiveCeiling } from './actions.js';
 
 export const START_AGE = 14;
 export const GRAD_AGE = 18;
@@ -138,7 +139,7 @@ export function newLife(build, name, rng = defaultRng) {
     trainCounts: {},
     yearLog: [],
     seenEvents: [],
-    pendingChoice: null,
+    choices: [],
 
     program: null,
     stock: 0, // pre-draft process: workouts, interviews, agency
@@ -370,7 +371,7 @@ export function advanceYear(life, rng = defaultRng) {
   rollEvents(life, rng, out);
   const rolled = rollYearEvents(life, rng);
   out.push(...rolled.passive);
-  life.choice = rolled.choice;
+  life.choices = rolled.queue;
   driftRelationships(life, rng);
 
   const entry = {
@@ -524,7 +525,10 @@ export function proBuildFrom(life) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
       const now = life.attrs[k];
-      const ceiling = life.build.skills[k];
+      // The soft ceiling, not the rolled one. A player who has already trained
+      // past his genetics keeps every point of it, and still has somewhere to
+      // go in the pro years.
+      const ceiling = effectiveCeiling(life, k);
       return [k, clamp(Math.round(now + Math.max(0, ceiling - now) * share), 25, 99)];
     }),
   );

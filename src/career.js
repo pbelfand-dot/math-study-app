@@ -20,7 +20,12 @@ function runDraft(b, draftOvr, potential, rng) {
   const guaranteed = !!b.archetype?.guaranteesDraft;
 
   if (hype < DRAFT_CUTOFF && !guaranteed) {
-    const signChance = clamp((hype - 46) / 52, 0, 0.42);
+    // Undrafted is not the end of it. The floor is deliberately non-zero: a
+    // camp invite, a two-way, a summer roster somewhere. Below it the maths
+    // said a player with a poor roll had EXACTLY zero chance of ever being
+    // seen, which is both wrong about basketball and a dead end to hand
+    // somebody who has just played eight years.
+    const signChance = clamp((hype - 44) / 54, 0.05, 0.45);
     return { drafted: false, pick: null, hype, signed: rng.chance(signChance), guaranteed: false };
   }
 

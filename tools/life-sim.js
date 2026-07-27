@@ -17,7 +17,7 @@ import { teamChemistry, coachTrust, personIn, peopleIn } from '../src/people.js'
 import {
   availableActions, actionsForPerson, doAction, blockedReason, focusActions,
 } from '../src/actions.js';
-import { CHOICES, resolveChoice } from '../src/events.js';
+import { CHOICES, PLAYS, resolveChoice } from '../src/events.js';
 import {
   newLife, advanceYear, overallNow, recruitScore, starRating,
   commit, declare, returnToSchool, proBuildFrom, GRAD_AGE, DRAFT_AGE_CAP,
@@ -49,12 +49,31 @@ const PREFERRED = {
 };
 
 function answerChoice(life, rng) {
-  if (!life.choice) return;
-  const c = life.choice;
-  const pick = Math.min(PREFERRED[c.id] ?? 0, c.options.length - 1);
-  const line = resolveChoice(life, c.id, pick, rng);
-  if (line && life.log.length) life.log[life.log.length - 1].events.push(line);
-  life.choice = null;
+  // Drain the whole queue. A year can raise a possession and a life question,
+  // and leaving either unanswered leaves the life stuck.
+  while (life.choices?.length) {
+    const c = life.choices[0];
+    // On a possession the stand-in takes the option resolved against whichever
+    // attribute it is currently best at — which is what a player does too.
+    const pick = c.kind === 'play'
+      ? bestPlayOption(life, c)
+      : Math.min(PREFERRED[c.id] ?? 0, c.options.length - 1);
+    const line = resolveChoice(life, c.kind, c.id, pick, rng);
+    if (line && life.log.length) life.log[life.log.length - 1].events.push(line);
+    life.choices.shift();
+  }
+}
+
+function bestPlayOption(life, c) {
+  const p = PLAYS.find((x) => x.id === c.id);
+  if (!p) return 0;
+  let best = 0;
+  let bestEdge = -Infinity;
+  p.options.forEach((o, i) => {
+    const edge = life.attrs[o.key] - o.diff;
+    if (edge > bestEdge) { bestEdge = edge; best = i; }
+  });
+  return best;
 }
 
 function playYear(life, rng) {
@@ -123,7 +142,7 @@ function playYear(life, rng) {
   // 5. Focused work on whatever has the most left in it, while the falloff and
   //    the body both still say yes.
   for (let i = 0; i < 4 && life.strain <= 58; i++) {
-    const best = focusActions(life).filter((a) => a.gain > 0.6).sort((a, b) => b.gain - a.gain)[0];
+    const best = focusActions(life).filter((a) => a.gain > 0.45).sort((a, b) => b.gain - a.gain)[0];
     if (!best) break;
     doAction(life, best, rng);
   }

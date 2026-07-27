@@ -59,10 +59,44 @@ export const sessionsLeft = (life, key) =>
 export const falloffFor = (life, key) =>
   REPEAT_FALLOFF[Math.min(life.trainCounts?.[key] || 0, REPEAT_FALLOFF.length - 1)];
 
+// The genetic ceiling is a CAP, not a stopper.
+//
+// It used to be a wall: at the rolled number the room hit zero, gains hit zero,
+// and the attribute was finished forever no matter what you did. That breaks
+// the project's own first rule — nothing is capped, some things are just
+// absurdly expensive in luck — and it left builds with low rolls mathematically
+// dead before they had played a game.
+//
+// So work above the ceiling keeps paying, into headroom that you earn: every
+// session you have ever spent on that attribute across the whole life raises
+// the level it will asymptote toward. Talent and work ethic set how much is
+// available. Nobody reaches the asymptote — that is the point of one — but the
+// number never stops moving, and a player who commits to one thing for eight
+// years ends up somewhere his genetics said he could not go.
+// Headroom is entirely EARNED, per attribute, from every session you have ever
+// spent on it. There is no free component on purpose: a flat bonus on all
+// twelve attributes is not "the cap can be broken", it is just a higher cap,
+// and it inflated the whole game — 42% of every life reaching a pro league.
+//
+// The curve is deliberately slow. A handful of sessions is worth almost
+// nothing; committing to one attribute across most of a life is worth ten or
+// twelve points above what you were dealt. So breaking a ceiling is real, and
+// it costs you the years you did not spend on anything else.
+export const EARNED_HEADROOM = 18;   // the asymptote, before talent scaling
+export const HEADROOM_TAU = 18;      // weighted sessions to reach ~63% of it
+
+export function headroomFor(life, key) {
+  const spent = life.lifetimeTraining?.[key] || 0;
+  const gift = clamp(0.45 + ((life.talent ?? 50) - 50) / 90 + (life.mentals.workEthic - 50) / 130, 0.25, 1.4);
+  return EARNED_HEADROOM * gift * (1 - Math.exp(-spent / HEADROOM_TAU));
+}
+
+export const effectiveCeiling = (life, key) => life.build.skills[key] + headroomFor(life, key);
+
 // What a session would actually add, in attribute points, right now. Returned
 // so the option can say so before it is taken instead of after.
 export function previewGain(life, key, weight = 1, mult = 1) {
-  const room = life.build.skills[key] - life.attrs[key];
+  const room = effectiveCeiling(life, key) - life.attrs[key];
   if (room <= 0) return 0;
   return room * trainRate(life, mult) * weight * falloffFor(life, key);
 }
@@ -72,6 +106,10 @@ function trainSkills(life, weights, mult = 1) {
   for (const [k, w] of Object.entries(weights)) {
     const gain = previewGain(life, k, w, mult);
     life.trainCounts[k] = (life.trainCounts[k] || 0) + 1;
+    // Lifetime sessions, which never reset with the year — this is what buys
+    // the headroom above the rolled ceiling.
+    life.lifetimeTraining = life.lifetimeTraining || {};
+    life.lifetimeTraining[k] = (life.lifetimeTraining[k] || 0) + w;
     if (gain <= 0) continue;
     life.attrs[k] = clamp(life.attrs[k] + gain, 20, 99);
     moved.push(k);
@@ -484,7 +522,8 @@ export const ACTIONS = [
 export function focusActions(life) {
   return SKILL_KEYS.map((k) => {
     const left = sessionsLeft(life, k);
-    const room = life.build.skills[k] - life.attrs[k];
+    const cap = life.build.skills[k];
+    const room = effectiveCeiling(life, k) - life.attrs[k];
     return {
       id: `focus:${k}`,
       cat: 'train',
@@ -497,7 +536,9 @@ export function focusActions(life) {
       now: Math.round(life.attrs[k]),
       gain: previewGain(life, k, 1),
       left,
-      maxed: room <= 0.5,
+      cap,
+      over: life.attrs[k] - cap, // how far past the rolled ceiling you already are
+      maxed: room <= 0.05,
       run: (l) => {
         const before = l.attrs[k];
         trainSkills(l, { [k]: 1 });

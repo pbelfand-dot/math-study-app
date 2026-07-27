@@ -32,12 +32,12 @@ const S = { life: null, prog: Progress.load(), career: null, verdict: null, wonB
 // ---------------------------------------------------------------------------
 // New life / resume
 // ---------------------------------------------------------------------------
-function startLife() {
+function startLife(name) {
   const rng = defaultRng;
   // The roll engine still runs in full — it is now describing genetics: the
   // height he finishes at and the ceiling on every attribute.
   const build = rollCompleteBuild(rng);
-  S.life = newLife(build, randomName(rng), rng);
+  S.life = newLife(build, (name || '').trim() || randomName(rng), rng);
   S.career = null;
   S.verdict = null;
   S.wonBadges = null;
@@ -65,7 +65,7 @@ function resumeOrStart() {
   render(true);
   // A life saved mid-question re-asks it. Otherwise the answer would be lost
   // and the year would move on having quietly skipped a decision.
-  if (S.life.choice) openChoice();
+  if (S.life.choices?.length) openChoice();
   else if (S.life.pending) openDecision();
 }
 
@@ -88,7 +88,28 @@ function idcardHtml() {
         &middot; OVR ${overallNow(L)} &middot; ${esc(L.teamRole)}</div>
       <div class="sub">${line2} &middot; ${where}</div>
     </div>
-    <div class="cash"><b>${money(L.money)}</b><span>Bank balance</span></div>`;
+    <div class="stack">
+      ${ppgHtml(L)}
+      <div class="cash"><b>${money(L.money)}</b><span>Bank balance</span></div>
+    </div>`;
+}
+
+// Scoring is the number the whole recruiting apparatus reacts to, so it belongs
+// on the front screen rather than buried in the season log. Last season big,
+// career average underneath, because "what am I averaging" and "what have I
+// averaged" are different questions and both get asked.
+function ppgHtml(L) {
+  const seasons = L.log.filter((y) => y.stats);
+  if (!seasons.length) return '<div class="cash ppg"><b>&mdash;</b><span>PPG</span></div>';
+  // The last season that actually produced a box score, not the last season
+  // full stop — a year lost to a cut or a redshirt should not blank out an
+  // average you spent three years building.
+  const last = seasons[seasons.length - 1].stats.ppg;
+  const career = seasons.reduce((a, y) => a + y.stats.ppg, 0) / seasons.length;
+  return `<div class="cash ppg">
+    <b>${last.toFixed(1)}</b>
+    <span>PPG &middot; ${career.toFixed(1)} career</span>
+  </div>`;
 }
 
 const BARS = [
@@ -201,22 +222,26 @@ function optRow(a, idx) {
 // is, how far your genetics let it go, what this session adds, and how many
 // more are worth taking this year.
 function focusRow(a, idx) {
-  const cap = S.life.build.skills[a.key];
   const spent = a.gain < 0.05;
+  // The rolled ceiling is a marker on the bar, not the end of it. Once you are
+  // past it the row says so, because "at your genetic ceiling" was a lie the
+  // moment the cap stopped being a wall.
+  const past = a.over > 0.5;
   return `<button class="opt focus" data-act="${idx}" type="button" ${spent ? 'disabled' : ''}>
     <span>
-      <span class="t">${esc(a.name)} <b class="num">${a.now}</b></span>
-      <span class="bar"><span class="now" style="width:${clamp(a.now, 0, 100)}%"></span>
-        <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span>
+      <span class="t">${esc(a.name)} <b class="num">${a.now}${
+        past ? `<i class="over">+${a.over.toFixed(0)}</i>` : ''
+      }</b></span>
+      <span class="bar"><span class="now ${past ? 'past' : ''}" style="width:${clamp(a.now, 0, 100)}%"></span>
+        <span class="cap" style="left:${clamp(a.cap, 0, 99)}%"></span></span>
       <span class="tags">
         ${
-          a.maxed
-            ? '<span class="tag dim">At your genetic ceiling</span>'
-            : spent
-              ? '<span class="tag dim">Nothing left in it this year</span>'
-              : `<span class="tag gain">+${a.gain.toFixed(1)} this session</span>
-                 <span class="tag ${a.left <= 1 ? 'wear' : ''}">${a.left} more worth taking</span>`
+          spent
+            ? '<span class="tag dim">Nothing left in it this year</span>'
+            : `<span class="tag gain">+${a.gain.toFixed(1)} this session</span>
+               <span class="tag ${a.left <= 1 ? 'wear' : ''}">${a.left} more worth taking</span>`
         }
+        ${past ? '<span class="tag past">Past what you were dealt</span>' : ''}
       </span>
     </span>
     <span class="go">&rsaquo;</span>
@@ -274,7 +299,7 @@ function drawSheet() {
     body.innerHTML = acts.map(optRow).join('');
   } else if (kind === 'stats') {
     title.textContent = 'You';
-    hint.textContent = 'The bar is where you are. The notch is as far as your genetics go.';
+    hint.textContent = 'The bar is where you are. The notch is what you were dealt — you can train past it, and it costs years.';
     body.innerHTML = statsSheetHtml();
   } else if (kind === 'vault') {
     title.textContent = 'Vault';
@@ -340,27 +365,30 @@ function wireSheet() {
 // ---------------------------------------------------------------------------
 function openChoice() {
   const L = S.life;
-  const c = L.choice;
+  const c = L.choices?.[0];
+  if (!c) { if (L.pending) openDecision(); return; }
   S.sheet = { kind: 'choice' };
   $('sheetBack').classList.add('off');
   $('sheetTitle').textContent = c.title;
-  $('sheetHint').textContent = '';
+  $('sheetHint').textContent = c.kind === 'play' ? 'One possession.' : '';
   $('sheetBody').innerHTML = `
     <p class="choice-text">${esc(c.text)}</p>
-    ${c.options.map((label, i) => `<button class="btn choice" data-opt="${i}" type="button">${esc(label)}</button>`).join('')}`;
+    ${c.options.map((label, i) => `<button class="btn choice" data-opt="${i}" type="button">${esc(label)}</button>`).join('')}
+    ${L.choices.length > 1 ? `<p class="note" style="text-align:center;margin-top:6px">${L.choices.length - 1} more to come</p>` : ''}`;
   $('sheet').classList.remove('hidden');
   $('scrim').classList.remove('hidden');
   for (const el of $('sheetBody').querySelectorAll('[data-opt]')) {
     el.onclick = () => {
-      const line = resolveChoice(L, c.id, Number(el.dataset.opt), defaultRng);
+      const line = resolveChoice(L, c.kind, c.id, Number(el.dataset.opt), defaultRng);
       // The outcome belongs to the year that asked, so it goes on that entry
       // rather than opening the next one with a consequence of the last.
       if (line && L.log.length) L.log[L.log.length - 1].events.push(line);
-      L.choice = null;
+      L.choices.shift();
       Progress.saveLife(L);
       closeSheet();
       render(true);
-      if (L.pending) openDecision();
+      if (L.choices.length) openChoice();
+      else if (L.pending) openDecision();
     };
   }
 }
@@ -522,9 +550,10 @@ function statsSheetHtml() {
       ${SKILL_KEYS.map((k) => {
         const now = Math.round(L.attrs[k]);
         const cap = L.build.skills[k];
+        const past = now > cap;
         return `<div class="attr">
-          <span class="k">${LABELS[k]}</span><span class="v">${now}</span>
-          <span class="bar"><span class="now" style="width:${now}%"></span>
+          <span class="k">${LABELS[k]}</span><span class="v">${now}${past ? ` <i class="over">+${now - cap}</i>` : ''}</span>
+          <span class="bar"><span class="now ${past ? 'past' : ''}" style="width:${now}%"></span>
             <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span></div>`;
       }).join('')}
     </div>
@@ -616,13 +645,13 @@ function render(scrollToEnd = false) {
   // The + changes job depending on what the game is waiting for: play the year,
   // answer a decision, or start again once it is all over.
   const age = $('ageBtn');
-  const waiting = !!L.pending || !!L.choice;
+  const waiting = !!L.pending || !!L.choices?.length;
   age.classList.toggle('decide', waiting || over);
   age.querySelector('.lb').textContent = over ? 'New' : waiting ? 'Decide' : 'Age';
   age.querySelector('.plus').textContent = over ? '↻' : waiting ? '?' : '+';
 
   for (const el of document.querySelectorAll('[data-cat]')) {
-    el.disabled = over || !!L.pending || !!L.choice;
+    el.disabled = over || !!L.pending || !!L.choices?.length;
     // A category holding something urgent says so, rather than making you find
     // out by opening all four.
     const cat = el.dataset.cat;
@@ -630,7 +659,7 @@ function render(scrollToEnd = false) {
       (cat === 'school' && L.meters.grades < 40) ||
       (cat === 'train' && L.injured) ||
       (cat === 'people' && (coachTrust(L) < 28 || teamChemistry(L) < 30));
-    el.dataset.alert = String(!over && !L.pending && !L.choice && !!alert);
+    el.dataset.alert = String(!over && !L.pending && !L.choices?.length && !!alert);
   }
 
   if (scrollToEnd) requestAnimationFrame(() => { $('feed').scrollTop = $('feed').scrollHeight; });
@@ -643,14 +672,14 @@ for (const el of document.querySelectorAll('[data-cat]')) {
   el.onclick = () => openSheet(el.dataset.cat);
 }
 $('ageBtn').onclick = () => {
-  if (S.career) { startLife(); return; }
-  if (S.life.choice) { openChoice(); return; }
+  if (S.career) { openNewLife(); return; }
+  if (S.life.choices?.length) { openChoice(); return; }
   if (S.life.pending) { openDecision(); return; }
   advanceYear(S.life, defaultRng);
   Progress.saveLife(S.life);
   closeSheet();
   render(true);
-  if (S.life.choice) openChoice();
+  if (S.life.choices?.length) openChoice();
   else if (S.life.pending) openDecision();
 };
 $('sheetClose').onclick = () => {
@@ -682,7 +711,30 @@ $('menuBtn').onclick = () => {
   $('mStats').onclick = () => openSheet('stats');
   $('mVault').onclick = () => openSheet('vault');
   $('mBadges').onclick = () => openSheet('badges');
-  $('mNew').onclick = startLife;
+  $('mNew').onclick = openNewLife;
 };
+
+// Name him yourself, or take the one the game offers. The field is pre-filled
+// so it is never a blank box you have to solve before you can play.
+function openNewLife() {
+  const suggested = randomName(defaultRng);
+  S.sheet = { kind: 'newlife' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'A new life';
+  $('sheetHint').textContent = 'Fourteen years old. Everything else is already decided and none of it is visible.';
+  $('sheetBody').innerHTML = `
+    <label class="field">
+      <span>Name</span>
+      <input id="nameBox" type="text" maxlength="28" value="${esc(suggested)}"
+        autocomplete="off" autocapitalize="words" spellcheck="false" />
+    </label>
+    <button class="btn" id="reroll" type="button">Give me another one</button>
+    <button class="btn primary" id="beginLife" type="button" style="margin-top:8px">Start</button>`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  $('reroll').onclick = () => { $('nameBox').value = randomName(defaultRng); };
+  $('beginLife').onclick = () => startLife($('nameBox').value);
+  $('nameBox').onkeydown = (e) => { if (e.key === 'Enter') startLife($('nameBox').value); };
+}
 
 resumeOrStart();

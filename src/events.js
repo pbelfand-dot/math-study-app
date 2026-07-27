@@ -16,6 +16,7 @@
 import { clamp } from './roll.js';
 import { SKILL_KEYS } from './constants.js';
 import { peopleIn, personIn, nudge, teamChemistry, coachTrust, makePerson } from './people.js';
+import { effectiveCeiling } from './actions.js';
 
 // Prefixed because the bundler flattens every module into one scope and a
 // generic private helper name collides with the identical one next door.
@@ -37,7 +38,7 @@ const stock = (l, n) => { l.stock = clamp(l.stock + n, -40, 40); };
 // windfall on a maxed-out skill is correctly worth almost nothing.
 function bump(life, keys, share) {
   for (const k of keys) {
-    const room = life.build.skills[k] - life.attrs[k];
+    const room = effectiveCeiling(life, k) - life.attrs[k];
     if (room > 0) life.attrs[k] = clamp(life.attrs[k] + room * share, 20, 99);
   }
 }
@@ -590,6 +591,174 @@ export const CHOICES = [
 ];
 
 // ---------------------------------------------------------------------------
+// In-game moments
+//
+// The other tables are about a life. These are about a possession: you have the
+// ball, here is the situation, what do you do. Each option is resolved against
+// the attribute it actually depends on, so the numbers you spent four years
+// training are the numbers that decide whether it goes in — which is the only
+// way an attribute ever feels like anything rather than reading like a
+// spreadsheet cell.
+//
+// `diff` is what the attribute is measured against, and PARITY IS A COIN FLIP:
+// an attribute exactly equal to the difficulty makes the play half the time.
+// The first pass set difficulties against pro-level numbers and measured a 24%
+// make rate for a player choosing his own best option, which is not a decision,
+// it is a punishment. Difficulties are keyed to what a teenager actually has.
+// ---------------------------------------------------------------------------
+function attempt(life, key, diff, rng) {
+  const p = clamp(0.5 + (life.attrs[key] - diff) / 70, 0.05, 0.93);
+  return rng.chance(p);
+}
+
+// A made play is worth a little of everything a good game is worth. A miss
+// costs the coach's patience more than anything else, because he is the one
+// deciding whether you get the ball again.
+function playOutcome(life, key, made, rng, madeText, missText) {
+  if (made) {
+    bump(life, [key], 0.05);
+    hype(life, 5); happy(life, 7);
+    nudge(personIn(life, 'coach'), 4);
+    life.playsMade = (life.playsMade || 0) + 1;
+    return { kind: 'good', text: madeText };
+  }
+  happy(life, -5);
+  nudge(personIn(life, 'coach'), -4);
+  life.playsMissed = (life.playsMissed || 0) + 1;
+  return { kind: 'bad', text: missText };
+}
+
+const played = (l) => l.lastMinutes >= 8;
+
+export const PLAYS = [
+  {
+    id: 'topofkey', weight: 10, when: played,
+    title: 'Top of the key',
+    text: () => 'You catch it with a foot on the line and a defender closing hard. Two seconds on the shot clock.',
+    options: [
+      { label: 'Rise and shoot it', key: 'three', diff: 42,
+        made: 'You shot it over the closeout. Nothing but net, and the bench lost it.',
+        miss: 'You shot it over the closeout. Front rim, and the break went the other way.' },
+      { label: 'Pump fake and drive', key: 'handles', diff: 39,
+        made: 'You put the ball on the floor, got by him, and finished through contact.',
+        miss: 'You put the ball on the floor and he stripped it clean.' },
+      { label: 'Swing it to the corner', key: 'playmaking', diff: 27,
+        made: 'You made the extra pass. Corner three, and the assist was the best part of it.',
+        miss: 'You made the extra pass a beat late and it went out of bounds off his hands.' },
+    ],
+  },
+  {
+    id: 'transition', weight: 10, when: played,
+    title: 'Two on one',
+    text: () => 'Long rebound, you are gone, and there is one defender back with your teammate filling the lane.',
+    options: [
+      { label: 'Take off from the dotted line', key: 'dunk', diff: 45,
+        made: 'You went from the dotted line and put it through him. The gym stopped.',
+        miss: 'You went from the dotted line and caught the back of the rim. Everyone saw it.' },
+      { label: 'Lay it in', key: 'finishing', diff: 25,
+        made: 'You took the two that was there. Nobody writes about it and it counts the same.',
+        miss: 'You took the easy one and rushed it off the glass.' },
+      { label: 'Drop it off', key: 'playmaking', diff: 31,
+        made: 'You froze the last man and dropped it off. Easiest two he will ever get.',
+        miss: 'You waited a half-second too long and the pass went into his feet.' },
+    ],
+  },
+  {
+    id: 'postup', weight: 8, when: (l) => played(l) && (l.adultHeight >= 77 || l.attrs.post > 45),
+    title: 'On the block',
+    text: () => 'You have got him sealed on the left block and the entry pass is coming.',
+    options: [
+      { label: 'Turn and face', key: 'midrange', diff: 39,
+        made: 'You turned, faced, and shot it over him before he was set.',
+        miss: 'You turned into a double team you did not see.' },
+      { label: 'Back him down', key: 'post', diff: 37,
+        made: 'You backed him under the rim and went right through his chest.',
+        miss: 'You backed him down into nothing and threw up a prayer.' },
+      { label: 'Kick it back out', key: 'playmaking', diff: 23,
+        made: 'You drew the double and found the open man. Good basketball.',
+        miss: 'You forced it back out and it got picked off at the arc.' },
+    ],
+  },
+  {
+    id: 'lastshot', weight: 9, when: played,
+    title: 'Down one, six seconds',
+    text: () => 'The play is drawn up for you. Everyone in the gym knows it is drawn up for you.',
+    options: [
+      { label: 'Pull up from three to win it', key: 'three', diff: 51,
+        made: 'You pulled up from four feet behind the line and won it outright.',
+        miss: 'You pulled up from four feet behind the line and it never had a chance.' },
+      { label: 'Get to the rim to tie it', key: 'finishing', diff: 39,
+        made: 'You got downhill, drew the foul, and made them both. Overtime.',
+        miss: 'You got downhill into three bodies and it got blocked out of bounds.' },
+      { label: 'Give it up to the open man', key: 'playmaking', diff: 33,
+        made: 'You gave it up. He made it. You have never been happier about a pass.',
+        miss: 'You gave it up and he missed. Everyone remembered who passed.' },
+    ],
+  },
+  {
+    id: 'iso', weight: 7, when: (l) => played(l) && l.build.mentality >= 48,
+    title: 'Cleared out',
+    text: () => 'Coach clears the side for you. It is you and him and thirty feet of nothing.',
+    options: [
+      { label: 'Cross him over', key: 'handles', diff: 45,
+        made: 'You took him left, came back right, and he sat down. The bench cleared.',
+        miss: 'You took him left, he stayed, and you dribbled it off your own foot.' },
+      { label: 'Rise over him', key: 'midrange', diff: 42,
+        made: 'You did not need to beat him. You just shot it over him.',
+        miss: 'You settled for a contested two and it was ugly.' },
+      { label: 'Give it up and cut', key: 'playmaking', diff: 29,
+        made: 'You gave it up, cut behind him, and got it back at the rim.',
+        miss: 'You gave it up and stood there. The possession died.' },
+    ],
+  },
+  {
+    id: 'defense', weight: 8, when: played,
+    title: 'Their best player',
+    text: () => 'Coach puts you on their best player for the last four minutes. He has 28.',
+    options: [
+      { label: 'Pressure him full court', key: 'perimeterD', diff: 45,
+        made: 'You picked him up full court and he did not touch it again.',
+        miss: 'You picked him up full court and he went by you twice.' },
+      { label: 'Sit back and contest', key: 'perimeterD', diff: 31,
+        made: 'You gave him the first step and took away everything after it.',
+        miss: 'You gave him space and he made you pay from three.' },
+      { label: 'Go for the steal', key: 'speed', diff: 49,
+        made: 'You jumped the passing lane and took it the other way.',
+        miss: 'You gambled, missed, and gave up a layup nobody had to work for.' },
+    ],
+  },
+  {
+    id: 'rimprotect', weight: 7, when: (l) => played(l) && l.adultHeight >= 76,
+    title: 'He is coming down the lane',
+    text: () => 'Their guard has beaten his man and there is nothing between him and the rim except you.',
+    options: [
+      { label: 'Meet him at the top', key: 'block', diff: 45,
+        made: 'You met him at the top and put it into the third row.',
+        miss: 'You met him at the top, missed it entirely, and fouled him hard.' },
+      { label: 'Stand your ground', key: 'interiorD', diff: 37,
+        made: 'You stood there, took the contact, and drew the charge.',
+        miss: 'You stood there and he went straight over you.' },
+      { label: 'Get out of the way', key: 'rebounding', diff: 21,
+        made: 'You conceded the two and got the rebound out clean. Not heroic. Correct.',
+        miss: 'You conceded the two and did not even get the ball back.' },
+    ],
+  },
+  {
+    id: 'freethrows', weight: 6, when: played,
+    title: 'Two shots, tie game',
+    text: () => 'You get fouled with the game level and one second left. The gym is very loud.',
+    options: [
+      { label: 'Same routine as always', key: 'midrange', diff: 33,
+        made: 'Same routine. Both of them. You did not hear a thing.',
+        miss: 'Same routine, and the first one was short. You knew immediately.' },
+      { label: 'Step off and reset', key: 'midrange', diff: 39,
+        made: 'You stepped off, breathed, stepped back on, and buried them.',
+        miss: 'You stepped off, thought about it too long, and short-armed it.' },
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Rolling a year
 // ---------------------------------------------------------------------------
 function pickWeighted(pool, rng) {
@@ -599,9 +768,11 @@ function pickWeighted(pool, rng) {
   return pool[pool.length - 1];
 }
 
-// Two to four things happen in a year, and one of them can be a question. The
-// same event cannot fire twice in one year, and `seen` keeps the once-in-a-life
-// beats from repeating.
+// Two to four things happen in a year. On top of that a year can ask you up to
+// two questions — one about the life, one about a possession — so they come
+// back as a QUEUE rather than a single slot. A year where you played and also
+// had something happen off the floor should present both, in order, instead of
+// silently dropping one.
 export function rollYearEvents(life, rng) {
   const passive = [];
   const seen = life.seenEvents || (life.seenEvents = []);
@@ -617,25 +788,42 @@ export function rollYearEvents(life, rng) {
     if (line) passive.push(line);
   }
 
-  // The question, if there is one to ask.
-  let choice = null;
-  if (rng.chance(0.62)) {
+  const queue = [];
+
+  // A possession first — it belongs to the season that just finished.
+  if (rng.chance(0.78)) {
+    const ppool = PLAYS.filter((p) => p.when(life));
+    if (ppool.length) {
+      const p = pickWeighted(ppool, rng);
+      queue.push({
+        kind: 'play', id: p.id, title: p.title, text: p.text(life),
+        options: p.options.map((o) => o.label),
+      });
+    }
+  }
+
+  // Then the life, if it has something to ask.
+  if (rng.chance(0.55)) {
     const cpool = CHOICES.filter((c) => !seen.includes(c.id) && c.when(life));
     if (cpool.length) {
       const c = pickWeighted(cpool, rng);
       seen.push(c.id);
-      choice = { id: c.id, title: c.title, text: c.text(life), options: c.options.map((o) => o.label) };
-      life.pendingChoice = c.id;
+      queue.push({ kind: 'life', id: c.id, title: c.title, text: c.text(life), options: c.options.map((o) => o.label) });
     }
   }
-  return { passive, choice };
+  return { passive, queue };
 }
 
-export function resolveChoice(life, choiceId, optionIndex, rng) {
-  const c = CHOICES.find((x) => x.id === choiceId);
-  life.pendingChoice = null;
-  if (!c) return null;
-  const opt = c.options[optionIndex];
+export function resolveChoice(life, kind, id, optionIndex, rng) {
+  if (kind === 'play') {
+    const p = PLAYS.find((x) => x.id === id);
+    const opt = p?.options[optionIndex];
+    if (!opt) return null;
+    const made = attempt(life, opt.key, opt.diff, rng);
+    return playOutcome(life, opt.key, made, rng, opt.made, opt.miss);
+  }
+  const c = CHOICES.find((x) => x.id === id);
+  const opt = c?.options[optionIndex];
   if (!opt) return null;
   return opt.run(life, rng) || { kind: 'note', text: opt.label };
 }

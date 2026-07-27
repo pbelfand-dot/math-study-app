@@ -92,7 +92,12 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .idcard .proj { font-weight: 700; }
 .idcard .proj.good { color: var(--good); }
 .idcard .proj.bad { color: var(--bad); }
+/* Bank balance and scoring average stack in the corner. PPG is the number the
+   whole recruiting apparatus reacts to, so it sits where it can be read at a
+   glance rather than inside the season log. */
+.idcard .stack { display: grid; gap: 4px; justify-items: end; }
 .idcard .cash { text-align: right; }
+.idcard .cash.ppg b { color: var(--accent); }
 .idcard .cash b { display: block; font-size: 16px; font-weight: 750; color: var(--good); }
 .idcard .cash span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
 
@@ -218,6 +223,11 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .tag.gain { background: #dcfce7; color: #15803d; }
 .tag.dim { background: #eef1f6; color: var(--muted); }
 .tag.wear { background: #ffedd5; color: #c2410c; }
+/* Past the rolled ceiling. Deliberately loud — it is the rarest thing a player
+   can do to a number and it should not read as ordinary progress. */
+.tag.past { background: #f3e8ff; color: #7c3aed; }
+.over { font-style: normal; font-size: 11px; font-weight: 800; color: var(--t3); }
+.opt.focus .now.past, .attr .now.past { background: linear-gradient(90deg, var(--accent) 70%, var(--t3)); }
 
 /* A focused-training row carries its own progress bar. */
 .opt.focus .t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -231,6 +241,16 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 /* A question the year asks. */
 .choice-text { font-size: 15px; line-height: 1.55; color: var(--ink); padding: 2px 4px 12px; }
+
+/* Name entry on a new life. */
+.field { display: grid; gap: 5px; margin-bottom: 10px; }
+.field span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.field input {
+  font: inherit; font-size: 16px; font-weight: 650; color: var(--ink);
+  padding: 12px 13px; border: 1.5px solid var(--line); border-radius: 11px;
+  background: var(--surface-2); width: 100%; min-width: 0;
+}
+.field input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 .btn.choice { margin-bottom: 8px; text-align: left; border-color: var(--accent); color: var(--deep); background: var(--accent-soft); }
 .opt .go { font-size: 20px; color: var(--accent); }
 

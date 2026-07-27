@@ -72,6 +72,36 @@ four. Money buys reliability and it buys the top rung. It does not buy
 development, and the option you cannot afford is shown blocked with its price
 rather than hidden, so you can see what you are missing.
 
+## Possessions
+
+Every season you played puts you in a game situation and asks what you do. Each
+option is resolved against **the attribute it actually depends on**, so the
+numbers you spent four years training are the numbers that decide whether it
+goes in:
+
+> **Top of the key** — You catch it with a foot on the line and a defender
+> closing hard. Two seconds on the shot clock.
+> *Rise and shoot it* (three) · *Pump fake and drive* (handles) · *Swing it to
+> the corner* (playmaking)
+
+Eight scenarios, 23 options between them: transition two-on-ones, the last shot
+down one, an isolation your coach cleared out for you, guarding their best
+player, protecting the rim, two free throws with the game level. Parity is a
+coin flip — an attribute exactly equal to the difficulty makes the play half the
+time — so the same possession is a different decision for every build.
+
+Measured over 4,000 players facing the same pool:
+
+| how you pick | make rate |
+|---|---|
+| the flashiest option every time | 45% |
+| the safest option every time | 68% |
+| the one your attributes are best at | 72% |
+
+Taking off from the dotted line is a real gamble. Knowing what you are actually
+good at is the best play in the game, and the only way to know is to have
+looked.
+
 ## Things happen to you
 
 Two kinds, in `src/events.js`, and both read your situation rather than firing at
@@ -95,6 +125,42 @@ choice.
 Two to four things happen every year, and roughly two years in three ask you
 something. Verified across 2,000 simulated lives: every entry in both tables
 fires, and the once-in-a-life beats never repeat.
+
+## The ceiling is a cap, not a stopper
+
+The rolled ceilings used to be a wall: at the number the room hit zero, gains
+hit zero, and the attribute was finished forever. That broke this project's own
+first rule — *nothing is capped, some things are just absurdly expensive in
+luck* — and it left low rolls mathematically dead before they had played a game.
+
+Work above the ceiling now keeps paying, into **headroom you earn**: every
+session ever spent on that attribute raises the level it asymptotes toward, and
+talent and work ethic set how much is available. There is no free component,
+deliberately — a flat bonus on all twelve attributes is not "the cap can be
+broken", it is just a higher cap, and when it was tried it inflated the whole
+game to 42% of every life reaching a pro league.
+
+Measured across 600 pairs of lives:
+
+| | points above the rolled ceiling |
+|---|---|
+| ground one attribute all life | median **+2.3**, p90 **+6.9**, max **+12.3** |
+| spread across everything | **−9.0** on that attribute |
+
+So breaking a ceiling is real, and it costs you the years you did not spend on
+anything else. Once you are past it the row says *Past what you were dealt*,
+because "at your genetic ceiling" was a lie the moment the cap stopped being a
+wall.
+
+**And nobody is written off.** The undrafted signing chance has a 5% floor — a
+camp invite, a two-way, a summer roster somewhere. Below it the maths said a
+poor roll had *exactly zero* chance of ever being seen, which is both wrong
+about basketball and a dead end to hand someone who just played eight years. By
+genetic band, the share of lives that reach a pro league:
+
+| true ceiling | 0-35 | 35-45 | 45-55 | 55-65 | 65-80 | 80+ |
+|---|---|---|---|---|---|---|
+| made the league | 6.1% | 7.3% | 22.0% | 52.5% | 87.1% | 99.0% |
 
 ## The slider nobody sees
 
@@ -366,14 +432,15 @@ shooting-and-IQ builds at `dependence <= 0.85` finish at 32.6.
 | four-star | 8.3% | |
 | blue-blood offer in hand | 6.6% | |
 | no offer at all | 24.3% | prep year / overseas is always there |
-| genetic ceiling realised by 22 | 90% median | |
-| drafted | 15.9% | 21.3% for the raw genetics, unplayed |
-| made the league | 19.2% | 25.4% raw |
-| all-star selections per life | 0.08 | |
+| genetic ceiling realised by 22 | 93% median | |
+| drafted | 26.2% | 21.9% for the raw genetics, unplayed |
+| made the league | 33.3% | 29.0% raw |
+| all-star selections per life | 0.17 | |
 
 The number that matters most is the conditional one. **Of lives whose genetics were
 actually there — a true ceiling of 80 or better — 97% get drafted and each averages
-2.4 all-star selections.** A pipeline that loses gifted players is worse than one that
+3.8 all-star selections.** A played life now beats the raw unplayed build, which
+is the whole point of a ceiling you can train past. A pipeline that loses gifted players is worse than one that
 is merely stingy, and before the college stage existed this engine lost nearly all of
 them: four years of high school closed too little of the genetic gap, so the median
 build reaching the draft projected to a **35** and essentially nobody turned pro.

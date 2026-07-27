@@ -220,7 +220,12 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .idcard .proj { font-weight: 700; }
 .idcard .proj.good { color: var(--good); }
 .idcard .proj.bad { color: var(--bad); }
+/* Bank balance and scoring average stack in the corner. PPG is the number the
+   whole recruiting apparatus reacts to, so it sits where it can be read at a
+   glance rather than inside the season log. */
+.idcard .stack { display: grid; gap: 4px; justify-items: end; }
 .idcard .cash { text-align: right; }
+.idcard .cash.ppg b { color: var(--accent); }
 .idcard .cash b { display: block; font-size: 16px; font-weight: 750; color: var(--good); }
 .idcard .cash span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
 
@@ -346,6 +351,11 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .tag.gain { background: #dcfce7; color: #15803d; }
 .tag.dim { background: #eef1f6; color: var(--muted); }
 .tag.wear { background: #ffedd5; color: #c2410c; }
+/* Past the rolled ceiling. Deliberately loud — it is the rarest thing a player
+   can do to a number and it should not read as ordinary progress. */
+.tag.past { background: #f3e8ff; color: #7c3aed; }
+.over { font-style: normal; font-size: 11px; font-weight: 800; color: var(--t3); }
+.opt.focus .now.past, .attr .now.past { background: linear-gradient(90deg, var(--accent) 70%, var(--t3)); }
 
 /* A focused-training row carries its own progress bar. */
 .opt.focus .t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -359,6 +369,16 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 /* A question the year asks. */
 .choice-text { font-size: 15px; line-height: 1.55; color: var(--ink); padding: 2px 4px 12px; }
+
+/* Name entry on a new life. */
+.field { display: grid; gap: 5px; margin-bottom: 10px; }
+.field span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.field input {
+  font: inherit; font-size: 16px; font-weight: 650; color: var(--ink);
+  padding: 12px 13px; border: 1.5px solid var(--line); border-radius: 11px;
+  background: var(--surface-2); width: 100%; min-width: 0;
+}
+.field input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 .btn.choice { margin-bottom: 8px; text-align: left; border-color: var(--accent); color: var(--deep); background: var(--accent-soft); }
 .opt .go { font-size: 20px; color: var(--accent); }
 
@@ -1731,6 +1751,747 @@ function driftRelationships(life, rng) {
   }
 }
 
+/* ===== src/actions.js ===== */
+// What you can do with a year.
+//
+// The old design put every option on one screen as a fixed list of slots, which
+// made the whole game visible at a glance and therefore solvable at a glance.
+// This replaces it with a time budget and a catalogue where most entries are
+// CONDITIONAL: an action only appears when your situation calls for it. You do
+// not see "Apologise to the coach" until you have a coach who is angry with
+// you, or "Take a redshirt" until you are buried on a bench. Finding out that an
+// option exists is part of the game, the same way it is in life.
+//
+// Four categories, matching the four buttons around the + in the UI.
+//
+// There is no time budget. Every action can be taken once a year and that is the
+// only bookkeeping — an abstract "42% of the year" tax on each button turned
+// every decision into arithmetic. What actually limits a year is the same set of
+// things that limits a real one: money, a body that accumulates wear and then
+// breaks, grades that decay while you are in the gym, and people who drift if
+// you never turn up. Doing everything is allowed. It is just a good way to blow
+// out a knee.
+
+
+
+
+
+const CATEGORIES = [
+  { id: 'train', name: 'Train', hint: 'The gym. Where the ability comes from.' },
+  { id: 'school', name: 'School', hint: 'Eligibility, and the mind the game runs on.' },
+  { id: 'people', name: 'People', hint: 'Everyone who decides something about you.' },
+  { id: 'life', name: 'Life', hint: 'Money, health, exposure, and being a person.' },
+];
+
+// Named for its module. Every module's top level shares one scope once the
+// bundler flattens them, so a generic private helper name is a landmine.
+const cash = (n) => `$${Math.round(n).toLocaleString()}`;
+const isCollege = (l) => l.stage === 'college';
+const isHS = (l) => l.stage === 'highschool';
+
+// How much of the remaining gap ONE session closes, before diminishing returns.
+// Work ethic and the hidden talent slider both scale it, a trainer or a college
+// staff multiplies it, and none of the three are things you can read off the
+// screen while you are deciding.
+function trainRate(life, mult = 1) {
+  return (
+    0.155 *
+    (0.55 + life.mentals.workEthic / 110) *
+    (0.62 + (life.talent ?? 50) / 130) *
+    (life.program?.development ?? 1) *
+    (personIn(life, 'trainer') ? 1.22 : 1) *
+    mult
+  );
+}
+
+// The fourth session on the same attribute in the same year is worth nothing.
+// This is what stops "train the same number every year" from being the whole
+// game, and it is stated in the UI rather than left to be discovered.
+const REPEAT_FALLOFF = [1, 0.5, 0.2, 0];
+const sessionsLeft = (life, key) =>
+  Math.max(0, REPEAT_FALLOFF.length - 1 - (life.trainCounts?.[key] || 0));
+const falloffFor = (life, key) =>
+  REPEAT_FALLOFF[Math.min(life.trainCounts?.[key] || 0, REPEAT_FALLOFF.length - 1)];
+
+// The genetic ceiling is a CAP, not a stopper.
+//
+// It used to be a wall: at the rolled number the room hit zero, gains hit zero,
+// and the attribute was finished forever no matter what you did. That breaks
+// the project's own first rule — nothing is capped, some things are just
+// absurdly expensive in luck — and it left builds with low rolls mathematically
+// dead before they had played a game.
+//
+// So work above the ceiling keeps paying, into headroom that you earn: every
+// session you have ever spent on that attribute across the whole life raises
+// the level it will asymptote toward. Talent and work ethic set how much is
+// available. Nobody reaches the asymptote — that is the point of one — but the
+// number never stops moving, and a player who commits to one thing for eight
+// years ends up somewhere his genetics said he could not go.
+// Headroom is entirely EARNED, per attribute, from every session you have ever
+// spent on it. There is no free component on purpose: a flat bonus on all
+// twelve attributes is not "the cap can be broken", it is just a higher cap,
+// and it inflated the whole game — 42% of every life reaching a pro league.
+//
+// The curve is deliberately slow. A handful of sessions is worth almost
+// nothing; committing to one attribute across most of a life is worth ten or
+// twelve points above what you were dealt. So breaking a ceiling is real, and
+// it costs you the years you did not spend on anything else.
+const EARNED_HEADROOM = 18;   // the asymptote, before talent scaling
+const HEADROOM_TAU = 18;      // weighted sessions to reach ~63% of it
+
+function headroomFor(life, key) {
+  const spent = life.lifetimeTraining?.[key] || 0;
+  const gift = clamp(0.45 + ((life.talent ?? 50) - 50) / 90 + (life.mentals.workEthic - 50) / 130, 0.25, 1.4);
+  return EARNED_HEADROOM * gift * (1 - Math.exp(-spent / HEADROOM_TAU));
+}
+
+const effectiveCeiling = (life, key) => life.build.skills[key] + headroomFor(life, key);
+
+// What a session would actually add, in attribute points, right now. Returned
+// so the option can say so before it is taken instead of after.
+function previewGain(life, key, weight = 1, mult = 1) {
+  const room = effectiveCeiling(life, key) - life.attrs[key];
+  if (room <= 0) return 0;
+  return room * trainRate(life, mult) * weight * falloffFor(life, key);
+}
+
+function trainSkills(life, weights, mult = 1) {
+  const moved = [];
+  for (const [k, w] of Object.entries(weights)) {
+    const gain = previewGain(life, k, w, mult);
+    life.trainCounts[k] = (life.trainCounts[k] || 0) + 1;
+    // Lifetime sessions, which never reset with the year — this is what buys
+    // the headroom above the rolled ceiling.
+    life.lifetimeTraining = life.lifetimeTraining || {};
+    life.lifetimeTraining[k] = (life.lifetimeTraining[k] || 0) + w;
+    if (gain <= 0) continue;
+    life.attrs[k] = clamp(life.attrs[k] + gain, 20, 99);
+    moved.push(k);
+  }
+  return moved;
+}
+
+const weakest = (life, n) =>
+  [...SKILL_KEYS]
+    .sort((a, b) => life.build.skills[b] - life.attrs[b] - (life.build.skills[a] - life.attrs[a]))
+    .slice(0, n);
+
+// ---------------------------------------------------------------------------
+// The catalogue
+//
+// cost   — time, out of TIME_PER_YEAR
+// price  — money, and the action is hidden rather than disabled when broke, so
+//          "I cannot afford this" is something you notice rather than read
+// show   — the condition that makes this option exist at all
+// once   — cannot be repeated inside one year
+// run    — mutates the life, returns a line for the year's log
+// ---------------------------------------------------------------------------
+const ACTIONS = [
+  // ---- TRAIN --------------------------------------------------------------
+  {
+    id: 'gym', cat: 'train', name: 'Weight room', blurb: 'Strength and explosion.',
+    wear: 14, price: 0, trains: { dunk: 1, finishing: 0.6, interiorD: 0.5, rebounding: 0.5 },
+    run: (l) => {
+      trainSkills(l, { dunk: 1, finishing: 0.6, interiorD: 0.5, rebounding: 0.5 });
+      l.physicals.durability = clamp(l.physicals.durability + 1, 10, 99);
+      return { kind: 'note', text: 'Put in a winter in the weight room.' };
+    },
+  },
+  {
+    id: 'shoot', cat: 'train', name: 'Shooting reps', blurb: 'A thousand a day, alone.',
+    wear: 6, price: 0, trains: { three: 1, midrange: 0.9 },
+    run: (l) => {
+      trainSkills(l, { three: 1, midrange: 0.9 });
+      return { kind: 'note', text: 'Got up shots every morning before school.' };
+    },
+  },
+  {
+    id: 'skills', cat: 'train', name: 'Ball-handling work', blurb: 'Handle and creation.',
+    wear: 7, price: 0, trains: { handles: 1, playmaking: 0.8 },
+    run: (l) => {
+      trainSkills(l, { handles: 1, playmaking: 0.8 });
+      return { kind: 'note', text: 'Cones, tennis balls, two hours a night.' };
+    },
+  },
+  {
+    id: 'agility', cat: 'train', name: 'Speed & agility', blurb: 'First step, lateral slides.',
+    wear: 12, price: 0, trains: { speed: 1, perimeterD: 0.6 },
+    run: (l) => {
+      trainSkills(l, { speed: 1, perimeterD: 0.6 });
+      return { kind: 'note', text: 'Ran hills until it stopped being a punishment.' };
+    },
+  },
+  {
+    id: 'postwork', cat: 'train', name: 'Post footwork', blurb: 'Work on the block.',
+    wear: 8, price: 0, trains: { post: 1, interiorD: 0.5, block: 0.4 },
+    show: (l) => l.adultHeight >= 78 || l.attrs.post > 45,
+    run: (l) => {
+      trainSkills(l, { post: 1, interiorD: 0.5, block: 0.4 });
+      return { kind: 'note', text: 'Learned to actually play with your back to the rim.' };
+    },
+  },
+  {
+    id: 'film', cat: 'train', name: 'Watch film', blurb: 'Reads, not reps.',
+    price: 0,
+    run: (l, rng) => {
+      // Film is worth what you bring to it — this is where school pays back
+      // into basketball, which is the whole reason smarts is a stat.
+      const gain = 1.2 + (l.stats.smarts / 100) * 2.6;
+      l.mentals.bballIQ = clamp(Math.round(l.mentals.bballIQ + gain), 1, 99);
+      return {
+        kind: 'note',
+        text: l.stats.smarts > 70
+          ? 'Broke down film and actually saw things in it.'
+          : 'Sat through film. Some of it stuck.',
+      };
+    },
+  },
+  {
+    id: 'trainer', cat: 'train', name: 'Hire a private trainer', blurb: 'Somebody whose job is you.',
+    price: 2200,
+    show: (l) => !personIn(l, 'trainer') && l.money >= 2200,
+    run: (l, rng) => {
+      l.people.push(makePerson(l, 'trainer', rng, { rel: 60 }));
+      return { kind: 'good', text: 'Hired a private trainer. Everything in the gym counts for more now.' };
+    },
+  },
+  // ---- getting the body back ----------------------------------------------
+  //
+  // A ladder rather than one button. The free rungs work — you can play a whole
+  // life without spending anything here — they are just slower, less certain,
+  // and they do not give you back what an injury permanently took. What money
+  // buys is reliability and the top rung, which is the only thing that returns
+  // lost speed and explosion. That is the advantage of having it, and it is an
+  // advantage rather than a gate.
+  {
+    id: 'ricerest', cat: 'train', name: 'Ice it and wait', blurb: 'No money, no plan, no guarantees.',
+    price: 0,
+    show: (l) => l.injured,
+    run: (l, rng) => {
+      l.stats.health = clamp(l.stats.health + 10, 0, 100);
+      l.strain = Math.max(0, l.strain - 12);
+      if (rng.chance(0.45)) {
+        l.injured = false;
+        return { kind: 'good', text: 'You iced it, sat, and waited. It came right on its own.' };
+      }
+      return { kind: 'bad', text: 'You iced it and waited. It is still not right, and now you have lost a year as well.' };
+    },
+  },
+  {
+    id: 'teamphysio', cat: 'train', name: 'The team physio', blurb: 'Free, overworked, and better than nothing.',
+    price: 0,
+    show: (l) => l.injured && l.age >= 15,
+    run: (l, rng) => {
+      l.stats.health = clamp(l.stats.health + 15, 0, 100);
+      l.strain = Math.max(0, l.strain - 18);
+      if (rng.chance(0.70)) {
+        l.injured = false;
+        return { kind: 'good', text: 'The team physio got you back. It took most of a season.' };
+      }
+      return { kind: 'note', text: 'The physio did what he could between forty other players. It is close.' };
+    },
+  },
+  {
+    id: 'physio', cat: 'train', name: 'Private physiotherapy', blurb: 'Someone whose only patient that hour is you.',
+    price: 800,
+    show: (l) => l.injured,
+    run: (l) => {
+      l.injured = false;
+      l.stats.health = clamp(l.stats.health + 22, 0, 100);
+      l.strain = Math.max(0, l.strain - 26);
+      return { kind: 'good', text: 'Did the rehab properly, with someone watching. The knee feels like a knee again.' };
+    },
+  },
+  {
+    id: 'clinic', cat: 'train', name: 'Sports medicine clinic', blurb: 'Imaging, a plan, and a date you come back.',
+    price: 3200,
+    show: (l) => l.injured && l.money >= 3200,
+    run: (l) => {
+      l.injured = false;
+      l.stats.health = clamp(l.stats.health + 32, 0, 100);
+      l.strain = 0;
+      // Rebuilds a little of what the injury took, but not all of it.
+      l.attrs.speed = clamp(l.attrs.speed + 2, 20, 99);
+      return { kind: 'good', text: 'A clinic scanned it, built a programme around it, and gave you a date. You met the date.' };
+    },
+  },
+  {
+    id: 'specialist', cat: 'train', name: 'Fly out to a specialist', blurb: 'The surgeon professionals use.',
+    price: 11000,
+    show: (l) => l.injured && l.money >= 11000,
+    run: (l) => {
+      l.injured = false;
+      l.stats.health = 100;
+      l.strain = 0;
+      // The only thing in the game that gives back what an injury permanently
+      // took. It costs what it costs for exactly that reason.
+      l.attrs.speed = clamp(l.attrs.speed + 4, 20, 99);
+      l.attrs.dunk = clamp(l.attrs.dunk + 4, 20, 99);
+      l.physicals.durability = clamp(l.physicals.durability + 3, 10, 99);
+      return { kind: 'good', text: 'You flew out to the surgeon the professionals use. You came back moving like you did before.' };
+    },
+  },
+
+  // ---- staying ahead of it ------------------------------------------------
+  {
+    id: 'rest', cat: 'train', name: 'Take the summer off', blurb: 'Nothing heroic. It works.',
+    price: 0,
+    run: (l) => {
+      l.strain = Math.max(0, l.strain - 30);
+      l.stats.health = clamp(l.stats.health + 12, 0, 100);
+      l.stats.happiness = clamp(l.stats.happiness + 10, 0, 100);
+      return { kind: 'note', text: 'Rested. Came back feeling like a person.' };
+    },
+  },
+  {
+    id: 'stretch', cat: 'train', name: 'Stretch and ice, every night', blurb: 'Free, boring, and it adds up.',
+    price: 0,
+    run: (l) => {
+      l.strain = Math.max(0, l.strain - 16);
+      l.stats.health = clamp(l.stats.health + 6, 0, 100);
+      return { kind: 'note', text: 'Stretched and iced every night all year. Nobody noticed and it worked.' };
+    },
+  },
+  {
+    id: 'massage', cat: 'train', name: 'Recovery therapist', blurb: 'Soft tissue work, once a week.',
+    price: 700,
+    show: (l) => l.money >= 700,
+    run: (l) => {
+      l.strain = Math.max(0, l.strain - 30);
+      l.stats.health = clamp(l.stats.health + 12, 0, 100);
+      l.physicals.durability = clamp(l.physicals.durability + 1, 10, 99);
+      return { kind: 'good', text: 'Weekly soft tissue work. You stopped waking up sore.' };
+    },
+  },
+  {
+    id: 'offseason', cat: 'train', name: 'Offseason at a performance centre', blurb: 'Sleep, food, load management, all of it handled.',
+    price: 5500,
+    show: (l) => l.money >= 5500,
+    run: (l) => {
+      l.strain = 0;
+      l.stats.health = clamp(l.stats.health + 26, 0, 100);
+      l.stats.happiness = clamp(l.stats.happiness + 8, 0, 100);
+      l.physicals.durability = clamp(l.physicals.durability + 3, 10, 99);
+      l.physicals.stamina = clamp(l.physicals.stamina + 3, 10, 99);
+      return { kind: 'good', text: 'Spent the offseason somewhere that handled your sleep, your food and your load. You have never felt like this.' };
+    },
+  },
+
+  // ---- SCHOOL -------------------------------------------------------------
+  {
+    id: 'study', cat: 'school', name: 'Study', blurb: 'Books, actually opened.',
+    price: 0,
+    run: (l) => {
+      l.meters.grades = clamp(l.meters.grades + 15, 0, 100);
+      l.stats.smarts = clamp(l.stats.smarts + 2.2, 0, 100);
+      l.stats.happiness = clamp(l.stats.happiness - 3, 0, 100);
+      return { kind: 'note', text: 'Put real hours into schoolwork.' };
+    },
+  },
+  {
+    id: 'tutor', cat: 'school', name: 'Get a tutor', blurb: 'Because studying alone is not working.',
+    price: 700,
+    show: (l) => l.meters.grades < 62 && l.money >= 700,
+    run: (l) => {
+      l.meters.grades = clamp(l.meters.grades + 24, 0, 100);
+      l.stats.smarts = clamp(l.stats.smarts + 3.4, 0, 100);
+      return { kind: 'good', text: 'A tutor turned the grades around.' };
+    },
+  },
+  {
+    id: 'extracredit', cat: 'school', name: 'Beg for extra credit', blurb: 'It is late in the term.',
+    price: 0,
+    show: (l) => l.meters.grades < 48,
+    run: (l, rng) => {
+      if (rng.chance(0.55 + l.stats.smarts / 400)) {
+        l.meters.grades = clamp(l.meters.grades + 16, 0, 100);
+        return { kind: 'good', text: 'A teacher took pity and let you make up the work.' };
+      }
+      return { kind: 'bad', text: 'Asked for extra credit. Was told the deadline was the deadline.' };
+    },
+  },
+  {
+    id: 'skipclass', cat: 'school', name: 'Skip class', blurb: 'There are better uses of a Tuesday.',
+    price: 0,
+    run: (l) => {
+      l.meters.grades = clamp(l.meters.grades - 16, 0, 100);
+      l.stats.happiness = clamp(l.stats.happiness + 7, 0, 100);
+      l.time += 12; // the whole point is that it buys time back
+      return { kind: 'bad', text: 'Skipped enough class that somebody noticed.' };
+    },
+  },
+  {
+    id: 'academics', cat: 'school', name: 'Meet with academic support', blurb: 'Compliance is asking.',
+    price: 0,
+    show: (l) => isCollege(l) && l.meters.grades < 55,
+    run: (l) => {
+      l.meters.grades = clamp(l.meters.grades + 20, 0, 100);
+      return { kind: 'good', text: 'Academic support got you back on track. Barely.' };
+    },
+  },
+  {
+    id: 'sat', cat: 'school', name: 'Prep for the entrance exam', blurb: 'Schools have minimums.',
+    price: 0,
+    show: (l) => isHS(l) && l.age >= 16,
+    run: (l) => {
+      l.stats.smarts = clamp(l.stats.smarts + 4, 0, 100);
+      l.meters.grades = clamp(l.meters.grades + 8, 0, 100);
+      return { kind: 'note', text: 'Ground through test prep.' };
+    },
+  },
+
+  // ---- LIFE ---------------------------------------------------------------
+  {
+    id: 'job', cat: 'life', name: 'Work a part-time job', blurb: 'Somebody has to pay for the camps.',
+    price: 0,
+    show: (l) => isHS(l),
+    run: (l, rng) => {
+      const earned = 1800 + rng.int(1400);
+      l.money += earned;
+      l.meters.grades = clamp(l.meters.grades - 7, 0, 100);
+      l.stats.happiness = clamp(l.stats.happiness - 4, 0, 100);
+      return { kind: 'note', text: `Worked after school. Made ${cash(earned)}.` };
+    },
+  },
+  {
+    id: 'aau', cat: 'life', name: 'Play the AAU circuit', blurb: 'Play in front of everyone.',
+    wear: 16, price: 1100,
+    show: (l) => isHS(l) && l.money >= 1100,
+    run: (l, rng) => {
+      l.meters.hype = clamp(l.meters.hype + 15 * (1 - l.meters.hype / 118), 0, 100);
+      trainSkills(l, Object.fromEntries(weakest(l, 2).map((k) => [k, 0.5])));
+      return {
+        kind: rng.chance(0.3) ? 'good' : 'note',
+        text: 'Spent the summer on the circuit. A lot of gyms, a lot of eyes.',
+      };
+    },
+  },
+  {
+    id: 'camp', cat: 'life', name: 'Elite camp invite', blurb: 'One weekend, every scout there.',
+    price: 1700,
+    show: (l) => isHS(l) && l.meters.hype >= 42 && l.money >= 1700,
+    run: (l) => {
+      l.meters.hype = clamp(l.meters.hype + 21 * (1 - l.meters.hype / 118), 0, 100);
+      return { kind: 'good', text: 'Got the camp invite and did not embarrass yourself.' };
+    },
+  },
+  {
+    id: 'highlights', cat: 'life', name: 'Post your highlights', blurb: 'The tape does not lie. Much.',
+    price: 0,
+    show: (l) => l.lastStats && l.lastStats.ppg >= 9,
+    run: (l, rng) => {
+      const pop = rng.chance(0.28);
+      l.meters.hype = clamp(l.meters.hype + (pop ? 14 : 5) * (1 - l.meters.hype / 118), 0, 100);
+      return pop
+        ? { kind: 'good', text: 'A mixtape got picked up. Your phone did not stop for a week.' }
+        : { kind: 'note', text: 'Posted a highlight reel. It did fine.' };
+    },
+  },
+  {
+    id: 'nil', cat: 'life', name: 'Sign an NIL deal', blurb: 'A dealership wants your face on it.',
+    price: 0,
+    show: (l) => isCollege(l) && l.meters.hype >= 52,
+    run: (l, rng) => {
+      // Endorsement money is not linear in fame. It is close to nothing until
+      // people outside your own conference know your name, then it moves fast.
+      const reach = (l.meters.hype / 100) ** 2;
+      const deal = Math.round((500 + 26000 * reach * (0.55 + l.meters.rep / 150)) * (0.6 + rng.random() * 0.8));
+      l.money += deal;
+      return { kind: 'good', text: `Signed an NIL deal — ${cash(deal)}.` };
+    },
+  },
+  {
+    id: 'media', cat: 'life', name: 'Media training', blurb: 'Say the right thing, on camera.',
+    price: 400,
+    show: (l) => isCollege(l) && l.money >= 400,
+    run: (l) => {
+      l.meters.rep = clamp(l.meters.rep + 13, 0, 100);
+      return { kind: 'good', text: 'Learned how to handle a microphone.' };
+    },
+  },
+  {
+    id: 'combine', cat: 'life', name: 'Pro-day circuit', blurb: 'Workouts in front of front offices.',
+    wear: 8, price: 900,
+    show: (l) => isCollege(l) && l.age >= 19 && l.money >= 900,
+    run: (l, rng) => {
+      l.stock = clamp(l.stock + 4 + rng.int(5), -40, 40);
+      l.meters.hype = clamp(l.meters.hype + 11 * (1 - l.meters.hype / 118), 0, 100);
+      return { kind: 'good', text: 'Worked out for front offices. Somebody moved you up a board.' };
+    },
+  },
+  {
+    id: 'party', cat: 'life', name: 'Go out', blurb: 'You are eighteen once.',
+    price: 120,
+    run: (l, rng) => {
+      l.stats.happiness = clamp(l.stats.happiness + 13, 0, 100);
+      const seen = rng.chance(l.meters.hype > 55 ? 0.30 : 0.08);
+      if (seen) {
+        l.meters.rep = clamp(l.meters.rep - 12, 0, 100);
+        l.stock = clamp(l.stock - 4, -40, 40);
+        return { kind: 'bad', text: 'A video of you out got around. It did not look great.' };
+      }
+      return { kind: 'note', text: 'Went out. Nobody was filming.' };
+    },
+  },
+  {
+    id: 'doctor', cat: 'life', name: 'See a specialist', blurb: 'Something is not right.',
+    price: 900,
+    show: (l) => l.stats.health < 62 && l.money >= 900,
+    run: (l) => {
+      l.stats.health = clamp(l.stats.health + 18, 0, 100);
+      l.strain = Math.max(0, l.strain - 12);
+      return { kind: 'good', text: 'Saw a specialist and got the body sorted out.' };
+    },
+  },
+  {
+    id: 'agency', cat: 'life', name: 'Sign with an agency', blurb: 'They run your pre-draft process.',
+    price: 3500,
+    show: (l) => isCollege(l) && !personIn(l, 'agent') && l.money >= 3500,
+    run: (l, rng) => {
+      l.people.push(makePerson(l, 'agent', rng, { rel: 65 }));
+      l.stock = clamp(l.stock + 5, -40, 40);
+      return { kind: 'good', text: 'Signed with an agency. Somebody is working the phones for you now.' };
+    },
+  },
+  {
+    id: 'transfer', cat: 'life', name: 'Enter the transfer portal', blurb: 'This is not working.',
+    price: 0,
+    show: (l) => isCollege(l) && l.age >= 19 && l.lastMinutes < 12,
+    run: (l, rng) => {
+      l.wantsTransfer = true;
+      return { kind: 'note', text: 'Put your name in the portal. Somewhere else, then.' };
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Focused training
+//
+// The grouped sessions above are what a team does with you. This is what you do
+// on your own: pick one attribute and work it. Repeatable, unlike everything
+// else, because the limit here is the falloff rather than a once-a-year rule —
+// a second session on the same number is worth half, a third a fifth, and a
+// fourth is worth nothing at all.
+// ---------------------------------------------------------------------------
+function focusActions(life) {
+  return SKILL_KEYS.map((k) => {
+    const left = sessionsLeft(life, k);
+    const cap = life.build.skills[k];
+    const room = effectiveCeiling(life, k) - life.attrs[k];
+    return {
+      id: `focus:${k}`,
+      cat: 'train',
+      key: k,
+      name: SKILLS[k].label,
+      wear: 7,
+      price: 0,
+      trains: { [k]: 1 },
+      focus: true,
+      now: Math.round(life.attrs[k]),
+      gain: previewGain(life, k, 1),
+      left,
+      cap,
+      over: life.attrs[k] - cap, // how far past the rolled ceiling you already are
+      maxed: room <= 0.05,
+      run: (l) => {
+        const before = l.attrs[k];
+        trainSkills(l, { [k]: 1 });
+        const moved = l.attrs[k] - before;
+        if (moved < 0.05) {
+          return { kind: 'note', text: `Another session on ${SKILLS[k].label.toLowerCase()}. Nothing left in it this year.` };
+        }
+        return { kind: 'note', text: `Worked ${SKILLS[k].label.toLowerCase()} on your own. +${moved.toFixed(1)}.` };
+      },
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// People actions
+//
+// Built per person rather than listed, because what you can do with somebody
+// depends on who they are and how things currently stand between you.
+// ---------------------------------------------------------------------------
+function actionsForPerson(life, p) {
+  const out = [];
+  const push = (id, name, run, price = 0) => out.push({ id, name, price, run, person: p.id });
+
+  push('talk', 'Spend time together', (l, rng) => {
+    nudge(p, 4 + rng.int(5));
+    p.met++;
+    l.stats.happiness = clamp(l.stats.happiness + 2, 0, 100);
+    return { kind: 'note', text: `Spent some time with ${p.name}.` };
+  });
+
+  if (p.rel < 45) {
+    push('mend', 'Try to patch things up', (l, rng) => {
+      p.met++;
+      if (rng.chance(0.62)) {
+        nudge(p, 12 + rng.int(9));
+        return { kind: 'good', text: `Cleared the air with ${p.name}.` };
+      }
+      nudge(p, -4);
+      return { kind: 'bad', text: `Tried to talk to ${p.name}. It went badly.` };
+    });
+  }
+
+  if (p.role === 'teammate') {
+    push('runit', 'Get in the gym together', (l, rng) => {
+      p.met++;
+      nudge(p, 7 + rng.int(6));
+      trainSkills(l, Object.fromEntries(weakest(l, 2).map((k) => [k, 0.45])));
+      return { kind: 'note', text: `Worked out with ${p.name}. Both of you got better.` };
+    });
+    if (p.rel < 35) {
+      push('confront', 'Have it out with him', (l, rng) => {
+        p.met++;
+        if (rng.chance(0.4)) {
+          nudge(p, 18);
+          return { kind: 'good', text: `You and ${p.name} finally said it out loud. It helped.` };
+        }
+        nudge(p, -14);
+        l.meters.rep = clamp(l.meters.rep - 4, 0, 100);
+        return { kind: 'bad', text: `It got heard outside the locker room. That was a mistake.` };
+      });
+    }
+  }
+
+  if (p.role === 'coach') {
+    push('minutes', 'Ask for more minutes', (l, rng) => {
+      p.met++;
+      // Asking works when he already rates you and backfires when he does not,
+      // which is the entire lesson about asking for things.
+      if (rng.chance(0.25 + p.rel / 220)) {
+        l.minutesPitch = true;
+        nudge(p, 3);
+        return { kind: 'good', text: 'The coach heard you out and said he would look at it.' };
+      }
+      nudge(p, -9);
+      return { kind: 'bad', text: 'You asked for minutes. He did not take it well.' };
+    });
+    push('extra', 'Stay after every practice', (l, rng) => {
+      p.met++;
+      nudge(p, 9 + rng.int(6));
+      trainSkills(l, Object.fromEntries(weakest(l, 3).map((k) => [k, 0.4])));
+      return { kind: 'good', text: 'Last one out of the gym, all year. He noticed.' };
+    });
+  }
+
+  if (p.role === 'mother' || p.role === 'father') {
+    const pot = Math.round(300 + life.background.yearly * 0.6);
+    push('askmoney', 'Ask for money', (l, rng) => {
+      p.met++;
+      if (rng.chance(0.35 + p.rel / 200)) {
+        const got = Math.round(pot * (0.5 + rng.random()));
+        l.money += got;
+        nudge(p, -3);
+        return { kind: 'good', text: `${p.name} gave you ${cash(got)}.` };
+      }
+      return { kind: 'bad', text: `Asked ${p.name} for money. There is not any.` };
+    });
+  }
+
+  if (p.role === 'trainer') {
+    push('session', 'Extra sessions all summer', (l) => {
+      p.met++;
+      nudge(p, 5);
+      trainSkills(l, Object.fromEntries(weakest(l, 3).map((k) => [k, 0.8])), 1.15);
+      l.strain += 12;  // declared inline: person actions are built, not listed
+      return { kind: 'good', text: `A summer of extra work with ${p.name}.` };
+    }, 900);
+  }
+
+  if (p.role === 'agent') {
+    push('push', 'Have them work the phones', (l, rng) => {
+      p.met++;
+      l.stock = clamp(l.stock + 3 + rng.int(4), -40, 40);
+      return { kind: 'good', text: `${p.name} spent the spring selling you to front offices.` };
+    });
+  }
+
+  if (p.role === 'friend' || p.role === 'partner' || p.role === 'sibling') {
+    push('lean', 'Lean on them', (l) => {
+      p.met++;
+      nudge(p, 5);
+      l.stats.happiness = clamp(l.stats.happiness + 9, 0, 100);
+      return { kind: 'good', text: `Talked to ${p.name} when it was heavy. It helped.` };
+    });
+  }
+
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Availability and execution
+// ---------------------------------------------------------------------------
+// Everything is once a year. `once` is gone as a flag because it is now the
+// rule; an already-taken action disappears from the list rather than sitting
+// there greyed out.
+function availableActions(life, cat) {
+  return ACTIONS.filter((a) => {
+    if (a.cat !== cat) return false;
+    if (life.doneThisYear.includes(a.id)) return false;
+    if (a.show && !a.show(life)) return false;
+    return true;
+  });
+}
+
+// Whether it can be taken right now, and if not, why. Money is the only hard
+// block left; wear is a consequence, not a gate, so the game lets you do the
+// stupid thing and then charges you for it.
+function blockedReason(life, a) {
+  if ((a.price || 0) > life.money) return `Costs ${cash(a.price)}`;
+  return null;
+}
+
+// A warning, not a refusal. Shown on anything physical once the body has had
+// enough, so the cost of a sixth session in one year is legible before you take
+// it rather than after the knee goes.
+function strainWarning(life, a) {
+  if (!a.wear) return null;
+  if (life.strain + a.wear > 78) return 'Your body has had enough';
+  if (life.strain + a.wear > 55) return 'Getting worn down';
+  return null;
+}
+
+// Every action, wherever it was built, must have a numeric price and a callable
+// effect. A person action assembled with its arguments one position out passed
+// a leftover number as the effect and the effect function as the price, which
+// made `money -= <function>` produce NaN and put "$NaN" on the button — with no
+// error anywhere until the bank balance was already ruined. Checking the shape
+// at the boundary turns that into a thrown error at the call site instead.
+function assertAction(a) {
+  if (typeof a?.run !== 'function') {
+    throw new TypeError(`action "${a?.id}" has no effect function (got ${typeof a?.run})`);
+  }
+  if (a.price != null && !Number.isFinite(a.price)) {
+    throw new TypeError(`action "${a.id}" has a non-numeric price (${typeof a.price})`);
+  }
+  if (a.wear != null && !Number.isFinite(a.wear)) {
+    throw new TypeError(`action "${a.id}" has a non-numeric wear (${typeof a.wear})`);
+  }
+}
+
+function doAction(life, a, rng) {
+  assertAction(a);
+  if (blockedReason(life, a)) return null;
+  life.money -= a.price || 0;
+  life.strain += a.wear || 0;
+  const entry = a.run(life, rng) || { kind: 'note', text: a.name };
+  life.doneThisYear.push(a.id);
+  life.yearLog.push(entry);
+  return entry;
+}
+
+// Every action the game can ever offer, for the harness to check in one pass.
+// Person actions are built per person rather than listed, so they only exist
+// once somebody exists to build them from.
+function allActionsFor(life) {
+  const out = [...ACTIONS, ...focusActions(life)];
+  for (const p of life.people) if (p.alive) out.push(...actionsForPerson(life, p));
+  return out;
+}
+
 /* ===== src/events.js ===== */
 // Things that happen to you.
 //
@@ -1746,6 +2507,7 @@ function driftRelationships(life, rng) {
 // to have been cutting corners. Weight is how often it comes up once it is
 // eligible, so the common ones stay common without the rare ones being
 // impossible.
+
 
 
 
@@ -1771,7 +2533,7 @@ const stock = (l, n) => { l.stock = clamp(l.stock + n, -40, 40); };
 // windfall on a maxed-out skill is correctly worth almost nothing.
 function bump(life, keys, share) {
   for (const k of keys) {
-    const room = life.build.skills[k] - life.attrs[k];
+    const room = effectiveCeiling(life, k) - life.attrs[k];
     if (room > 0) life.attrs[k] = clamp(life.attrs[k] + room * share, 20, 99);
   }
 }
@@ -2324,6 +3086,174 @@ const CHOICES = [
 ];
 
 // ---------------------------------------------------------------------------
+// In-game moments
+//
+// The other tables are about a life. These are about a possession: you have the
+// ball, here is the situation, what do you do. Each option is resolved against
+// the attribute it actually depends on, so the numbers you spent four years
+// training are the numbers that decide whether it goes in — which is the only
+// way an attribute ever feels like anything rather than reading like a
+// spreadsheet cell.
+//
+// `diff` is what the attribute is measured against, and PARITY IS A COIN FLIP:
+// an attribute exactly equal to the difficulty makes the play half the time.
+// The first pass set difficulties against pro-level numbers and measured a 24%
+// make rate for a player choosing his own best option, which is not a decision,
+// it is a punishment. Difficulties are keyed to what a teenager actually has.
+// ---------------------------------------------------------------------------
+function attempt(life, key, diff, rng) {
+  const p = clamp(0.5 + (life.attrs[key] - diff) / 70, 0.05, 0.93);
+  return rng.chance(p);
+}
+
+// A made play is worth a little of everything a good game is worth. A miss
+// costs the coach's patience more than anything else, because he is the one
+// deciding whether you get the ball again.
+function playOutcome(life, key, made, rng, madeText, missText) {
+  if (made) {
+    bump(life, [key], 0.05);
+    hype(life, 5); happy(life, 7);
+    nudge(personIn(life, 'coach'), 4);
+    life.playsMade = (life.playsMade || 0) + 1;
+    return { kind: 'good', text: madeText };
+  }
+  happy(life, -5);
+  nudge(personIn(life, 'coach'), -4);
+  life.playsMissed = (life.playsMissed || 0) + 1;
+  return { kind: 'bad', text: missText };
+}
+
+const played = (l) => l.lastMinutes >= 8;
+
+const PLAYS = [
+  {
+    id: 'topofkey', weight: 10, when: played,
+    title: 'Top of the key',
+    text: () => 'You catch it with a foot on the line and a defender closing hard. Two seconds on the shot clock.',
+    options: [
+      { label: 'Rise and shoot it', key: 'three', diff: 42,
+        made: 'You shot it over the closeout. Nothing but net, and the bench lost it.',
+        miss: 'You shot it over the closeout. Front rim, and the break went the other way.' },
+      { label: 'Pump fake and drive', key: 'handles', diff: 39,
+        made: 'You put the ball on the floor, got by him, and finished through contact.',
+        miss: 'You put the ball on the floor and he stripped it clean.' },
+      { label: 'Swing it to the corner', key: 'playmaking', diff: 27,
+        made: 'You made the extra pass. Corner three, and the assist was the best part of it.',
+        miss: 'You made the extra pass a beat late and it went out of bounds off his hands.' },
+    ],
+  },
+  {
+    id: 'transition', weight: 10, when: played,
+    title: 'Two on one',
+    text: () => 'Long rebound, you are gone, and there is one defender back with your teammate filling the lane.',
+    options: [
+      { label: 'Take off from the dotted line', key: 'dunk', diff: 45,
+        made: 'You went from the dotted line and put it through him. The gym stopped.',
+        miss: 'You went from the dotted line and caught the back of the rim. Everyone saw it.' },
+      { label: 'Lay it in', key: 'finishing', diff: 25,
+        made: 'You took the two that was there. Nobody writes about it and it counts the same.',
+        miss: 'You took the easy one and rushed it off the glass.' },
+      { label: 'Drop it off', key: 'playmaking', diff: 31,
+        made: 'You froze the last man and dropped it off. Easiest two he will ever get.',
+        miss: 'You waited a half-second too long and the pass went into his feet.' },
+    ],
+  },
+  {
+    id: 'postup', weight: 8, when: (l) => played(l) && (l.adultHeight >= 77 || l.attrs.post > 45),
+    title: 'On the block',
+    text: () => 'You have got him sealed on the left block and the entry pass is coming.',
+    options: [
+      { label: 'Turn and face', key: 'midrange', diff: 39,
+        made: 'You turned, faced, and shot it over him before he was set.',
+        miss: 'You turned into a double team you did not see.' },
+      { label: 'Back him down', key: 'post', diff: 37,
+        made: 'You backed him under the rim and went right through his chest.',
+        miss: 'You backed him down into nothing and threw up a prayer.' },
+      { label: 'Kick it back out', key: 'playmaking', diff: 23,
+        made: 'You drew the double and found the open man. Good basketball.',
+        miss: 'You forced it back out and it got picked off at the arc.' },
+    ],
+  },
+  {
+    id: 'lastshot', weight: 9, when: played,
+    title: 'Down one, six seconds',
+    text: () => 'The play is drawn up for you. Everyone in the gym knows it is drawn up for you.',
+    options: [
+      { label: 'Pull up from three to win it', key: 'three', diff: 51,
+        made: 'You pulled up from four feet behind the line and won it outright.',
+        miss: 'You pulled up from four feet behind the line and it never had a chance.' },
+      { label: 'Get to the rim to tie it', key: 'finishing', diff: 39,
+        made: 'You got downhill, drew the foul, and made them both. Overtime.',
+        miss: 'You got downhill into three bodies and it got blocked out of bounds.' },
+      { label: 'Give it up to the open man', key: 'playmaking', diff: 33,
+        made: 'You gave it up. He made it. You have never been happier about a pass.',
+        miss: 'You gave it up and he missed. Everyone remembered who passed.' },
+    ],
+  },
+  {
+    id: 'iso', weight: 7, when: (l) => played(l) && l.build.mentality >= 48,
+    title: 'Cleared out',
+    text: () => 'Coach clears the side for you. It is you and him and thirty feet of nothing.',
+    options: [
+      { label: 'Cross him over', key: 'handles', diff: 45,
+        made: 'You took him left, came back right, and he sat down. The bench cleared.',
+        miss: 'You took him left, he stayed, and you dribbled it off your own foot.' },
+      { label: 'Rise over him', key: 'midrange', diff: 42,
+        made: 'You did not need to beat him. You just shot it over him.',
+        miss: 'You settled for a contested two and it was ugly.' },
+      { label: 'Give it up and cut', key: 'playmaking', diff: 29,
+        made: 'You gave it up, cut behind him, and got it back at the rim.',
+        miss: 'You gave it up and stood there. The possession died.' },
+    ],
+  },
+  {
+    id: 'defense', weight: 8, when: played,
+    title: 'Their best player',
+    text: () => 'Coach puts you on their best player for the last four minutes. He has 28.',
+    options: [
+      { label: 'Pressure him full court', key: 'perimeterD', diff: 45,
+        made: 'You picked him up full court and he did not touch it again.',
+        miss: 'You picked him up full court and he went by you twice.' },
+      { label: 'Sit back and contest', key: 'perimeterD', diff: 31,
+        made: 'You gave him the first step and took away everything after it.',
+        miss: 'You gave him space and he made you pay from three.' },
+      { label: 'Go for the steal', key: 'speed', diff: 49,
+        made: 'You jumped the passing lane and took it the other way.',
+        miss: 'You gambled, missed, and gave up a layup nobody had to work for.' },
+    ],
+  },
+  {
+    id: 'rimprotect', weight: 7, when: (l) => played(l) && l.adultHeight >= 76,
+    title: 'He is coming down the lane',
+    text: () => 'Their guard has beaten his man and there is nothing between him and the rim except you.',
+    options: [
+      { label: 'Meet him at the top', key: 'block', diff: 45,
+        made: 'You met him at the top and put it into the third row.',
+        miss: 'You met him at the top, missed it entirely, and fouled him hard.' },
+      { label: 'Stand your ground', key: 'interiorD', diff: 37,
+        made: 'You stood there, took the contact, and drew the charge.',
+        miss: 'You stood there and he went straight over you.' },
+      { label: 'Get out of the way', key: 'rebounding', diff: 21,
+        made: 'You conceded the two and got the rebound out clean. Not heroic. Correct.',
+        miss: 'You conceded the two and did not even get the ball back.' },
+    ],
+  },
+  {
+    id: 'freethrows', weight: 6, when: played,
+    title: 'Two shots, tie game',
+    text: () => 'You get fouled with the game level and one second left. The gym is very loud.',
+    options: [
+      { label: 'Same routine as always', key: 'midrange', diff: 33,
+        made: 'Same routine. Both of them. You did not hear a thing.',
+        miss: 'Same routine, and the first one was short. You knew immediately.' },
+      { label: 'Step off and reset', key: 'midrange', diff: 39,
+        made: 'You stepped off, breathed, stepped back on, and buried them.',
+        miss: 'You stepped off, thought about it too long, and short-armed it.' },
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Rolling a year
 // ---------------------------------------------------------------------------
 function pickWeighted(pool, rng) {
@@ -2333,9 +3263,11 @@ function pickWeighted(pool, rng) {
   return pool[pool.length - 1];
 }
 
-// Two to four things happen in a year, and one of them can be a question. The
-// same event cannot fire twice in one year, and `seen` keeps the once-in-a-life
-// beats from repeating.
+// Two to four things happen in a year. On top of that a year can ask you up to
+// two questions — one about the life, one about a possession — so they come
+// back as a QUEUE rather than a single slot. A year where you played and also
+// had something happen off the floor should present both, in order, instead of
+// silently dropping one.
 function rollYearEvents(life, rng) {
   const passive = [];
   const seen = life.seenEvents || (life.seenEvents = []);
@@ -2351,727 +3283,44 @@ function rollYearEvents(life, rng) {
     if (line) passive.push(line);
   }
 
-  // The question, if there is one to ask.
-  let choice = null;
-  if (rng.chance(0.62)) {
-    const cpool = CHOICES.filter((c) => !seen.includes(c.id) && c.when(life));
-    if (cpool.length) {
-      const c = pickWeighted(cpool, rng);
-      seen.push(c.id);
-      choice = { id: c.id, title: c.title, text: c.text(life), options: c.options.map((o) => o.label) };
-      life.pendingChoice = c.id;
-    }
-  }
-  return { passive, choice };
-}
+  const queue = [];
 
-function resolveChoice(life, choiceId, optionIndex, rng) {
-  const c = CHOICES.find((x) => x.id === choiceId);
-  life.pendingChoice = null;
-  if (!c) return null;
-  const opt = c.options[optionIndex];
-  if (!opt) return null;
-  return opt.run(life, rng) || { kind: 'note', text: opt.label };
-}
-
-/* ===== src/actions.js ===== */
-// What you can do with a year.
-//
-// The old design put every option on one screen as a fixed list of slots, which
-// made the whole game visible at a glance and therefore solvable at a glance.
-// This replaces it with a time budget and a catalogue where most entries are
-// CONDITIONAL: an action only appears when your situation calls for it. You do
-// not see "Apologise to the coach" until you have a coach who is angry with
-// you, or "Take a redshirt" until you are buried on a bench. Finding out that an
-// option exists is part of the game, the same way it is in life.
-//
-// Four categories, matching the four buttons around the + in the UI.
-//
-// There is no time budget. Every action can be taken once a year and that is the
-// only bookkeeping — an abstract "42% of the year" tax on each button turned
-// every decision into arithmetic. What actually limits a year is the same set of
-// things that limits a real one: money, a body that accumulates wear and then
-// breaks, grades that decay while you are in the gym, and people who drift if
-// you never turn up. Doing everything is allowed. It is just a good way to blow
-// out a knee.
-
-
-
-
-
-const CATEGORIES = [
-  { id: 'train', name: 'Train', hint: 'The gym. Where the ability comes from.' },
-  { id: 'school', name: 'School', hint: 'Eligibility, and the mind the game runs on.' },
-  { id: 'people', name: 'People', hint: 'Everyone who decides something about you.' },
-  { id: 'life', name: 'Life', hint: 'Money, health, exposure, and being a person.' },
-];
-
-// Named for its module. Every module's top level shares one scope once the
-// bundler flattens them, so a generic private helper name is a landmine.
-const cash = (n) => `$${Math.round(n).toLocaleString()}`;
-const isCollege = (l) => l.stage === 'college';
-const isHS = (l) => l.stage === 'highschool';
-
-// How much of the remaining gap ONE session closes, before diminishing returns.
-// Work ethic and the hidden talent slider both scale it, a trainer or a college
-// staff multiplies it, and none of the three are things you can read off the
-// screen while you are deciding.
-function trainRate(life, mult = 1) {
-  return (
-    0.155 *
-    (0.55 + life.mentals.workEthic / 110) *
-    (0.62 + (life.talent ?? 50) / 130) *
-    (life.program?.development ?? 1) *
-    (personIn(life, 'trainer') ? 1.22 : 1) *
-    mult
-  );
-}
-
-// The fourth session on the same attribute in the same year is worth nothing.
-// This is what stops "train the same number every year" from being the whole
-// game, and it is stated in the UI rather than left to be discovered.
-const REPEAT_FALLOFF = [1, 0.5, 0.2, 0];
-const sessionsLeft = (life, key) =>
-  Math.max(0, REPEAT_FALLOFF.length - 1 - (life.trainCounts?.[key] || 0));
-const falloffFor = (life, key) =>
-  REPEAT_FALLOFF[Math.min(life.trainCounts?.[key] || 0, REPEAT_FALLOFF.length - 1)];
-
-// What a session would actually add, in attribute points, right now. Returned
-// so the option can say so before it is taken instead of after.
-function previewGain(life, key, weight = 1, mult = 1) {
-  const room = life.build.skills[key] - life.attrs[key];
-  if (room <= 0) return 0;
-  return room * trainRate(life, mult) * weight * falloffFor(life, key);
-}
-
-function trainSkills(life, weights, mult = 1) {
-  const moved = [];
-  for (const [k, w] of Object.entries(weights)) {
-    const gain = previewGain(life, k, w, mult);
-    life.trainCounts[k] = (life.trainCounts[k] || 0) + 1;
-    if (gain <= 0) continue;
-    life.attrs[k] = clamp(life.attrs[k] + gain, 20, 99);
-    moved.push(k);
-  }
-  return moved;
-}
-
-const weakest = (life, n) =>
-  [...SKILL_KEYS]
-    .sort((a, b) => life.build.skills[b] - life.attrs[b] - (life.build.skills[a] - life.attrs[a]))
-    .slice(0, n);
-
-// ---------------------------------------------------------------------------
-// The catalogue
-//
-// cost   — time, out of TIME_PER_YEAR
-// price  — money, and the action is hidden rather than disabled when broke, so
-//          "I cannot afford this" is something you notice rather than read
-// show   — the condition that makes this option exist at all
-// once   — cannot be repeated inside one year
-// run    — mutates the life, returns a line for the year's log
-// ---------------------------------------------------------------------------
-const ACTIONS = [
-  // ---- TRAIN --------------------------------------------------------------
-  {
-    id: 'gym', cat: 'train', name: 'Weight room', blurb: 'Strength and explosion.',
-    wear: 14, price: 0, trains: { dunk: 1, finishing: 0.6, interiorD: 0.5, rebounding: 0.5 },
-    run: (l) => {
-      trainSkills(l, { dunk: 1, finishing: 0.6, interiorD: 0.5, rebounding: 0.5 });
-      l.physicals.durability = clamp(l.physicals.durability + 1, 10, 99);
-      return { kind: 'note', text: 'Put in a winter in the weight room.' };
-    },
-  },
-  {
-    id: 'shoot', cat: 'train', name: 'Shooting reps', blurb: 'A thousand a day, alone.',
-    wear: 6, price: 0, trains: { three: 1, midrange: 0.9 },
-    run: (l) => {
-      trainSkills(l, { three: 1, midrange: 0.9 });
-      return { kind: 'note', text: 'Got up shots every morning before school.' };
-    },
-  },
-  {
-    id: 'skills', cat: 'train', name: 'Ball-handling work', blurb: 'Handle and creation.',
-    wear: 7, price: 0, trains: { handles: 1, playmaking: 0.8 },
-    run: (l) => {
-      trainSkills(l, { handles: 1, playmaking: 0.8 });
-      return { kind: 'note', text: 'Cones, tennis balls, two hours a night.' };
-    },
-  },
-  {
-    id: 'agility', cat: 'train', name: 'Speed & agility', blurb: 'First step, lateral slides.',
-    wear: 12, price: 0, trains: { speed: 1, perimeterD: 0.6 },
-    run: (l) => {
-      trainSkills(l, { speed: 1, perimeterD: 0.6 });
-      return { kind: 'note', text: 'Ran hills until it stopped being a punishment.' };
-    },
-  },
-  {
-    id: 'postwork', cat: 'train', name: 'Post footwork', blurb: 'Work on the block.',
-    wear: 8, price: 0, trains: { post: 1, interiorD: 0.5, block: 0.4 },
-    show: (l) => l.adultHeight >= 78 || l.attrs.post > 45,
-    run: (l) => {
-      trainSkills(l, { post: 1, interiorD: 0.5, block: 0.4 });
-      return { kind: 'note', text: 'Learned to actually play with your back to the rim.' };
-    },
-  },
-  {
-    id: 'film', cat: 'train', name: 'Watch film', blurb: 'Reads, not reps.',
-    price: 0,
-    run: (l, rng) => {
-      // Film is worth what you bring to it — this is where school pays back
-      // into basketball, which is the whole reason smarts is a stat.
-      const gain = 1.2 + (l.stats.smarts / 100) * 2.6;
-      l.mentals.bballIQ = clamp(Math.round(l.mentals.bballIQ + gain), 1, 99);
-      return {
-        kind: 'note',
-        text: l.stats.smarts > 70
-          ? 'Broke down film and actually saw things in it.'
-          : 'Sat through film. Some of it stuck.',
-      };
-    },
-  },
-  {
-    id: 'trainer', cat: 'train', name: 'Hire a private trainer', blurb: 'Somebody whose job is you.',
-    price: 2200,
-    show: (l) => !personIn(l, 'trainer') && l.money >= 2200,
-    run: (l, rng) => {
-      l.people.push(makePerson(l, 'trainer', rng, { rel: 60 }));
-      return { kind: 'good', text: 'Hired a private trainer. Everything in the gym counts for more now.' };
-    },
-  },
-  // ---- getting the body back ----------------------------------------------
-  //
-  // A ladder rather than one button. The free rungs work — you can play a whole
-  // life without spending anything here — they are just slower, less certain,
-  // and they do not give you back what an injury permanently took. What money
-  // buys is reliability and the top rung, which is the only thing that returns
-  // lost speed and explosion. That is the advantage of having it, and it is an
-  // advantage rather than a gate.
-  {
-    id: 'ricerest', cat: 'train', name: 'Ice it and wait', blurb: 'No money, no plan, no guarantees.',
-    price: 0,
-    show: (l) => l.injured,
-    run: (l, rng) => {
-      l.stats.health = clamp(l.stats.health + 10, 0, 100);
-      l.strain = Math.max(0, l.strain - 12);
-      if (rng.chance(0.45)) {
-        l.injured = false;
-        return { kind: 'good', text: 'You iced it, sat, and waited. It came right on its own.' };
-      }
-      return { kind: 'bad', text: 'You iced it and waited. It is still not right, and now you have lost a year as well.' };
-    },
-  },
-  {
-    id: 'teamphysio', cat: 'train', name: 'The team physio', blurb: 'Free, overworked, and better than nothing.',
-    price: 0,
-    show: (l) => l.injured && l.age >= 15,
-    run: (l, rng) => {
-      l.stats.health = clamp(l.stats.health + 15, 0, 100);
-      l.strain = Math.max(0, l.strain - 18);
-      if (rng.chance(0.70)) {
-        l.injured = false;
-        return { kind: 'good', text: 'The team physio got you back. It took most of a season.' };
-      }
-      return { kind: 'note', text: 'The physio did what he could between forty other players. It is close.' };
-    },
-  },
-  {
-    id: 'physio', cat: 'train', name: 'Private physiotherapy', blurb: 'Someone whose only patient that hour is you.',
-    price: 800,
-    show: (l) => l.injured,
-    run: (l) => {
-      l.injured = false;
-      l.stats.health = clamp(l.stats.health + 22, 0, 100);
-      l.strain = Math.max(0, l.strain - 26);
-      return { kind: 'good', text: 'Did the rehab properly, with someone watching. The knee feels like a knee again.' };
-    },
-  },
-  {
-    id: 'clinic', cat: 'train', name: 'Sports medicine clinic', blurb: 'Imaging, a plan, and a date you come back.',
-    price: 3200,
-    show: (l) => l.injured && l.money >= 3200,
-    run: (l) => {
-      l.injured = false;
-      l.stats.health = clamp(l.stats.health + 32, 0, 100);
-      l.strain = 0;
-      // Rebuilds a little of what the injury took, but not all of it.
-      l.attrs.speed = clamp(l.attrs.speed + 2, 20, 99);
-      return { kind: 'good', text: 'A clinic scanned it, built a programme around it, and gave you a date. You met the date.' };
-    },
-  },
-  {
-    id: 'specialist', cat: 'train', name: 'Fly out to a specialist', blurb: 'The surgeon professionals use.',
-    price: 11000,
-    show: (l) => l.injured && l.money >= 11000,
-    run: (l) => {
-      l.injured = false;
-      l.stats.health = 100;
-      l.strain = 0;
-      // The only thing in the game that gives back what an injury permanently
-      // took. It costs what it costs for exactly that reason.
-      l.attrs.speed = clamp(l.attrs.speed + 4, 20, 99);
-      l.attrs.dunk = clamp(l.attrs.dunk + 4, 20, 99);
-      l.physicals.durability = clamp(l.physicals.durability + 3, 10, 99);
-      return { kind: 'good', text: 'You flew out to the surgeon the professionals use. You came back moving like you did before.' };
-    },
-  },
-
-  // ---- staying ahead of it ------------------------------------------------
-  {
-    id: 'rest', cat: 'train', name: 'Take the summer off', blurb: 'Nothing heroic. It works.',
-    price: 0,
-    run: (l) => {
-      l.strain = Math.max(0, l.strain - 30);
-      l.stats.health = clamp(l.stats.health + 12, 0, 100);
-      l.stats.happiness = clamp(l.stats.happiness + 10, 0, 100);
-      return { kind: 'note', text: 'Rested. Came back feeling like a person.' };
-    },
-  },
-  {
-    id: 'stretch', cat: 'train', name: 'Stretch and ice, every night', blurb: 'Free, boring, and it adds up.',
-    price: 0,
-    run: (l) => {
-      l.strain = Math.max(0, l.strain - 16);
-      l.stats.health = clamp(l.stats.health + 6, 0, 100);
-      return { kind: 'note', text: 'Stretched and iced every night all year. Nobody noticed and it worked.' };
-    },
-  },
-  {
-    id: 'massage', cat: 'train', name: 'Recovery therapist', blurb: 'Soft tissue work, once a week.',
-    price: 700,
-    show: (l) => l.money >= 700,
-    run: (l) => {
-      l.strain = Math.max(0, l.strain - 30);
-      l.stats.health = clamp(l.stats.health + 12, 0, 100);
-      l.physicals.durability = clamp(l.physicals.durability + 1, 10, 99);
-      return { kind: 'good', text: 'Weekly soft tissue work. You stopped waking up sore.' };
-    },
-  },
-  {
-    id: 'offseason', cat: 'train', name: 'Offseason at a performance centre', blurb: 'Sleep, food, load management, all of it handled.',
-    price: 5500,
-    show: (l) => l.money >= 5500,
-    run: (l) => {
-      l.strain = 0;
-      l.stats.health = clamp(l.stats.health + 26, 0, 100);
-      l.stats.happiness = clamp(l.stats.happiness + 8, 0, 100);
-      l.physicals.durability = clamp(l.physicals.durability + 3, 10, 99);
-      l.physicals.stamina = clamp(l.physicals.stamina + 3, 10, 99);
-      return { kind: 'good', text: 'Spent the offseason somewhere that handled your sleep, your food and your load. You have never felt like this.' };
-    },
-  },
-
-  // ---- SCHOOL -------------------------------------------------------------
-  {
-    id: 'study', cat: 'school', name: 'Study', blurb: 'Books, actually opened.',
-    price: 0,
-    run: (l) => {
-      l.meters.grades = clamp(l.meters.grades + 15, 0, 100);
-      l.stats.smarts = clamp(l.stats.smarts + 2.2, 0, 100);
-      l.stats.happiness = clamp(l.stats.happiness - 3, 0, 100);
-      return { kind: 'note', text: 'Put real hours into schoolwork.' };
-    },
-  },
-  {
-    id: 'tutor', cat: 'school', name: 'Get a tutor', blurb: 'Because studying alone is not working.',
-    price: 700,
-    show: (l) => l.meters.grades < 62 && l.money >= 700,
-    run: (l) => {
-      l.meters.grades = clamp(l.meters.grades + 24, 0, 100);
-      l.stats.smarts = clamp(l.stats.smarts + 3.4, 0, 100);
-      return { kind: 'good', text: 'A tutor turned the grades around.' };
-    },
-  },
-  {
-    id: 'extracredit', cat: 'school', name: 'Beg for extra credit', blurb: 'It is late in the term.',
-    price: 0,
-    show: (l) => l.meters.grades < 48,
-    run: (l, rng) => {
-      if (rng.chance(0.55 + l.stats.smarts / 400)) {
-        l.meters.grades = clamp(l.meters.grades + 16, 0, 100);
-        return { kind: 'good', text: 'A teacher took pity and let you make up the work.' };
-      }
-      return { kind: 'bad', text: 'Asked for extra credit. Was told the deadline was the deadline.' };
-    },
-  },
-  {
-    id: 'skipclass', cat: 'school', name: 'Skip class', blurb: 'There are better uses of a Tuesday.',
-    price: 0,
-    run: (l) => {
-      l.meters.grades = clamp(l.meters.grades - 16, 0, 100);
-      l.stats.happiness = clamp(l.stats.happiness + 7, 0, 100);
-      l.time += 12; // the whole point is that it buys time back
-      return { kind: 'bad', text: 'Skipped enough class that somebody noticed.' };
-    },
-  },
-  {
-    id: 'academics', cat: 'school', name: 'Meet with academic support', blurb: 'Compliance is asking.',
-    price: 0,
-    show: (l) => isCollege(l) && l.meters.grades < 55,
-    run: (l) => {
-      l.meters.grades = clamp(l.meters.grades + 20, 0, 100);
-      return { kind: 'good', text: 'Academic support got you back on track. Barely.' };
-    },
-  },
-  {
-    id: 'sat', cat: 'school', name: 'Prep for the entrance exam', blurb: 'Schools have minimums.',
-    price: 0,
-    show: (l) => isHS(l) && l.age >= 16,
-    run: (l) => {
-      l.stats.smarts = clamp(l.stats.smarts + 4, 0, 100);
-      l.meters.grades = clamp(l.meters.grades + 8, 0, 100);
-      return { kind: 'note', text: 'Ground through test prep.' };
-    },
-  },
-
-  // ---- LIFE ---------------------------------------------------------------
-  {
-    id: 'job', cat: 'life', name: 'Work a part-time job', blurb: 'Somebody has to pay for the camps.',
-    price: 0,
-    show: (l) => isHS(l),
-    run: (l, rng) => {
-      const earned = 1800 + rng.int(1400);
-      l.money += earned;
-      l.meters.grades = clamp(l.meters.grades - 7, 0, 100);
-      l.stats.happiness = clamp(l.stats.happiness - 4, 0, 100);
-      return { kind: 'note', text: `Worked after school. Made ${cash(earned)}.` };
-    },
-  },
-  {
-    id: 'aau', cat: 'life', name: 'Play the AAU circuit', blurb: 'Play in front of everyone.',
-    wear: 16, price: 1100,
-    show: (l) => isHS(l) && l.money >= 1100,
-    run: (l, rng) => {
-      l.meters.hype = clamp(l.meters.hype + 15 * (1 - l.meters.hype / 118), 0, 100);
-      trainSkills(l, Object.fromEntries(weakest(l, 2).map((k) => [k, 0.5])));
-      return {
-        kind: rng.chance(0.3) ? 'good' : 'note',
-        text: 'Spent the summer on the circuit. A lot of gyms, a lot of eyes.',
-      };
-    },
-  },
-  {
-    id: 'camp', cat: 'life', name: 'Elite camp invite', blurb: 'One weekend, every scout there.',
-    price: 1700,
-    show: (l) => isHS(l) && l.meters.hype >= 42 && l.money >= 1700,
-    run: (l) => {
-      l.meters.hype = clamp(l.meters.hype + 21 * (1 - l.meters.hype / 118), 0, 100);
-      return { kind: 'good', text: 'Got the camp invite and did not embarrass yourself.' };
-    },
-  },
-  {
-    id: 'highlights', cat: 'life', name: 'Post your highlights', blurb: 'The tape does not lie. Much.',
-    price: 0,
-    show: (l) => l.lastStats && l.lastStats.ppg >= 9,
-    run: (l, rng) => {
-      const pop = rng.chance(0.28);
-      l.meters.hype = clamp(l.meters.hype + (pop ? 14 : 5) * (1 - l.meters.hype / 118), 0, 100);
-      return pop
-        ? { kind: 'good', text: 'A mixtape got picked up. Your phone did not stop for a week.' }
-        : { kind: 'note', text: 'Posted a highlight reel. It did fine.' };
-    },
-  },
-  {
-    id: 'nil', cat: 'life', name: 'Sign an NIL deal', blurb: 'A dealership wants your face on it.',
-    price: 0,
-    show: (l) => isCollege(l) && l.meters.hype >= 52,
-    run: (l, rng) => {
-      // Endorsement money is not linear in fame. It is close to nothing until
-      // people outside your own conference know your name, then it moves fast.
-      const reach = (l.meters.hype / 100) ** 2;
-      const deal = Math.round((500 + 26000 * reach * (0.55 + l.meters.rep / 150)) * (0.6 + rng.random() * 0.8));
-      l.money += deal;
-      return { kind: 'good', text: `Signed an NIL deal — ${cash(deal)}.` };
-    },
-  },
-  {
-    id: 'media', cat: 'life', name: 'Media training', blurb: 'Say the right thing, on camera.',
-    price: 400,
-    show: (l) => isCollege(l) && l.money >= 400,
-    run: (l) => {
-      l.meters.rep = clamp(l.meters.rep + 13, 0, 100);
-      return { kind: 'good', text: 'Learned how to handle a microphone.' };
-    },
-  },
-  {
-    id: 'combine', cat: 'life', name: 'Pro-day circuit', blurb: 'Workouts in front of front offices.',
-    wear: 8, price: 900,
-    show: (l) => isCollege(l) && l.age >= 19 && l.money >= 900,
-    run: (l, rng) => {
-      l.stock = clamp(l.stock + 4 + rng.int(5), -40, 40);
-      l.meters.hype = clamp(l.meters.hype + 11 * (1 - l.meters.hype / 118), 0, 100);
-      return { kind: 'good', text: 'Worked out for front offices. Somebody moved you up a board.' };
-    },
-  },
-  {
-    id: 'party', cat: 'life', name: 'Go out', blurb: 'You are eighteen once.',
-    price: 120,
-    run: (l, rng) => {
-      l.stats.happiness = clamp(l.stats.happiness + 13, 0, 100);
-      const seen = rng.chance(l.meters.hype > 55 ? 0.30 : 0.08);
-      if (seen) {
-        l.meters.rep = clamp(l.meters.rep - 12, 0, 100);
-        l.stock = clamp(l.stock - 4, -40, 40);
-        return { kind: 'bad', text: 'A video of you out got around. It did not look great.' };
-      }
-      return { kind: 'note', text: 'Went out. Nobody was filming.' };
-    },
-  },
-  {
-    id: 'doctor', cat: 'life', name: 'See a specialist', blurb: 'Something is not right.',
-    price: 900,
-    show: (l) => l.stats.health < 62 && l.money >= 900,
-    run: (l) => {
-      l.stats.health = clamp(l.stats.health + 18, 0, 100);
-      l.strain = Math.max(0, l.strain - 12);
-      return { kind: 'good', text: 'Saw a specialist and got the body sorted out.' };
-    },
-  },
-  {
-    id: 'agency', cat: 'life', name: 'Sign with an agency', blurb: 'They run your pre-draft process.',
-    price: 3500,
-    show: (l) => isCollege(l) && !personIn(l, 'agent') && l.money >= 3500,
-    run: (l, rng) => {
-      l.people.push(makePerson(l, 'agent', rng, { rel: 65 }));
-      l.stock = clamp(l.stock + 5, -40, 40);
-      return { kind: 'good', text: 'Signed with an agency. Somebody is working the phones for you now.' };
-    },
-  },
-  {
-    id: 'transfer', cat: 'life', name: 'Enter the transfer portal', blurb: 'This is not working.',
-    price: 0,
-    show: (l) => isCollege(l) && l.age >= 19 && l.lastMinutes < 12,
-    run: (l, rng) => {
-      l.wantsTransfer = true;
-      return { kind: 'note', text: 'Put your name in the portal. Somewhere else, then.' };
-    },
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Focused training
-//
-// The grouped sessions above are what a team does with you. This is what you do
-// on your own: pick one attribute and work it. Repeatable, unlike everything
-// else, because the limit here is the falloff rather than a once-a-year rule —
-// a second session on the same number is worth half, a third a fifth, and a
-// fourth is worth nothing at all.
-// ---------------------------------------------------------------------------
-function focusActions(life) {
-  return SKILL_KEYS.map((k) => {
-    const left = sessionsLeft(life, k);
-    const room = life.build.skills[k] - life.attrs[k];
-    return {
-      id: `focus:${k}`,
-      cat: 'train',
-      key: k,
-      name: SKILLS[k].label,
-      wear: 7,
-      price: 0,
-      trains: { [k]: 1 },
-      focus: true,
-      now: Math.round(life.attrs[k]),
-      gain: previewGain(life, k, 1),
-      left,
-      maxed: room <= 0.5,
-      run: (l) => {
-        const before = l.attrs[k];
-        trainSkills(l, { [k]: 1 });
-        const moved = l.attrs[k] - before;
-        if (moved < 0.05) {
-          return { kind: 'note', text: `Another session on ${SKILLS[k].label.toLowerCase()}. Nothing left in it this year.` };
-        }
-        return { kind: 'note', text: `Worked ${SKILLS[k].label.toLowerCase()} on your own. +${moved.toFixed(1)}.` };
-      },
-    };
-  });
-}
-
-// ---------------------------------------------------------------------------
-// People actions
-//
-// Built per person rather than listed, because what you can do with somebody
-// depends on who they are and how things currently stand between you.
-// ---------------------------------------------------------------------------
-function actionsForPerson(life, p) {
-  const out = [];
-  const push = (id, name, run, price = 0) => out.push({ id, name, price, run, person: p.id });
-
-  push('talk', 'Spend time together', (l, rng) => {
-    nudge(p, 4 + rng.int(5));
-    p.met++;
-    l.stats.happiness = clamp(l.stats.happiness + 2, 0, 100);
-    return { kind: 'note', text: `Spent some time with ${p.name}.` };
-  });
-
-  if (p.rel < 45) {
-    push('mend', 'Try to patch things up', (l, rng) => {
-      p.met++;
-      if (rng.chance(0.62)) {
-        nudge(p, 12 + rng.int(9));
-        return { kind: 'good', text: `Cleared the air with ${p.name}.` };
-      }
-      nudge(p, -4);
-      return { kind: 'bad', text: `Tried to talk to ${p.name}. It went badly.` };
-    });
-  }
-
-  if (p.role === 'teammate') {
-    push('runit', 'Get in the gym together', (l, rng) => {
-      p.met++;
-      nudge(p, 7 + rng.int(6));
-      trainSkills(l, Object.fromEntries(weakest(l, 2).map((k) => [k, 0.45])));
-      return { kind: 'note', text: `Worked out with ${p.name}. Both of you got better.` };
-    });
-    if (p.rel < 35) {
-      push('confront', 'Have it out with him', (l, rng) => {
-        p.met++;
-        if (rng.chance(0.4)) {
-          nudge(p, 18);
-          return { kind: 'good', text: `You and ${p.name} finally said it out loud. It helped.` };
-        }
-        nudge(p, -14);
-        l.meters.rep = clamp(l.meters.rep - 4, 0, 100);
-        return { kind: 'bad', text: `It got heard outside the locker room. That was a mistake.` };
+  // A possession first — it belongs to the season that just finished.
+  if (rng.chance(0.78)) {
+    const ppool = PLAYS.filter((p) => p.when(life));
+    if (ppool.length) {
+      const p = pickWeighted(ppool, rng);
+      queue.push({
+        kind: 'play', id: p.id, title: p.title, text: p.text(life),
+        options: p.options.map((o) => o.label),
       });
     }
   }
 
-  if (p.role === 'coach') {
-    push('minutes', 'Ask for more minutes', (l, rng) => {
-      p.met++;
-      // Asking works when he already rates you and backfires when he does not,
-      // which is the entire lesson about asking for things.
-      if (rng.chance(0.25 + p.rel / 220)) {
-        l.minutesPitch = true;
-        nudge(p, 3);
-        return { kind: 'good', text: 'The coach heard you out and said he would look at it.' };
-      }
-      nudge(p, -9);
-      return { kind: 'bad', text: 'You asked for minutes. He did not take it well.' };
-    });
-    push('extra', 'Stay after every practice', (l, rng) => {
-      p.met++;
-      nudge(p, 9 + rng.int(6));
-      trainSkills(l, Object.fromEntries(weakest(l, 3).map((k) => [k, 0.4])));
-      return { kind: 'good', text: 'Last one out of the gym, all year. He noticed.' };
-    });
+  // Then the life, if it has something to ask.
+  if (rng.chance(0.55)) {
+    const cpool = CHOICES.filter((c) => !seen.includes(c.id) && c.when(life));
+    if (cpool.length) {
+      const c = pickWeighted(cpool, rng);
+      seen.push(c.id);
+      queue.push({ kind: 'life', id: c.id, title: c.title, text: c.text(life), options: c.options.map((o) => o.label) });
+    }
   }
-
-  if (p.role === 'mother' || p.role === 'father') {
-    const pot = Math.round(300 + life.background.yearly * 0.6);
-    push('askmoney', 'Ask for money', (l, rng) => {
-      p.met++;
-      if (rng.chance(0.35 + p.rel / 200)) {
-        const got = Math.round(pot * (0.5 + rng.random()));
-        l.money += got;
-        nudge(p, -3);
-        return { kind: 'good', text: `${p.name} gave you ${cash(got)}.` };
-      }
-      return { kind: 'bad', text: `Asked ${p.name} for money. There is not any.` };
-    });
-  }
-
-  if (p.role === 'trainer') {
-    push('session', 'Extra sessions all summer', (l) => {
-      p.met++;
-      nudge(p, 5);
-      trainSkills(l, Object.fromEntries(weakest(l, 3).map((k) => [k, 0.8])), 1.15);
-      l.strain += 12;  // declared inline: person actions are built, not listed
-      return { kind: 'good', text: `A summer of extra work with ${p.name}.` };
-    }, 900);
-  }
-
-  if (p.role === 'agent') {
-    push('push', 'Have them work the phones', (l, rng) => {
-      p.met++;
-      l.stock = clamp(l.stock + 3 + rng.int(4), -40, 40);
-      return { kind: 'good', text: `${p.name} spent the spring selling you to front offices.` };
-    });
-  }
-
-  if (p.role === 'friend' || p.role === 'partner' || p.role === 'sibling') {
-    push('lean', 'Lean on them', (l) => {
-      p.met++;
-      nudge(p, 5);
-      l.stats.happiness = clamp(l.stats.happiness + 9, 0, 100);
-      return { kind: 'good', text: `Talked to ${p.name} when it was heavy. It helped.` };
-    });
-  }
-
-  return out;
+  return { passive, queue };
 }
 
-// ---------------------------------------------------------------------------
-// Availability and execution
-// ---------------------------------------------------------------------------
-// Everything is once a year. `once` is gone as a flag because it is now the
-// rule; an already-taken action disappears from the list rather than sitting
-// there greyed out.
-function availableActions(life, cat) {
-  return ACTIONS.filter((a) => {
-    if (a.cat !== cat) return false;
-    if (life.doneThisYear.includes(a.id)) return false;
-    if (a.show && !a.show(life)) return false;
-    return true;
-  });
-}
-
-// Whether it can be taken right now, and if not, why. Money is the only hard
-// block left; wear is a consequence, not a gate, so the game lets you do the
-// stupid thing and then charges you for it.
-function blockedReason(life, a) {
-  if ((a.price || 0) > life.money) return `Costs ${cash(a.price)}`;
-  return null;
-}
-
-// A warning, not a refusal. Shown on anything physical once the body has had
-// enough, so the cost of a sixth session in one year is legible before you take
-// it rather than after the knee goes.
-function strainWarning(life, a) {
-  if (!a.wear) return null;
-  if (life.strain + a.wear > 78) return 'Your body has had enough';
-  if (life.strain + a.wear > 55) return 'Getting worn down';
-  return null;
-}
-
-// Every action, wherever it was built, must have a numeric price and a callable
-// effect. A person action assembled with its arguments one position out passed
-// a leftover number as the effect and the effect function as the price, which
-// made `money -= <function>` produce NaN and put "$NaN" on the button — with no
-// error anywhere until the bank balance was already ruined. Checking the shape
-// at the boundary turns that into a thrown error at the call site instead.
-function assertAction(a) {
-  if (typeof a?.run !== 'function') {
-    throw new TypeError(`action "${a?.id}" has no effect function (got ${typeof a?.run})`);
+function resolveChoice(life, kind, id, optionIndex, rng) {
+  if (kind === 'play') {
+    const p = PLAYS.find((x) => x.id === id);
+    const opt = p?.options[optionIndex];
+    if (!opt) return null;
+    const made = attempt(life, opt.key, opt.diff, rng);
+    return playOutcome(life, opt.key, made, rng, opt.made, opt.miss);
   }
-  if (a.price != null && !Number.isFinite(a.price)) {
-    throw new TypeError(`action "${a.id}" has a non-numeric price (${typeof a.price})`);
-  }
-  if (a.wear != null && !Number.isFinite(a.wear)) {
-    throw new TypeError(`action "${a.id}" has a non-numeric wear (${typeof a.wear})`);
-  }
-}
-
-function doAction(life, a, rng) {
-  assertAction(a);
-  if (blockedReason(life, a)) return null;
-  life.money -= a.price || 0;
-  life.strain += a.wear || 0;
-  const entry = a.run(life, rng) || { kind: 'note', text: a.name };
-  life.doneThisYear.push(a.id);
-  life.yearLog.push(entry);
-  return entry;
-}
-
-// Every action the game can ever offer, for the harness to check in one pass.
-// Person actions are built per person rather than listed, so they only exist
-// once somebody exists to build them from.
-function allActionsFor(life) {
-  const out = [...ACTIONS, ...focusActions(life)];
-  for (const p of life.people) if (p.alive) out.push(...actionsForPerson(life, p));
-  return out;
+  const c = CHOICES.find((x) => x.id === id);
+  const opt = c?.options[optionIndex];
+  if (!opt) return null;
+  return opt.run(life, rng) || { kind: 'note', text: opt.label };
 }
 
 /* ===== src/career.js ===== */
@@ -3089,7 +3338,12 @@ function runDraft(b, draftOvr, potential, rng) {
   const guaranteed = !!b.archetype?.guaranteesDraft;
 
   if (hype < DRAFT_CUTOFF && !guaranteed) {
-    const signChance = clamp((hype - 46) / 52, 0, 0.42);
+    // Undrafted is not the end of it. The floor is deliberately non-zero: a
+    // camp invite, a two-way, a summer roster somewhere. Below it the maths
+    // said a player with a poor roll had EXACTLY zero chance of ever being
+    // seen, which is both wrong about basketball and a dead end to hand
+    // somebody who has just played eight years.
+    const signChance = clamp((hype - 44) / 54, 0.05, 0.45);
     return { drafted: false, pick: null, hype, signed: rng.chance(signChance), guaranteed: false };
   }
 
@@ -3974,6 +4228,7 @@ const Progress = {
 
 
 
+
 const START_AGE = 14;
 const GRAD_AGE = 18;
 const DRAFT_AGE_CAP = 22;
@@ -4088,7 +4343,7 @@ function newLife(build, name, rng = defaultRng) {
     trainCounts: {},
     yearLog: [],
     seenEvents: [],
-    pendingChoice: null,
+    choices: [],
 
     program: null,
     stock: 0, // pre-draft process: workouts, interviews, agency
@@ -4320,7 +4575,7 @@ function advanceYear(life, rng = defaultRng) {
   rollEvents(life, rng, out);
   const rolled = rollYearEvents(life, rng);
   out.push(...rolled.passive);
-  life.choice = rolled.choice;
+  life.choices = rolled.queue;
   driftRelationships(life, rng);
 
   const entry = {
@@ -4474,7 +4729,10 @@ function proBuildFrom(life) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
       const now = life.attrs[k];
-      const ceiling = life.build.skills[k];
+      // The soft ceiling, not the rolled one. A player who has already trained
+      // past his genetics keeps every point of it, and still has somewhere to
+      // go in the pro years.
+      const ceiling = effectiveCeiling(life, k);
       return [k, clamp(Math.round(now + Math.max(0, ceiling - now) * share), 25, 99)];
     }),
   );
@@ -4525,12 +4783,12 @@ const S = { life: null, prog: Progress.load(), career: null, verdict: null, wonB
 // ---------------------------------------------------------------------------
 // New life / resume
 // ---------------------------------------------------------------------------
-function startLife() {
+function startLife(name) {
   const rng = defaultRng;
   // The roll engine still runs in full — it is now describing genetics: the
   // height he finishes at and the ceiling on every attribute.
   const build = rollCompleteBuild(rng);
-  S.life = newLife(build, randomName(rng), rng);
+  S.life = newLife(build, (name || '').trim() || randomName(rng), rng);
   S.career = null;
   S.verdict = null;
   S.wonBadges = null;
@@ -4558,7 +4816,7 @@ function resumeOrStart() {
   render(true);
   // A life saved mid-question re-asks it. Otherwise the answer would be lost
   // and the year would move on having quietly skipped a decision.
-  if (S.life.choice) openChoice();
+  if (S.life.choices?.length) openChoice();
   else if (S.life.pending) openDecision();
 }
 
@@ -4581,7 +4839,28 @@ function idcardHtml() {
         &middot; OVR ${overallNow(L)} &middot; ${esc(L.teamRole)}</div>
       <div class="sub">${line2} &middot; ${where}</div>
     </div>
-    <div class="cash"><b>${money(L.money)}</b><span>Bank balance</span></div>`;
+    <div class="stack">
+      ${ppgHtml(L)}
+      <div class="cash"><b>${money(L.money)}</b><span>Bank balance</span></div>
+    </div>`;
+}
+
+// Scoring is the number the whole recruiting apparatus reacts to, so it belongs
+// on the front screen rather than buried in the season log. Last season big,
+// career average underneath, because "what am I averaging" and "what have I
+// averaged" are different questions and both get asked.
+function ppgHtml(L) {
+  const seasons = L.log.filter((y) => y.stats);
+  if (!seasons.length) return '<div class="cash ppg"><b>&mdash;</b><span>PPG</span></div>';
+  // The last season that actually produced a box score, not the last season
+  // full stop — a year lost to a cut or a redshirt should not blank out an
+  // average you spent three years building.
+  const last = seasons[seasons.length - 1].stats.ppg;
+  const career = seasons.reduce((a, y) => a + y.stats.ppg, 0) / seasons.length;
+  return `<div class="cash ppg">
+    <b>${last.toFixed(1)}</b>
+    <span>PPG &middot; ${career.toFixed(1)} career</span>
+  </div>`;
 }
 
 const BARS = [
@@ -4694,22 +4973,26 @@ function optRow(a, idx) {
 // is, how far your genetics let it go, what this session adds, and how many
 // more are worth taking this year.
 function focusRow(a, idx) {
-  const cap = S.life.build.skills[a.key];
   const spent = a.gain < 0.05;
+  // The rolled ceiling is a marker on the bar, not the end of it. Once you are
+  // past it the row says so, because "at your genetic ceiling" was a lie the
+  // moment the cap stopped being a wall.
+  const past = a.over > 0.5;
   return `<button class="opt focus" data-act="${idx}" type="button" ${spent ? 'disabled' : ''}>
     <span>
-      <span class="t">${esc(a.name)} <b class="num">${a.now}</b></span>
-      <span class="bar"><span class="now" style="width:${clamp(a.now, 0, 100)}%"></span>
-        <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span>
+      <span class="t">${esc(a.name)} <b class="num">${a.now}${
+        past ? `<i class="over">+${a.over.toFixed(0)}</i>` : ''
+      }</b></span>
+      <span class="bar"><span class="now ${past ? 'past' : ''}" style="width:${clamp(a.now, 0, 100)}%"></span>
+        <span class="cap" style="left:${clamp(a.cap, 0, 99)}%"></span></span>
       <span class="tags">
         ${
-          a.maxed
-            ? '<span class="tag dim">At your genetic ceiling</span>'
-            : spent
-              ? '<span class="tag dim">Nothing left in it this year</span>'
-              : `<span class="tag gain">+${a.gain.toFixed(1)} this session</span>
-                 <span class="tag ${a.left <= 1 ? 'wear' : ''}">${a.left} more worth taking</span>`
+          spent
+            ? '<span class="tag dim">Nothing left in it this year</span>'
+            : `<span class="tag gain">+${a.gain.toFixed(1)} this session</span>
+               <span class="tag ${a.left <= 1 ? 'wear' : ''}">${a.left} more worth taking</span>`
         }
+        ${past ? '<span class="tag past">Past what you were dealt</span>' : ''}
       </span>
     </span>
     <span class="go">&rsaquo;</span>
@@ -4767,7 +5050,7 @@ function drawSheet() {
     body.innerHTML = acts.map(optRow).join('');
   } else if (kind === 'stats') {
     title.textContent = 'You';
-    hint.textContent = 'The bar is where you are. The notch is as far as your genetics go.';
+    hint.textContent = 'The bar is where you are. The notch is what you were dealt — you can train past it, and it costs years.';
     body.innerHTML = statsSheetHtml();
   } else if (kind === 'vault') {
     title.textContent = 'Vault';
@@ -4833,27 +5116,30 @@ function wireSheet() {
 // ---------------------------------------------------------------------------
 function openChoice() {
   const L = S.life;
-  const c = L.choice;
+  const c = L.choices?.[0];
+  if (!c) { if (L.pending) openDecision(); return; }
   S.sheet = { kind: 'choice' };
   $('sheetBack').classList.add('off');
   $('sheetTitle').textContent = c.title;
-  $('sheetHint').textContent = '';
+  $('sheetHint').textContent = c.kind === 'play' ? 'One possession.' : '';
   $('sheetBody').innerHTML = `
     <p class="choice-text">${esc(c.text)}</p>
-    ${c.options.map((label, i) => `<button class="btn choice" data-opt="${i}" type="button">${esc(label)}</button>`).join('')}`;
+    ${c.options.map((label, i) => `<button class="btn choice" data-opt="${i}" type="button">${esc(label)}</button>`).join('')}
+    ${L.choices.length > 1 ? `<p class="note" style="text-align:center;margin-top:6px">${L.choices.length - 1} more to come</p>` : ''}`;
   $('sheet').classList.remove('hidden');
   $('scrim').classList.remove('hidden');
   for (const el of $('sheetBody').querySelectorAll('[data-opt]')) {
     el.onclick = () => {
-      const line = resolveChoice(L, c.id, Number(el.dataset.opt), defaultRng);
+      const line = resolveChoice(L, c.kind, c.id, Number(el.dataset.opt), defaultRng);
       // The outcome belongs to the year that asked, so it goes on that entry
       // rather than opening the next one with a consequence of the last.
       if (line && L.log.length) L.log[L.log.length - 1].events.push(line);
-      L.choice = null;
+      L.choices.shift();
       Progress.saveLife(L);
       closeSheet();
       render(true);
-      if (L.pending) openDecision();
+      if (L.choices.length) openChoice();
+      else if (L.pending) openDecision();
     };
   }
 }
@@ -5015,9 +5301,10 @@ function statsSheetHtml() {
       ${SKILL_KEYS.map((k) => {
         const now = Math.round(L.attrs[k]);
         const cap = L.build.skills[k];
+        const past = now > cap;
         return `<div class="attr">
-          <span class="k">${LABELS[k]}</span><span class="v">${now}</span>
-          <span class="bar"><span class="now" style="width:${now}%"></span>
+          <span class="k">${LABELS[k]}</span><span class="v">${now}${past ? ` <i class="over">+${now - cap}</i>` : ''}</span>
+          <span class="bar"><span class="now ${past ? 'past' : ''}" style="width:${now}%"></span>
             <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span></div>`;
       }).join('')}
     </div>
@@ -5109,13 +5396,13 @@ function render(scrollToEnd = false) {
   // The + changes job depending on what the game is waiting for: play the year,
   // answer a decision, or start again once it is all over.
   const age = $('ageBtn');
-  const waiting = !!L.pending || !!L.choice;
+  const waiting = !!L.pending || !!L.choices?.length;
   age.classList.toggle('decide', waiting || over);
   age.querySelector('.lb').textContent = over ? 'New' : waiting ? 'Decide' : 'Age';
   age.querySelector('.plus').textContent = over ? '↻' : waiting ? '?' : '+';
 
   for (const el of document.querySelectorAll('[data-cat]')) {
-    el.disabled = over || !!L.pending || !!L.choice;
+    el.disabled = over || !!L.pending || !!L.choices?.length;
     // A category holding something urgent says so, rather than making you find
     // out by opening all four.
     const cat = el.dataset.cat;
@@ -5123,7 +5410,7 @@ function render(scrollToEnd = false) {
       (cat === 'school' && L.meters.grades < 40) ||
       (cat === 'train' && L.injured) ||
       (cat === 'people' && (coachTrust(L) < 28 || teamChemistry(L) < 30));
-    el.dataset.alert = String(!over && !L.pending && !L.choice && !!alert);
+    el.dataset.alert = String(!over && !L.pending && !L.choices?.length && !!alert);
   }
 
   if (scrollToEnd) requestAnimationFrame(() => { $('feed').scrollTop = $('feed').scrollHeight; });
@@ -5136,14 +5423,14 @@ for (const el of document.querySelectorAll('[data-cat]')) {
   el.onclick = () => openSheet(el.dataset.cat);
 }
 $('ageBtn').onclick = () => {
-  if (S.career) { startLife(); return; }
-  if (S.life.choice) { openChoice(); return; }
+  if (S.career) { openNewLife(); return; }
+  if (S.life.choices?.length) { openChoice(); return; }
   if (S.life.pending) { openDecision(); return; }
   advanceYear(S.life, defaultRng);
   Progress.saveLife(S.life);
   closeSheet();
   render(true);
-  if (S.life.choice) openChoice();
+  if (S.life.choices?.length) openChoice();
   else if (S.life.pending) openDecision();
 };
 $('sheetClose').onclick = () => {
@@ -5175,8 +5462,31 @@ $('menuBtn').onclick = () => {
   $('mStats').onclick = () => openSheet('stats');
   $('mVault').onclick = () => openSheet('vault');
   $('mBadges').onclick = () => openSheet('badges');
-  $('mNew').onclick = startLife;
+  $('mNew').onclick = openNewLife;
 };
+
+// Name him yourself, or take the one the game offers. The field is pre-filled
+// so it is never a blank box you have to solve before you can play.
+function openNewLife() {
+  const suggested = randomName(defaultRng);
+  S.sheet = { kind: 'newlife' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'A new life';
+  $('sheetHint').textContent = 'Fourteen years old. Everything else is already decided and none of it is visible.';
+  $('sheetBody').innerHTML = `
+    <label class="field">
+      <span>Name</span>
+      <input id="nameBox" type="text" maxlength="28" value="${esc(suggested)}"
+        autocomplete="off" autocapitalize="words" spellcheck="false" />
+    </label>
+    <button class="btn" id="reroll" type="button">Give me another one</button>
+    <button class="btn primary" id="beginLife" type="button" style="margin-top:8px">Start</button>`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  $('reroll').onclick = () => { $('nameBox').value = randomName(defaultRng); };
+  $('beginLife').onclick = () => startLife($('nameBox').value);
+  $('nameBox').onkeydown = (e) => { if (e.key === 'Enter') startLife($('nameBox').value); };
+}
 
 resumeOrStart();
 </script>
