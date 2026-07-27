@@ -1,13 +1,13 @@
 {
-  "name": "Build a Hooper",
-  "short_name": "Hooper",
-  "description": "Roll a basketball player one attribute at a time, scored against what is expected for his height, then simulate the career it was worth.",
+  "name": "Hoop Life",
+  "short_name": "Hoop Life",
+  "description": "Live a basketball career one year at a time. Start at fourteen, plan every season of high school and college, and find out what the genetics you were dealt were actually worth.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#150f0b",
-  "theme_color": "#150f0b",
+  "background_color": "#eef1f6",
+  "theme_color": "#eef1f6",
   "categories": [
     "games",
     "sports"

@@ -6,6 +6,8 @@
 //   npm run sim -- --calibrate  -- emit RAW_QUANTILES + HYPE_QUANTILES
 //   npm run sim -- --chase      -- the 5'10" chasing 95+ dunk check
 //   npm run sim -- --careers    -- career-outcome distribution
+//   npm run sim -- --recruit    -- Hoop Life: emit STAR_CUTS + RECRUIT_CUTS
+//   npm run sim -- --pipeline   -- Hoop Life: high school -> college -> draft
 //   npm run sim -- -n 2000000   -- roll count
 
 import { SKILL_KEYS, SKILLS, VERIFIED_95_PLUS, UP_CHANCE, UP_SCALE, FREAK_CHANCE, FREAK_MULT, SCOUT_NOISE } from '../src/constants.js';
@@ -17,6 +19,7 @@ import { simulateCareer } from '../src/career.js';
 import { writeVerdict } from '../src/verdict.js';
 import { formatHeight } from '../src/roll.js';
 import { randomName } from '../src/names.js';
+import { recruitCalibrate, pipelineCheck } from './life-sim.js';
 
 const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);
@@ -269,7 +272,7 @@ function careerCheck(n) {
 
 // ---------------------------------------------------------------------------
 
-console.log(`BUILD A HOOPER — Monte Carlo   n=${N.toLocaleString()}`);
+console.log(`HOOP LIFE — Monte Carlo   n=${N.toLocaleString()}`);
 
 function sampleCareers(k) {
   for (let i = 0; i < k; i++) {
@@ -324,7 +327,11 @@ function progressionCheck(n) {
   }
 }
 
-if (has('--progression')) {
+if (has('--recruit')) {
+  recruitCalibrate(numArg('--recruit', 40000) || 40000, rng);
+} else if (has('--pipeline')) {
+  pipelineCheck(numArg('--pipeline', 20000) || 20000, rng);
+} else if (has('--progression')) {
   progressionCheck(numArg('--progression', 60000) || 60000);
 } else if (has('--sample')) {
   sampleCareers(numArg('--sample', 8) || 8);

@@ -16,8 +16,11 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const OUT = process.argv[2] || join(ROOT, 'docs', 'icons');
 
-const WOOD = [0x15, 0x0f, 0x0b];
-const LED = [0xff, 0xa9, 0x2b];
+// The ground and the ball. Both restated for the light theme — the old pair was
+// the orange-on-black scoreboard the app no longer uses anywhere else, and a
+// home-screen icon that does not match the app it opens reads as the wrong app.
+const WOOD = [0x25, 0x63, 0xeb];
+const LED = [0xff, 0xff, 0xff];
 
 // --- PNG writing -----------------------------------------------------------
 const CRC = (() => {

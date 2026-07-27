@@ -43,5 +43,5 @@ createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
   }
 }).listen(PORT, () => {
-  console.log(`Build a Hooper — http://localhost:${PORT}/`);
+  console.log(`Hoop Life — http://localhost:${PORT}/`);
 });

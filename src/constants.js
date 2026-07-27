@@ -266,3 +266,25 @@ export const HYPE_QUANTILES = [
   [96.6102, 0.9999],
   [107.2623, 1],
 ];
+
+// ---------------------------------------------------------------------------
+// Recruiting cuts (Hoop Life)
+//
+// Both tables are MEASURED percentiles of the recruit-score distribution at
+// graduation, emitted by `npm run sim -- --recruit`. They are not round
+// numbers and they must not be guessed: the first pass keyed star ratings off
+// raw hype thresholds and put 31.5% of every graduating class at five stars,
+// with 18% holding a blue-blood offer.
+//
+// Targets: 5-star ~2%, 4-star ~8%, 3-star ~21%, 2-star ~32%, 1-star the rest.
+// Offers: blue blood top ~3%, high major top ~12%, mid major top ~34%,
+// small school top ~68%.
+// ---------------------------------------------------------------------------
+export const STAR_CUTS = [46.8, 56.1, 62.7, 68.2]; // >= these read as 2, 3, 4, 5 stars
+
+export const RECRUIT_CUTS = {
+  blueBlood: 67.1,
+  highMajor: 61.9,
+  midMajor: 55.3,
+  smallSchool: 44.7,
+};

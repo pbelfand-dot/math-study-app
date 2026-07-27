@@ -179,6 +179,9 @@ export function bestCareers(p, n = 25) {
 // worth staking a month of pulls on, and there is no server to fall back to.
 // Making progress exportable turns an unrecoverable loss into an inconvenience.
 // ---------------------------------------------------------------------------
+// The `app` tag and the localStorage key both stay at their original values.
+// The game was renamed; a backup someone exported before the rename was not,
+// and breaking those to match a title would lose real progress for nothing.
 export function exportProgress(p) {
   return JSON.stringify({ app: 'build-a-hooper', exported: new Date().toISOString(), data: p });
 }
@@ -194,12 +197,47 @@ export function importProgress(text) {
   }
   const d = parsed && parsed.app === 'build-a-hooper' ? parsed.data : parsed;
   if (!d || typeof d !== 'object' || typeof d.builds !== 'number' || !Array.isArray(d.history)) {
-    return { ok: false, error: 'That does not look like a Build a Hooper backup.' };
+    return { ok: false, error: 'That does not look like a Hoop Life backup.' };
   }
   const merged = { ...blank(), ...d, streak: { ...blank().streak, ...(d.streak || {}) } };
   merged.version = 1;
   if (merged.history.length > HISTORY_CAP) merged.history.length = HISTORY_CAP;
   return { ok: true, progress: merged };
+}
+
+// ---------------------------------------------------------------------------
+// The life in progress
+//
+// Kept separate from the vault: the vault is a record of finished careers, this
+// is one live object that gets overwritten constantly. Without it a phone
+// dropping the tab from memory costs you eight years of decisions, which on a
+// game built entirely out of decisions is the whole thing.
+//
+// Stored as-is. Everything in a life is plain data by construction — the engine
+// takes the life and the rng as arguments rather than closing over either — so
+// a round trip through JSON returns something the engine still accepts.
+// ---------------------------------------------------------------------------
+const LIFE_KEY = 'hooper.life.v1';
+
+export function saveLife(life) {
+  try {
+    if (!life) localStorage.removeItem(LIFE_KEY);
+    else localStorage.setItem(LIFE_KEY, JSON.stringify(life));
+  } catch {
+    /* private mode or full quota — the life is still playable in memory */
+  }
+}
+
+export function loadLife() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LIFE_KEY));
+    // Anything that fails these is from an older shape and is not worth
+    // resurrecting halfway; a fresh life beats a broken one.
+    if (!raw || typeof raw.age !== 'number' || !raw.build?.skills || !raw.attrs) return null;
+    return raw;
+  } catch {
+    return null;
+  }
 }
 
 // Bundled together under one exported name. The bundler flattens modules into a
@@ -209,5 +247,5 @@ export function importProgress(text) {
 export const Progress = {
   todayStamp, load, save, bumpStreak, streakAlive,
   ACHIEVEMENTS, checkAchievements, careerScore, record, bestCareers,
-  exportProgress, importProgress,
+  exportProgress, importProgress, saveLife, loadLife,
 };

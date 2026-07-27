@@ -13,8 +13,8 @@
 // 99.6% of its weight on a JavaScript runtime whose only job is to serve one
 // static file. Keep the SEA path for the platforms mingw cannot target.
 //
-//   node tools/build-exe.js --native             -> dist/BuildAHooper.exe
-//   node tools/build-exe.js                      -> dist/BuildAHooper.exe (SEA)
+//   node tools/build-exe.js --native             -> dist/HoopLife.exe
+//   node tools/build-exe.js                      -> dist/HoopLife.exe (SEA)
 //   node tools/build-exe.js --target linux-x64   (or darwin-arm64, darwin-x64…)
 //   node tools/build-exe.js --target host        -> build for this machine
 //
@@ -43,10 +43,10 @@ const flag = (name, fb) => {
 };
 
 const TARGETS = {
-  'win-x64': { file: 'node.exe', out: 'BuildAHooper.exe', dir: 'win-x64' },
+  'win-x64': { file: 'node.exe', out: 'HoopLife.exe', dir: 'win-x64' },
   'linux-x64': { file: 'node', out: 'build-a-hooper', dir: 'linux-x64' },
-  'darwin-x64': { file: 'node', out: 'BuildAHooper-mac-x64', dir: 'darwin-x64' },
-  'darwin-arm64': { file: 'node', out: 'BuildAHooper-mac-arm64', dir: 'darwin-arm64' },
+  'darwin-x64': { file: 'node', out: 'HoopLife-mac-x64', dir: 'darwin-x64' },
+  'darwin-arm64': { file: 'node', out: 'HoopLife-mac-arm64', dir: 'darwin-arm64' },
 };
 
 let targetName = flag('--target', 'win-x64');
@@ -105,7 +105,7 @@ if (argv.includes('--native')) {
       `#define GAME_HTML_LEN ${html.length}\n`,
   );
 
-  const outPath = join(DIST, 'BuildAHooper.exe');
+  const outPath = join(DIST, 'HoopLife.exe');
   console.log('· compiling the launcher');
   run(CC, [
     join(ROOT, 'tools', 'launcher.c'),
@@ -117,7 +117,7 @@ if (argv.includes('--native')) {
   ]);
 
   const { size } = await stat(outPath);
-  console.log(`\n  dist/BuildAHooper.exe — ${(size / 1024).toFixed(0)} kB (win-x64, native launcher)`);
+  console.log(`\n  dist/HoopLife.exe — ${(size / 1024).toFixed(0)} kB (win-x64, native launcher)`);
   console.log('  Unsigned: SmartScreen will warn on first run.');
   process.exit(0);
 }

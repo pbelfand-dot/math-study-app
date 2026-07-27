@@ -27,6 +27,7 @@ const MODULES = [
   'src/career.js',
   'src/verdict.js',
   'src/progress.js',
+  'src/life.js',
   'web/main.js',
 ];
 
@@ -119,7 +120,7 @@ const out = fragment
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Build a Hooper</title>
+<title>Hoop Life</title>
 <link rel="icon" href="${FAVICON}" />
 </head>
 <body>

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A basketball build-roller and career simulator. Every attribute is scored against what is expected for that player's height.",
+  "description": "A basketball life simulator. Roll the genetics, then live the career one year at a time from high school through the draft.",
   "scripts": {
     "sim": "node tools/sim.js",
     "dev": "node tools/serve.js",
@@ -27,7 +27,7 @@
   },
   "build": {
     "appId": "com.buildahooper.game",
-    "productName": "Build a Hooper",
+    "productName": "Hoop Life",
     "files": [
       "electron-main.cjs",
       "dist/build-a-hooper.html"
@@ -37,7 +37,7 @@
       "target": [
         "portable"
       ],
-      "artifactName": "BuildAHooper-${version}-portable.${ext}"
+      "artifactName": "HoopLife-${version}-portable.${ext}"
     },
     "nsis": {
       "oneClick": false,

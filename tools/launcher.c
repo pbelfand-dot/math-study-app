@@ -1,4 +1,4 @@
-/* Build a Hooper — native Windows launcher.
+/* Hoop Life — native Windows launcher.
  *
  * The whole game is one self-contained HTML file. This writes it to the temp
  * directory and hands it to the default browser, which produces a ~400 kB
@@ -25,13 +25,13 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR args, int show) {
   char dir[MAX_PATH];
   DWORD n = GetTempPathA(MAX_PATH, dir);
   if (n == 0 || n > MAX_PATH) {
-    MessageBoxA(NULL, "Could not locate a temporary directory.", "Build a Hooper", MB_ICONERROR);
+    MessageBoxA(NULL, "Could not locate a temporary directory.", "Hoop Life", MB_ICONERROR);
     return 1;
   }
 
   char path[MAX_PATH];
   if (snprintf(path, sizeof(path), "%sbuild-a-hooper.html", dir) >= (int)sizeof(path)) {
-    MessageBoxA(NULL, "Temporary path too long.", "Build a Hooper", MB_ICONERROR);
+    MessageBoxA(NULL, "Temporary path too long.", "Hoop Life", MB_ICONERROR);
     return 1;
   }
 
@@ -40,7 +40,7 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR args, int show) {
   HANDLE f = CreateFileA(path, GENERIC_WRITE, FILE_SHARE_READ, NULL,
                          CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
   if (f == INVALID_HANDLE_VALUE) {
-    MessageBoxA(NULL, "Could not write the game file.", "Build a Hooper", MB_ICONERROR);
+    MessageBoxA(NULL, "Could not write the game file.", "Hoop Life", MB_ICONERROR);
     return 1;
   }
 
@@ -48,7 +48,7 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR args, int show) {
   while (total < GAME_HTML_LEN) {
     if (!WriteFile(f, GAME_HTML + total, GAME_HTML_LEN - total, &written, NULL) || written == 0) {
       CloseHandle(f);
-      MessageBoxA(NULL, "Could not write the game file.", "Build a Hooper", MB_ICONERROR);
+      MessageBoxA(NULL, "Could not write the game file.", "Hoop Life", MB_ICONERROR);
       return 1;
     }
     total += written;
@@ -61,7 +61,7 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR args, int show) {
     char msg[MAX_PATH + 128];
     snprintf(msg, sizeof(msg),
              "Could not open a browser automatically.\n\nOpen this file yourself:\n%s", path);
-    MessageBoxA(NULL, msg, "Build a Hooper", MB_ICONINFORMATION);
+    MessageBoxA(NULL, msg, "Hoop Life", MB_ICONINFORMATION);
     return 1;
   }
   return 0;

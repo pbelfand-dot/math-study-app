@@ -1,12 +1,33 @@
-# Build a Hooper
+# Hoop Life
 
-A basketball build-roller and career simulator. You roll a player one attribute at a
-time. Every attribute is scored against what is **expected for that player's height**,
-not against 99. Then you simulate their career and find out what the build was worth.
+A basketball life simulator, played one year at a time. You start at fourteen with a
+set of **genetics you cannot see** — the height you will finish at and a ceiling on
+every attribute — and you spend the next eight years deciding what to do about it.
+Three slots a year in high school, four in college. Then the draft finds out what the
+whole thing was worth.
+
+The roll engine that used to *be* the game is still here in full. It just describes
+your genetics now instead of your player: every attribute is scored against what is
+**expected for that player's height**, not against 99.
 
 A 6'0" with a 94 dunk is a freak. A 7'1" with a 94 dunk is Tuesday.
 
 Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
+
+## The shape of a life
+
+| | |
+|---|---|
+| **14–18, high school** | 3 slots a year. Train, or go to class, or get seen. AAU and elite camps cost money you may not have, and exposure is the entire recruiting path. You can be cut, ruled academically ineligible, or blow out a knee. |
+| **graduation** | You are rated 1–5 stars against everyone else in your class and the offers that came in are the offers you get. There is always somewhere to go. Four stars or better also unlocks declaring straight out of high school, which almost nobody should take. |
+| **18–22, college** | 4 slots a year. The program's development staff, the minutes you can get, and how often you are on television all come from the school you picked. NIL money, media training, an agency, the pre-draft workout circuit. |
+| **every year after the first** | Declare, or go back to school. Leaving early sells development you have not had yet; staying banks ability but you are closer to finished when they draft you. |
+| **the draft** | The existing career sim takes it from there — draft, growth, injuries, aging, awards, the Hall. |
+
+**Your potential is never shown to you.** Scouts give you a *grade*, on the same scale
+as everything else, and it is a projection that is allowed to be wrong. The four
+hidden mentals — work ethic, IQ, clutch, coachability — are revealed only after the
+career is over, which is usually when the arc makes sense in hindsight.
 
 ## Play it on your phone
 
@@ -22,6 +43,12 @@ Vanilla HTML/CSS/JS, ES modules, no framework, no backend, no dependencies.
 
 It then runs from the home screen with no browser chrome, works with no signal,
 and keeps your vault, badges and streak on the device.
+
+**A life in progress survives a reload.** The current life is written to
+`localStorage` on every state change and picked back up on boot — a phone dropping
+the tab out of memory would otherwise cost eight years of decisions, which on a game
+made entirely of decisions is the whole game. A career that has already finished is
+not resumed; there is nothing left to decide.
 
 **Offline is verified, not assumed.** Load once with a connection, then cold-start
 with the network cut: the game loads, a full career simulates, progress saves, and a
@@ -59,7 +86,7 @@ cleared cache eats a month of pulls.
 npm run dev     # http://localhost:8080
 npm run sim     # Monte Carlo harness — the rarity table
 npm run bundle  # dist/build-a-hooper.html — one self-contained file
-npm run exe     # dist/BuildAHooper.exe — standalone Windows app
+npm run exe     # dist/HoopLife.exe — standalone Windows app
 npm run site    # docs/ — installable PWA for GitHub Pages
 npm run icons   # regenerate the icon set
 ```
@@ -73,7 +100,7 @@ would rather not run anything, `npm run bundle` flattens the modules into a sing
 ```sh
 npm install
 npm run desktop            # run it in a real window
-npm run desktop:win        # dist/BuildAHooper-1.0.0-portable.exe
+npm run desktop:win        # dist/HoopLife-1.0.0-portable.exe
 npm run desktop:installer  # an NSIS installer instead
 ```
 
@@ -128,8 +155,18 @@ npm run sim -- --careers       # draft, career, award and in-league rate checks
 npm run sim -- --chase         # chase-pull odds
 npm run sim -- --sample 8      # readable sample builds, careers and verdicts
 npm run sim -- --calibrate     # re-emit the empirical constants
+npm run sim -- --recruit       # re-emit STAR_CUTS and RECRUIT_CUTS
+npm run sim -- --pipeline      # high school -> college -> draft, end to end
 npm run sim -- -n 2000000      # roll count
 ```
+
+The life engine gets the same gate the roll engine has always had, for the same
+reason: its first pass produced a **31.5% five-star rate** and a median pro potential
+of **35** against a draft cutoff of 62, and neither of those is visible from playing a
+few lives by hand. `tools/life-sim.js` plays lives with a stand-in for a competent
+player — deliberately not an optimal one; it cannot see the hidden mentals and it does
+not look ahead — because balance measured against a perfect player is balance nobody
+experiences.
 
 `--calibrate` prints `RAW_QUANTILES`, `HYPE_QUANTILES` and `BUILD_RARITY_CUTS` ready to
 paste into `src/constants.js`. Those three are measured, not chosen — regenerate them
@@ -219,6 +256,36 @@ Mean career 7.3 seasons for players who reach the league. The aging mechanic
 separates as designed: builds with `dependence >= 1.6` finish at 29.9 on average,
 shooting-and-IQ builds at `dependence <= 0.85` finish at 32.6.
 
+**The life pipeline**, 12,000 lives played competently, high school through the draft:
+
+| | measured | note |
+|---|---|---|
+| five-star recruits | 1.8% | cuts are measured percentiles, not round numbers |
+| four-star | 8.4% | |
+| blue-blood offer in hand | 2.7% | |
+| no offer at all | 32.6% | prep year / overseas is always there |
+| genetic ceiling realised by 22 | 92% median | |
+| drafted | 18.4% | 21.4% for the raw genetics, unplayed |
+| made the league | 22.0% | 25.4% raw |
+| all-star selections per life | 0.10 | |
+
+The number that matters most is the conditional one. **Of lives whose genetics were
+actually there — a true ceiling of 80 or better — 98% get drafted and each averages
+2.5 all-star selections.** A pipeline that loses gifted players is worse than one that
+is merely stingy, and before the college stage existed this engine lost nearly all of
+them: four years of high school closed too little of the genetic gap, so the median
+build reaching the draft projected to a **35** and essentially nobody turned pro.
+
+Two knobs do the work, and both are load-bearing:
+
+- **Star ratings are a rank, not a score.** Five-stars are the couple-dozen best
+  players in a country. Keying the rating off raw hype thresholds let anyone who could
+  afford enough camps buy one.
+- **How much of the remaining gap the pros close scales with how young you declare.**
+  A nineteen-year-old has more development runway ahead than a twenty-two-year-old who
+  is nearly finished. Without that term, staying four years was strictly dominant and
+  the one-and-done path made no sense.
+
 ## Two places the spec's own numbers do not close
 
 Reported rather than quietly tuned around.
@@ -278,8 +345,11 @@ tools/build-exe.js  standalone executable (Node SEA)
 tools/fetch-fonts.js  regenerates web/fonts.css
 tools/build-site.js   docs/ — PWA, manifest, service worker
 tools/make-icons.js   the icon set, rasterised with no dependencies
-src/progress.js       vault, achievements, daily streak (localStorage)
-web/                UI — scoreboard styling, fonts inlined as data URIs
+src/progress.js       vault, achievements, daily streak, the saved life (localStorage)
+src/life.js         the year-by-year engine: growth, training, seasons, recruiting,
+                    college, the declare decision, and the handoff to the draft
+tools/life-sim.js   Monte Carlo for the life pipeline
+web/                UI — the year feed, the + button, fonts inlined as data URIs
 ```
 
 ## Design notes
@@ -305,7 +375,7 @@ implementations were copied from.
 
 ## Standalone desktop app
 
-This project now includes an Electron desktop shell. It opens in its own **Build a Hooper** window, works offline, and stores saves locally through the app's local storage.
+This project now includes an Electron desktop shell. It opens in its own **Hoop Life** window, works offline, and stores saves locally through the app's local storage.
 
 ```bash
 npm install

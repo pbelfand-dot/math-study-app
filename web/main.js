@@ -1,15 +1,17 @@
-import { SKILLS, PHYSICALS, MENTALS, MENTAL_KEYS } from '../src/constants.js';
-import {
-  startBuild, rollArchetypeBeat, rollMentalityBeat, rollSkillBeat, rollPhysicalBeat,
-  rollMentals, beatPlan, formatHeight, oddsText,
-} from '../src/roll.js';
-import { applyGift, titleFor } from '../src/archetypes.js';
-import { potentialFor, draftOverallFor, potentialGrade, fitFor, positionFor, buildRarityTier } from '../src/overall.js';
+import { SKILLS, SKILL_KEYS, PHYSICALS, MENTALS, MENTAL_KEYS } from '../src/constants.js';
+import { rollCompleteBuild, formatHeight, clamp } from '../src/roll.js';
+import { titleFor } from '../src/archetypes.js';
+import { potentialGrade, positionFor, buildRarityTier } from '../src/overall.js';
 import { simulateCareer } from '../src/career.js';
 import { writeVerdict } from '../src/verdict.js';
-import { defaultRng, seededRng } from '../src/rng.js';
+import { defaultRng } from '../src/rng.js';
 import { randomName } from '../src/names.js';
 import { Progress } from '../src/progress.js';
+import {
+  newLife, advanceYear, overallNow, starRating, heightAt, gradeName,
+  trainingFor, slotsFor, commit, declare, returnToSchool, proBuildFrom,
+  draftProjection,
+} from '../src/life.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -18,496 +20,436 @@ const LABELS = {
   ...Object.fromEntries(Object.entries(PHYSICALS).map(([k, v]) => [k, v.label])),
   ...Object.fromEntries(Object.entries(MENTALS).map(([k, v]) => [k, v.label])),
 };
-const TIER_VAR = { Common: 't0', Uncommon: 't1', Rare: 't2', Elite: 't3', Legendary: 't4', Mythic: 't5' };
-const tierColor = (t) => `var(--${TIER_VAR[t.name] || 't0'})`;
-const ARCH_COLOR = { Common: 't1', Rare: 't2', Epic: 't3', Legendary: 't4' };
-const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const money = (n) => `$${Math.round(n).toLocaleString()}`;
 
-const todaySeed = Progress.todayStamp;
-
-const S = {
-  b: null, beats: [], idx: 0, rerolls: 3, lastKey: null, busy: false,
-  physSectionDrawn: false, done: false, simmed: false,
-  quick: false, daily: false, name: '', rng: defaultRng,
-  prog: Progress.load(),
-  view: 'play',
-};
+const S = { life: null, plan: [], view: 'life', prog: Progress.load(), career: null, verdict: null };
 
 // ---------------------------------------------------------------------------
-// New build
+// New life
 // ---------------------------------------------------------------------------
-function newBuild() {
-  S.rng = S.daily ? seededRng(`hooper-${todaySeed()}`) : defaultRng;
-  S.b = startBuild(S.rng);
-  S.beats = beatPlan(S.b);
-  S.idx = 0; S.rerolls = 3; S.lastKey = null;
-  S.physSectionDrawn = false; S.done = false; S.simmed = false;
-  S.name = randomName(S.rng);
-  ['stats', 'ovrSlot', 'car', 'freakSlot'].forEach((i) => ($(i).innerHTML = ''));
-  $('stage').className = 'stage';
-  $('stage').innerHTML = `
-    <div class="stage-lbl">Ready</div>
-    <div class="stage-num" style="font-size:32px">&mdash;</div>
-    <div class="stage-sub">Height first. Then we find out if you got handed anything.</div>`;
-  drawProg(); syncCounters(); updateBtns();
+function startLife() {
+  const rng = defaultRng;
+  // The roll engine still runs in full — it is now describing genetics: the
+  // height he finishes at and the ceiling on every attribute.
+  const build = rollCompleteBuild(rng);
+  S.life = newLife(build, randomName(rng), rng);
+  S.plan = [];
+  S.career = null;
+  S.verdict = null;
+  S.wonBadges = null;
+  Progress.saveLife(S.life);
+  render();
 }
 
-const drawProg = () =>
-  ($('prog').innerHTML = S.beats
-    .map((_, i) => `<div class="pip ${i < S.idx ? 'done' : i === S.idx ? 'now' : ''}"></div>`)
-    .join(''));
-
-function syncCounters() {
-  const p = S.prog;
-  $('cnt').textContent = p.builds;
-  $('best').textContent = p.bestGrade || '—';
-  $('lg').textContent = Progress.streakAlive(p) ? p.streak.count : 0;
-  $('badgeCount').textContent = `${Object.keys(p.achievements).length}/${Progress.ACHIEVEMENTS.length}`;
-}
-
-const stage = (html) => ($('stage').innerHTML = html);
-
-// Slot-machine landing. Numbers tumble, then settle.
-function land(el, final, then) {
-  if (reduceMotion()) { el.textContent = final; then && then(); return; }
-  S.busy = true;
-  el.classList.add('rolling');
-  let t = 0;
-  const iv = setInterval(() => {
-    el.textContent = Math.floor(Math.random() * 75) + 25;
-    if (++t > 9) {
-      clearInterval(iv);
-      el.classList.remove('rolling');
-      el.textContent = final;
-      S.busy = false;
-      then && then();
-      updateBtns();
-    }
-  }, 42);
-  updateBtns();
+// Pick a life back up where it was left. A career that already finished is not
+// resumable — there is nothing left to decide — so that one starts fresh.
+function resumeOrStart() {
+  const saved = Progress.loadLife();
+  if (!saved || saved.stage === 'pro') { startLife(); return; }
+  S.life = saved;
+  S.plan = [];
+  render();
 }
 
 // ---------------------------------------------------------------------------
-// One beat
+// Header + meters
 // ---------------------------------------------------------------------------
-function doStep(animate = true) {
-  const beat = S.beats[S.idx];
-  const b = S.b;
-  $('stage').className = 'stage';
+const METERS = [
+  ['health', 'Health', 'var(--health)'],
+  ['energy', 'Energy', 'var(--energy)'],
+  ['hype', 'Hype', 'var(--hype)'],
+  ['rep', 'Rep', 'var(--rep)'],
+  ['grades', 'Grades', 'var(--grades)'],
+  ['chemistry', 'Coach', 'var(--chem)'],
+];
 
-  if (beat.kind === 'height') {
-    stage(`<div class="stage-lbl">Height</div><div class="stage-num" id="sn">&mdash;</div>
-      <div class="stage-sub">Everything from here is scored against this number.</div>`);
-    if (animate) land($('sn'), formatHeight(b.height));
-    else $('sn').textContent = formatHeight(b.height);
-    S.lastKey = null;
-  } else if (beat.kind === 'body') {
-    const d = b.wingspan - b.height;
-    stage(`<div class="stage-lbl">Wingspan / Frame</div>
-      <div class="stage-num" style="font-size:44px">${formatHeight(b.wingspan)}</div>
-      <div class="stage-dev" style="color:${d >= 6 ? 'var(--t4)' : d >= 3 ? 'var(--led)' : 'var(--t0)'}">
-        ${d >= 0 ? '+' : ''}${d}" differential</div>
-      <div class="stage-exp">FRAME <b>${b.frame}</b></div>`);
-    S.lastKey = null;
-  } else if (beat.kind === 'archetype') {
-    const a = rollArchetypeBeat(b);
-    if (!a) {
-      stage(`<div class="stage-lbl">Archetype</div>
-        <div class="stage-num" style="font-size:36px;color:var(--t0)">NONE</div>
-        <div class="stage-sub">No gift. You'll be whatever the rolls make you &mdash;
-        and you'll get named for it at the end.</div>`);
-    } else {
-      const col = `var(--${ARCH_COLOR[a.tier]})`;
-      if (a.tier === 'Legendary') $('stage').className = 'stage leg';
-      stage(`<div class="arch-tier" style="color:${col}">${a.tier} Archetype</div>
-        <div class="arch-name" style="color:${col}">${esc(a.title)}</div>
-        <div class="stage-sub">${esc(a.flavor)}</div>
-        <div class="gifts">${giftLine(a)}</div>
-        ${floorLine(a)}
-        ${a.guaranteesDraft ? '<div class="stage-exp" style="margin-top:6px;color:var(--t4)">GUARANTEED DRAFTED</div>' : ''}`);
-    }
-    S.lastKey = null;
-  } else if (beat.kind === 'mentality') {
-    const m = rollMentalityBeat(b);
-    const desc =
-      m >= 78 ? 'Pure scorer. Wants the ball, every time.'
-      : m >= 60 ? 'Score-leaning. Looks for his own shot first.'
-      : m >= 41 ? 'Balanced. Takes what the defense gives.'
-      : m >= 22 ? 'Pass-leaning. Sets up teammates first.'
-      : 'Pure facilitator. Would rather have the assist.';
-    stage(`<div class="stage-lbl">Mentality</div>
-      <div class="stage-num" id="sn" style="font-size:42px;color:${m >= 60 ? 'var(--t4)' : m <= 40 ? 'var(--t2)' : 'var(--hot)'}">&mdash;</div>
-      <div class="axis"><div class="axis-bar"><div class="axis-dot" style="left:${m}%"></div></div>
-        <div class="axis-lbl"><span>PASS-FIRST</span><span>SCORE-FIRST</span></div></div>
-      <div class="stage-sub" style="margin-top:8px">${desc}<br>
-        <em>Not good or bad. It decides which stats matter now.</em></div>`);
-    if (animate) land($('sn'), m);
-    else $('sn').textContent = m;
-    S.lastKey = null;
-  } else if (beat.kind === 'skill') {
-    const k = beat.key;
-    const g = applyGift(b.archetype, k);
-    const meta = rollSkillBeat(b, k);
-    const v = b.skills[k];
-    const d = v - meta.expectedNatural;
-    const col = tierColor(meta.tier);
-    const tag = g.boost > 0
-      ? ` <span style="color:var(--${ARCH_COLOR[b.archetype.tier]})">&#9670; GIFTED</span>`
-      : g.boost < 0 ? ' <span style="color:var(--bad)">&#9660; TAXED</span>' : '';
-    stage(`<div class="stage-lbl">${LABELS[k]}${tag}</div>
-      <div class="stage-num" id="sn" style="color:${col}">&mdash;</div>
-      <div class="stage-exp">EXPECTED AT ${formatHeight(b.height)} &mdash; <b>${meta.expectedNatural}</b></div>
-      <div class="stage-dev" id="sd"></div><div class="stage-tier" id="st"></div>`);
-    const settle = () => {
-      $('sd').innerHTML = `<span style="color:${d > 0 ? 'var(--led)' : d < 0 ? '#7A5C5C' : 'var(--t0)'}">${d > 0 ? '+' : ''}${d} vs expected</span>`;
-      $('st').innerHTML = `<span style="color:${col}">${meta.tier.name}</span> <span style="color:var(--t0);letter-spacing:.1em">&middot; ${oddsText(meta.p)}</span>`;
-      addRow(k, v, meta.expectedNatural, col, d, false, g.boost > 0, meta.freak);
-    };
-    if (animate) land($('sn'), v, settle);
-    else { $('sn').textContent = v; settle(); }
-    S.lastKey = k;
-  } else if (beat.kind === 'potential') {
-    const grade = potentialGrade(b);
-    const col = grade >= 90 ? 'var(--t4)' : grade >= 80 ? 'var(--t3)' : grade >= 70 ? 'var(--t2)' : grade >= 60 ? 'var(--t1)' : 'var(--t0)';
-    const verdictText =
-      grade >= 92 ? 'Scouts think this is a franchise player. Scouts have been wrong before.'
-      : grade >= 82 ? 'Every team in the lottery has watched this tape.'
-      : grade >= 70 ? 'A real prospect. How real depends on things nobody can measure.'
-      : grade >= 58 ? 'Somebody will take a flyer late.'
-      : 'The report is short.';
-    stage(`<div class="stage-lbl">Potential &mdash; scouting grade</div>
-      <div class="stage-num" id="sn" style="color:${col}">&mdash;</div>
-      <div class="stage-exp">A PROJECTION, NOT A PROMISE &mdash; his real ceiling stays hidden</div>
-      <div class="stage-sub">${verdictText}</div>`);
-    const settle = () => addRow('potential', grade, 0, col, null, true, false, false);
-    if (animate) land($('sn'), grade, settle);
-    else { $('sn').textContent = grade; settle(); }
-    S.lastKey = null;
-  } else {
-    const k = beat.key;
-    const g = applyGift(b.archetype, k);
-    const meta = rollPhysicalBeat(b, k);
-    const v = b.physicals[k];
-    const note = {
-      durability: v < 40 ? 'Fragile. This will cost seasons.' : v > 75 ? 'Iron. Barely misses a game.' : 'Normal wear and tear.',
-      stamina: v < 40 ? 'Gasses early. Sixth-man minutes.' : v > 75 ? 'Never tires. Heavy starter minutes.' : 'Standard rotation load.',
-      longevity: v < 40 ? 'Short shelf life. Falls off fast.' : v > 75 ? 'Ages beautifully. Plays forever.' : 'Typical career arc.',
-    }[k];
-    const col = v >= 75 ? 'var(--t1)' : v <= 40 ? 'var(--t5)' : 'var(--hot)';
-    stage(`<div class="stage-lbl">${LABELS[k]}${g.boost > 0 ? ` <span style="color:var(--${ARCH_COLOR[b.archetype.tier]})">&#9670; GIFTED</span>` : ''}</div>
-      <div class="stage-num" id="sn" style="color:${col}">&mdash;</div>
-      <div class="stage-exp">EXPECTED &mdash; <b>${meta.expectedNatural}</b></div>
-      <div class="stage-sub">${note}</div>`);
-    const settle = () => addRow(k, v, meta.expectedNatural, col, v - meta.expectedNatural, true, g.boost > 0, false);
-    if (animate) land($('sn'), v, settle);
-    else { $('sn').textContent = v; settle(); }
-    S.lastKey = null; // physicals are not rerollable
-  }
-
-  S.idx++;
-  drawProg();
-  if (S.idx >= S.beats.length) finish();
-  updateBtns();
-}
-
-function giftLine(a) {
-  const out = [];
-  for (const [k, v] of Object.entries(a.boost || {})) out.push(`<b>+${v} ${LABELS[k] || k}</b>`);
-  for (const [k, v] of Object.entries(a.cost || {})) out.push(`<i>&minus;${v} ${LABELS[k] || k}</i>`);
-  for (const [k, v] of Object.entries(a.sigmaMult || {})) out.push(`${LABELS[k] || k} variance &times;${v}`);
-  if (a.costNote) out.push(`<i>${esc(a.costNote)}</i>`);
-  return out.join(' &middot; ');
-}
-
-function floorLine(a) {
-  const f = Object.entries(a.floor || {});
-  if (!f.length) return '';
-  const parts = f.map(([k, v]) =>
-    k === 'ALL'
-      ? `every stat no worse than expected${v >= 0 ? '+' : ''}${v}`
-      : `${LABELS[k] || k} at expected+${v}`,
-  );
-  return `<div class="stage-exp" style="margin-top:6px">FLOOR &mdash; ${parts.join(' &middot; ')}</div>`;
-}
-
-function addRow(k, v, exp, col, d, isPhys, gifted, freak) {
-  const label = k === 'potential' ? 'Potential' : LABELS[k];
-  const st = $('stats');
-  if (isPhys && !S.physSectionDrawn) {
-    st.insertAdjacentHTML('beforeend', '<div class="sect">Physical Intangibles</div>');
-    S.physSectionDrawn = true;
-  }
-  st.insertAdjacentHTML(
-    'beforeend',
-    `<div class="row" data-k="${k}">
-      <div class="nm" style="color:${col}">${label}${gifted ? ' <em>&#9670;</em>' : ''}${freak ? ' <em style="color:var(--t5)">&#9888;</em>' : ''}</div>
-      <div class="vl" style="color:${col}">${v}</div>
-      <div class="bar"><div class="fill" style="width:${v}%;background:${col}"></div>
-        ${d === null ? '' : `<div class="exp-tick" style="left:${Math.max(0, Math.min(99, exp))}%"></div>`}</div>
-      <div class="dev ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d === null ? '' : (d > 0 ? '+' : '') + d}</div>
-    </div>`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Build complete
-// ---------------------------------------------------------------------------
-function finish() {
-  const b = S.b;
-  rollMentals(b);
-  S.done = true;
-
-  const draftOvr = draftOverallFor(b);
-  const grade = potentialGrade(b);
-  const pos = positionFor(b.height);
-  const rarity = buildRarityTier(b);
-  const title = titleFor(b);
-  const fit = fitFor(b);
-
-
-
-  if (b.freakGene) {
-    $('freakSlot').innerHTML =
-      `<div class="freak">&#9888; FREAK GENE &mdash; ${LABELS[b.freakGene]} rolled on a curve 2.6&times; wider than normal</div>`;
-  }
-
-  const col = b.archetype ? `var(--${ARCH_COLOR[b.archetype.tier]})` : 'var(--line)';
-  const sub = b.archetype
-    ? `${b.archetype.tier.toUpperCase()} ARCHETYPE &mdash; ROLLED`
-    : `DERIVED &mdash; ${String(title.flavor || '').toUpperCase()}`;
-
-  $('ovrSlot').innerHTML = `
-    <div class="overall">
-      <div><div class="ovr-l">Overall &mdash; draft night</div><div class="ovr-n">${draftOvr}</div></div>
-      <div><div class="ovr-l">Potential (graded)</div><div class="ovr-n" style="color:var(--t3)">${grade}</div></div>
-      <div class="ovr-side">
-        ${rarity.name.toUpperCase()} BUILD<br>
-        ENTERS AT ${b.draftAge}<br>
-        FIT ${fit >= 0 ? '+' : ''}${fit.toFixed(2)} ${fit > 0.15 ? '&mdash; MATCHED' : fit < -0.15 ? '&mdash; MISMATCHED' : ''}
+function headerHtml() {
+  const L = S.life;
+  const h = heightAt(L);
+  const stars = starRating(L);
+  const college = L.stage === 'college';
+  const where = college ? esc(L.program.school) : esc(L.background.name);
+  return `
+    <div class="top">
+      <div class="who">
+        <div class="nm">${esc(L.name)}</div>
+        <div class="sub">
+          ${gradeName(L.age, L.stage)} &middot; ${formatHeight(h)} &middot; ${money(L.money)}
+          &middot; ${where}
+          <br />${
+            college
+              // Stars are a recruiting number. Once you are in a program nobody
+              // cares what you were rated; what matters is where you would go.
+              ? `<span class="stars">${esc(draftProjection(L).label)}</span>`
+              : `<span class="stars">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</span>`
+          }
+          <span style="color:var(--muted)"> &middot; ${esc(L.teamRole)}</span>
+        </div>
       </div>
-      <div class="pos-badge">${pos.short}</div>
+      <div class="ovr-badge"><b>${overallNow(L)}</b><span>Overall</span></div>
     </div>
-    <div class="title-bar">
-      <div class="tt" style="color:${col}">${esc(title.title)}</div>
-      <div class="ts">${sub}</div>
+    <div class="meters">
+      ${METERS.map(([k, label, col]) => {
+        const v = Math.round(L.meters[k]);
+        return `<div class="meter">
+          <div class="k">${label}</div>
+          <div class="track"><div class="fill" style="width:${clamp(v, 0, 100)}%;background:${col}"></div></div>
+          <div class="v">${v}</div>
+        </div>`;
+      }).join('')}
     </div>`;
-
-  stage(`<div class="stage-lbl">Build complete &mdash; ${esc(S.name)}</div>
-    <div class="stage-num" style="font-size:48px">${draftOvr}</div>
-    <div class="stage-exp">OVERALL ON DRAFT NIGHT &middot; POTENTIAL GRADED ${grade}</div>
-    <div class="stage-sub">Where he actually tops out is hidden &mdash; it depends on work ethic,
-    playing time and luck, and on four mental attributes you still cannot see. Simulate to find out.</div>`);
 }
 
 // ---------------------------------------------------------------------------
-// Career
+// The year feed
+// ---------------------------------------------------------------------------
+function yearHtml(e) {
+  const where = e.school ? ` &middot; ${esc(e.school)}` : '';
+  return `<article class="year">
+    <header>
+      <h3>${e.grade} year${e.stage === 'college' ? ' <span class="tag">College</span>' : ''}</h3>
+      <span class="meta">${formatHeight(e.height)} &middot; OVR ${e.ovr}${
+        e.stage === 'college' ? '' : ` &middot; ${'★'.repeat(e.stars)}`
+      }${where}</span>
+    </header>
+    <div class="body">
+      ${
+        e.stats
+          ? `<div class="line-stat">${e.role} &middot; ${e.stats.ppg} pts, ${e.stats.rpg} reb, ${e.stats.apg} ast in ${e.stats.mpg} min</div>`
+          : `<div class="line-stat">${esc(e.role)} &mdash; no stats this year</div>`
+      }
+      ${e.events.map((v) => `<div class="ev ${v.kind}"><span class="dot"></span><span>${esc(v.text)}</span></div>`).join('')}
+    </div>
+  </article>`;
+}
+
+// ---------------------------------------------------------------------------
+// The plan — three slots, each with a real cost
+// ---------------------------------------------------------------------------
+function planHtml() {
+  const L = S.life;
+  const slots = slotsFor(L);
+  const left = slots - S.plan.length;
+  return `<div class="panel">
+    <h2>Plan the year</h2>
+    <p class="hint">${
+      left > 0
+        ? `Pick ${left} more — you get ${slots} a year, and everything costs something.`
+        : 'Ready. Press the button to play the year.'
+    }</p>
+    <div class="opts">
+      ${trainingFor(L).map((t) => {
+        const picked = S.plan.filter((p) => p === t.id).length;
+        const gated = t.gated && L.meters.hype < t.gated;
+        const broke = t.cost > L.money;
+        const full = left <= 0 && !picked;
+        const bits = [];
+        if (t.cost) bits.push(`${broke ? '<b>' : ''}${money(t.cost)}${broke ? '</b>' : ''}`);
+        if (t.money) bits.push(`+${money(t.money)}`);
+        if (t.energy) bits.push(`${t.energy > 0 ? '+' : ''}${t.energy} energy`);
+        if (t.hype) bits.push(`+${t.hype} hype`);
+        if (t.grades) bits.push(`${t.grades > 0 ? '+' : ''}${t.grades} grades`);
+        if (t.rep) bits.push(`+${t.rep} rep`);
+        if (t.stock) bits.push(`+${t.stock} draft stock`);
+        if (t.nil) bits.push('endorsement money');
+        if (t.health) bits.push(`${t.health > 0 ? '+' : ''}${t.health} health`);
+        if (gated) bits.push('<b>needs more hype</b>');
+        return `<button class="opt" data-t="${t.id}" type="button"
+            aria-pressed="${picked ? 'true' : 'false'}" ${gated || broke || full ? 'disabled' : ''}>
+          <span class="pick">${picked ? picked : ''}</span>
+          <span class="txt">
+            <span class="t">${esc(t.name)}</span>
+            <span class="d">${esc(t.blurb)}</span>
+            <span class="cost">${bits.join(' &middot; ')}</span>
+          </span>
+        </button>`;
+      }).join('')}
+    </div>
+  </div>
+  <div class="advance">
+    <button class="big" id="advance" type="button" ${left > 0 ? 'disabled' : ''}>
+      <span class="plus">+</span> Play ${gradeName(L.age, L.stage)} year
+    </button>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Decision: where do you go after high school
+// ---------------------------------------------------------------------------
+function offersHtml() {
+  const L = S.life;
+  const stars = starRating(L);
+  return `<div class="panel">
+    <h2>Where do you go?</h2>
+    <p class="hint">Four years of high school are done — you graduate a
+      ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)} recruit. This is what came in.</p>
+    <div class="opts">
+      ${L.offers.map((o, i) => `
+        <div class="offer${o.pro ? ' risky' : ''}" style="margin-bottom:8px">
+          <div class="tier">${esc(o.tier)}</div>
+          <h4>${esc(o.school)}</h4>
+          <p>${esc(o.note)}</p>
+          ${
+            o.pro ? ''
+            : `<p class="note">Development ${'▮'.repeat(Math.round(o.development * 3))} &middot;
+                 minutes are ${o.minutesBar >= 52 ? 'hard to come by' : o.minutesBar >= 46 ? 'earned' : 'there for you'}
+                 &middot; ${o.exposure >= 1.2 ? 'on television every week' : o.exposure >= 0.8 ? 'seen enough' : 'nobody is watching'}</p>`
+          }
+          <button class="btn primary" data-offer="${i}" type="button">${o.pro ? 'Declare' : 'Commit'}</button>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Decision: stay in school or put your name in
+// ---------------------------------------------------------------------------
+function declareHtml() {
+  const L = S.life;
+  const proj = draftProjection(L);
+  const forced = L.pending === 'forced';
+  return `<div class="panel">
+    <h2>${forced ? 'You are out of eligibility' : 'Declare for the draft?'}</h2>
+    <p class="hint">${
+      forced
+        ? 'Four years of college are done. There is nothing left to go back to.'
+        : 'Leave now and you sell the years of development you have not had yet. Stay and you bank the ability, but you are that much closer to finished when they draft you.'
+    }</p>
+    <div class="proj ${proj.tone}">${esc(proj.label)}</div>
+    <p class="note">That is a projection, not a promise. Nobody knows what you top out at — including the people writing it.</p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary" id="doDeclare" type="button">Declare for the draft</button>
+      ${forced ? '' : '<button class="btn" id="doStay" type="button">Go back to school</button>'}
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// The pro career, once he leaves school
 // ---------------------------------------------------------------------------
 function runCareer() {
-  const b = S.b;
-  const rng = S.daily ? seededRng(`hooper-career-${todaySeed()}`) : defaultRng;
+  const L = S.life;
+  const rng = defaultRng;
+
+  // The engine that projects present ability onto the genetic ceiling lives in
+  // life.js, so the Monte Carlo harness and the app hand the draft the same
+  // build. It used to live here, which meant the sweep could not see it.
+  declare(L);
+  const b = proBuildFrom(L);
+
   const c = simulateCareer(b, rng);
   const v = writeVerdict(c, b, rng);
-  const a = c.careerAverages;
+  S.career = c;
+  S.verdict = v;
 
-  const draftLine = c.drafted
-    ? `Pick #${c.pick} &mdash; ${esc(c.teams[0])}`
-    : c.madeLeague ? `Undrafted &mdash; signed by ${esc(c.teams[0])}` : 'Undrafted &mdash; never signed';
-
-  const line = (k, val) => `<div class="line"><span>${k}</span><span>${val}</span></div>`;
-  const body = c.madeLeague
-    ? line('DRAFT OVR &rarr; PEAK', `${c.draftOvr} &rarr; ${c.peakRating}` +
-        `<span style="color:var(--led-dim);font-weight:400"> (+${c.peakRating - c.draftOvr})</span>`) +
-      line('TRUE CEILING (revealed)', c.peakRating >= c.potential
-        ? `${c.potential} &mdash; reached it`
-        : `${c.potential} &mdash; got ${Math.round(((c.peakRating - c.draftOvr) / Math.max(1, c.potential - c.draftOvr)) * 100)}% there`) +
-      line('SCOUTS GRADED HIM', potentialGrade(b)) +
-      line('OFFSEASON LEAPS', c.leaps) +
-      line('SEASONS', c.seasons.length) +
-      line('LOST TO INJURY', c.seasonsLostToInjury) +
-      line('CAREER AVERAGES', `${a.ppg} / ${a.rpg} / ${a.apg}`) +
-      line('ALL-STARS', c.awards.allStars) +
-      line('MVPS', c.awards.mvps) +
-      line('CHAMPIONSHIPS', c.awards.rings) +
-      line('HALL OF FAME', c.hof ? 'INDUCTED' : '—')
-    : line('SEASONS', 0) + line('OUTCOME', 'NEVER PLAYED');
-
-  const seasonRows = c.seasons
-    .map(
-      (s) => `<tr class="${s.allStar ? 'hl' : ''}">
-        <td>${s.age}</td><td>${esc(s.team)}</td><td>${s.rating}</td><td>${s.games}</td>
-        <td>${s.minutes}</td><td>${s.ppg}</td><td>${s.rpg}</td><td>${s.apg}</td><td>${s.wins}</td>
-        <td>${[s.leapt ? 'LEAP' : '', s.mvp ? 'MVP' : '', s.allStar ? 'AS' : '', s.ring ? 'TITLE' : '', s.injury ? esc(s.injury.kind) : ''].filter(Boolean).join(' ') || '—'}</td>
-      </tr>`,
-    )
-    .join('');
-
-  $('car').innerHTML = `<div class="career">
-    <h2>Career Result</h2>
-    <div class="draft">${draftLine}</div>
-    <div class="draft-sub">ENTERED AT ${b.draftAge} &middot; SCOUT HYPE ${c.hype} &middot; TRUE CEILING ${c.potential}${c.guaranteedByArchetype ? ' &middot; ARCHETYPE GUARANTEED A SLOT' : ''}</div>
-    ${body}
-    <div class="reveal">
-      <h3>Hidden attributes &mdash; revealed</h3>
-      ${MENTAL_KEYS.map((k) => line(LABELS[k].toUpperCase(), b.mentals[k])).join('')}
-      ${
-        c.traits.length
-          ? `<div class="traits">${c.traits
-              .map((t) => `<span class="trait ${t.effects.growth < 1 || t.effects.injury > 1 || t.effects.playoffProd < 1 || t.effects.teamSuccess < 1 ? 'bad' : ''}">${esc(t.name)}<b>${esc(t.desc)}</b></span>`)
-              .join('')}</div>`
-          : '<div class="traits"><span class="trait" style="border-color:var(--wood3);color:var(--t0)">No traits &mdash; nothing extreme enough to bend the sim</span></div>'
-      }
-    </div>
-    ${
-      c.seasons.length
-        ? `<details class="log"><summary>Season by season (${c.seasons.length})</summary>
-             <div class="scroll-x"><table>
-               <thead><tr><th>Age</th><th>Team</th><th>OVR</th><th>G</th><th>MP</th><th>PPG</th><th>RPG</th><th>APG</th><th>W</th><th>Notes</th></tr></thead>
-               <tbody>${seasonRows}</tbody></table></div></details>`
-        : ''
-    }
-    <div class="verdict"><b>${esc(v.headline)}</b><br>${esc(v.body)}</div>
-  </div>`;
-
-  // Persist: the vault entry, any achievements it unlocked, and the streak.
   Progress.record(S.prog, c, b, {
-    name: S.name, pos: positionFor(b.height).short, height: b.height,
-    title: c.title.title, grade: potentialGrade(b), daily: S.daily,
+    name: L.name, pos: positionFor(b.height).short, height: b.height,
+    title: c.title.title, grade: potentialGrade(b), daily: false,
   });
-  if (S.daily) Progress.bumpStreak(S.prog);
   const won = Progress.checkAchievements(S.prog, c, b);
   Progress.save(S.prog);
-  syncCounters();
-  if (won.length) {
-    $('car').insertAdjacentHTML('afterbegin',
-      `<div class="unlocked"><h3>${won.length === 1 ? 'Achievement unlocked' : `${won.length} achievements unlocked`}</h3>
-       <div class="traits">${won.map((a) => `<span class="trait" style="border-color:var(--t4);color:var(--t4)">${esc(a.name)}<b>${esc(a.hint)}</b></span>`).join('')}</div></div>`);
-  }
-
-  S.simmed = true;
-  updateBtns();
-  $('car').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'nearest' });
+  Progress.saveLife(null);
+  S.wonBadges = won;
+  render();
 }
 
-// ---------------------------------------------------------------------------
-// Controls
-// ---------------------------------------------------------------------------
-function nextLabel() {
-  const beat = S.beats[S.idx];
-  if (!beat) return 'Roll';
-  if (beat.kind === 'height') return 'Roll height';
-  if (beat.kind === 'body') return 'Roll wingspan';
-  if (beat.kind === 'archetype') return 'Roll archetype';
-  if (beat.kind === 'mentality') return 'Roll mentality';
-  if (beat.kind === 'potential') return 'Get the scouting grade';
-  return `Roll ${LABELS[beat.key].toLowerCase()}`;
-}
-
-function updateBtns() {
-  $('rrn').textContent = `(${S.rerolls})`;
-  $('rr').disabled = S.busy || !(S.rerolls > 0 && S.lastKey && !S.done);
-  const roll = $('roll');
-  roll.disabled = S.busy;
-  if (S.done) roll.textContent = S.simmed ? 'New build' : 'Simulate career';
-  else roll.textContent = S.quick ? 'Roll everything' : nextLabel();
-}
-
-$('roll').onclick = () => {
-  if (S.busy) return;
-  if (S.done) {
-    if (S.simmed) newBuild();
-    else runCareer();
-    return;
+function careerHtml() {
+  const c = S.career;
+  const a = c.careerAverages;
+  const line = (k, v) => `<div class="meter" style="grid-template-columns:1fr auto"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  return `<div class="panel">
+    <h2>The career</h2>
+    <h3 style="font-size:19px;margin-bottom:2px">${c.drafted ? `Pick #${c.pick}` : 'Undrafted'} &mdash; ${esc(c.teams[0] || 'nobody')}</h3>
+    <p class="note" style="margin-bottom:8px">${
+      S.life.program
+        ? `${esc(S.life.program.school)}, ${S.life.age - 18} year${S.life.age - 18 === 1 ? '' : 's'} &middot; declared at ${S.life.age}`
+        : `Declared straight out of high school at ${S.life.age}`
+    }</p>
+    <p class="hint">${esc(S.verdict.headline)}</p>
+    ${c.madeLeague ? line('Draft OVR → peak', `${c.draftOvr} → ${c.peakRating}`) : ''}
+    ${line('Seasons', c.seasons.length)}
+    ${c.madeLeague ? line('Career averages', `${a.ppg} / ${a.rpg} / ${a.apg}`) : ''}
+    ${line('All-stars', c.awards.allStars)}
+    ${line('MVPs', c.awards.mvps)}
+    ${line('Championships', c.awards.rings)}
+    ${line('Hall of fame', c.hof ? 'Inducted' : '—')}
+    <p class="note" style="margin-top:12px">${esc(S.verdict.body)}</p>
+  </div>
+  ${
+    (S.wonBadges || []).length
+      ? `<div class="panel"><h2>Unlocked</h2><div class="badges">${S.wonBadges
+          .map((b) => `<div class="badge on"><b>${esc(b.name)}</b><span>${esc(b.hint)}</span></div>`)
+          .join('')}</div></div>`
+      : ''
   }
-  if (S.quick) {
-    while (S.idx < S.beats.length) doStep(false);
-    return;
-  }
-  doStep(true);
-};
-
-$('rr').onclick = () => {
-  if (S.busy || S.rerolls <= 0 || !S.lastKey || S.done) return;
-  S.rerolls--;
-  S.idx--;
-  const row = $('stats').querySelector(`.row[data-k="${S.lastKey}"]`);
-  if (row) row.remove();
-  doStep(true);
-};
-
-$('quick').onclick = () => {
-  S.quick = !S.quick;
-  $('quick').setAttribute('aria-pressed', String(S.quick));
-  updateBtns();
-};
-
-$('daily').onclick = () => {
-  S.daily = !S.daily;
-  $('daily').setAttribute('aria-pressed', String(S.daily));
-  $('daily').textContent = S.daily ? `Daily ${todaySeed()}` : 'Daily seed';
-  newBuild();
-};
-
+  <div class="panel">
+    <h2>The hidden four</h2>
+    <p class="note" style="margin-bottom:10px">These were driving everything and you could not see them.</p>
+    <div class="attrs">
+      ${MENTAL_KEYS.map((k) => `<div class="attr">
+        <span class="k">${LABELS[k]}</span><span class="v">${S.life.mentals[k]}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="advance"><button class="big" id="again" type="button"><span class="plus">+</span> Start a new life</button></div>`;
+}
 
 // ---------------------------------------------------------------------------
 // Views
 // ---------------------------------------------------------------------------
-function setView(v) {
-  S.view = v;
-  for (const id of ['playView', 'vaultView', 'badgesView']) {
-    $(id).classList.toggle('hidden', id !== `${v}View`);
+function render() {
+  const L = S.life;
+  if (!L) return;
+  const body =
+    S.career ? careerHtml()
+    : L.pending === 'decision' ? offersHtml()
+    : L.pending ? declareHtml()
+    : planHtml();
+
+  $('lifeView').innerHTML =
+    headerHtml() +
+    `<div class="feed">${[...L.log].reverse().map(yearHtml).join('')}</div>` +
+    body;
+
+  if (!S.career) Progress.saveLife(L);
+
+  // Wire the plan.
+  for (const el of $('lifeView').querySelectorAll('[data-t]')) {
+    el.onclick = () => {
+      const id = el.dataset.t;
+      const at = S.plan.indexOf(id);
+      if (at >= 0) S.plan.splice(at, 1);
+      else if (S.plan.length < slotsFor(S.life)) S.plan.push(id);
+      render();
+    };
   }
-  for (const [id, name] of [['navPlay', 'play'], ['navVault', 'vault'], ['navBadges', 'badges']]) {
-    $(id).setAttribute('aria-pressed', String(name === v));
+  const adv = $('advance');
+  if (adv) {
+    adv.onclick = () => {
+      advanceYear(S.life, S.plan, defaultRng);
+      S.plan = [];
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
   }
-  if (v === 'vault') renderVault();
-  if (v === 'badges') renderBadges();
+  for (const el of $('lifeView').querySelectorAll('[data-offer]')) {
+    el.onclick = () => {
+      const offer = S.life.offers[Number(el.dataset.offer)];
+      if (offer.pro) { runCareer(); return; }
+      commit(S.life, offer);
+      S.plan = [];
+      render();
+    };
+  }
+  const dec = $('doDeclare');
+  if (dec) dec.onclick = () => runCareer();
+  const stay = $('doStay');
+  if (stay) {
+    stay.onclick = () => {
+      returnToSchool(S.life);
+      S.plan = [];
+      render();
+    };
+  }
+  const again = $('again');
+  if (again) again.onclick = startLife;
+
+  syncViews();
 }
 
-function renderVault() {
+function attrsHtml() {
+  const L = S.life;
+  const t = titleFor(L.build);
+  return `<div class="panel">
+    <h2>Attributes &mdash; now vs your ceiling</h2>
+    <p class="hint">The bar is where you are. The notch is as far as your genetics go,
+    at your current height. Training closes the gap; nothing closes it all the way on its own.</p>
+    <div class="attrs">
+      ${SKILL_KEYS.map((k) => {
+        const now = Math.round(L.attrs[k]);
+        const cap = L.build.skills[k];
+        return `<div class="attr">
+          <span class="k">${LABELS[k]}</span><span class="v">${now}</span>
+          <span class="bar"><span class="now" style="width:${now}%"></span>
+            <span class="cap" style="left:${clamp(cap, 0, 99)}%"></span></span>
+        </div>`;
+      }).join('')}
+    </div>
+    <h2 style="margin-top:16px">Body</h2>
+    <div class="attrs">
+      ${Object.keys(PHYSICALS).map((k) => `<div class="attr">
+        <span class="k">${LABELS[k]}</span><span class="v">${L.physicals[k]}</span>
+      </div>`).join('')}
+    </div>
+    <h2 style="margin-top:16px">Profile</h2>
+    <p class="note">${esc(t.title)} &mdash; ${esc(t.flavor || '')}<br />
+    Mentality ${L.build.mentality} &middot; ${
+      L.build.mentality >= 62 ? 'score-first' : L.build.mentality <= 38 ? 'pass-first' : 'balanced'
+    }${L.build.freakGene ? ` &middot; freak gene: ${LABELS[L.build.freakGene]}` : ''}</p>
+  </div>`;
+}
+
+function vaultHtml() {
   const p = S.prog;
   const best = Progress.bestCareers(p, 25);
-  const rows = best.map((e, i) => `<tr>
-      <td>${i + 1}</td>
-      <td style="text-align:left">${esc(e.name)}${e.daily ? ' <span style="color:var(--led-dim)">·D</span>' : ''}</td>
-      <td style="text-align:left">${esc(e.title)}</td>
-      <td>${e.pick ?? '—'}</td>
-      <td>${e.draftOvr}&rarr;${e.peak}</td>
-      <td>${e.seasons}</td><td>${e.allStars}</td><td>${e.mvps}</td><td>${e.rings}</td>
-      <td>${e.hof ? '★' : ''}</td><td style="color:var(--hot)">${e.score}</td>
-    </tr>`).join('');
-  $('vaultView').innerHTML = `<div class="career">
-    <h2>Career vault &mdash; your best ${best.length || ''}</h2>
+  return `<div class="panel">
+    <h2>Career vault</h2>
     ${
       best.length
         ? `<div class="scroll-x"><table>
-             <thead><tr><th>#</th><th style="text-align:left">Player</th><th style="text-align:left">Title</th>
-             <th>Pick</th><th>Arc</th><th>Yrs</th><th>AS</th><th>MVP</th><th>Rings</th><th>HOF</th><th>Score</th></tr></thead>
-             <tbody>${rows}</tbody></table></div>
-           <div class="draft-sub" style="margin-top:10px">${p.builds} builds rolled &middot;
-             best streak ${p.streak.best} ${p.streak.best === 1 ? 'day' : 'days'} &middot;
-             stored in this browser only</div>`
-        : `<p class="note">Nothing here yet. Simulate a career and it lands in the vault.</p>`
+            <thead><tr><th>#</th><th>Player</th><th>Pick</th><th>Peak</th><th>Yrs</th><th>AS</th><th>Rings</th><th>Score</th></tr></thead>
+            <tbody>${best.map((e, i) => `<tr><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.pick ?? '—'}</td>
+              <td>${e.peak}</td><td>${e.seasons}</td><td>${e.allStars}</td><td>${e.rings}</td><td>${e.score}</td></tr>`).join('')}
+            </tbody></table></div>`
+        : '<p class="note">Nothing yet. Finish a life and it lands here.</p>'
     }
-    <div class="section-label">Back up your progress</div>
-    <p class="note">There is no account and no server &mdash; everything lives on this device.
-    Copy this text somewhere safe and you can restore it on any phone, or after a
-    reinstall.</p>
+    <h2 style="margin-top:16px">Back up your progress</h2>
+    <p class="note">No account, no server. Copy this somewhere safe.</p>
     <textarea id="backupBox" class="backup" readonly rows="3">${esc(Progress.exportProgress(p))}</textarea>
     <div class="row" style="margin-top:9px">
-      <button class="b-alt" id="copyBackup" type="button">Copy backup</button>
-      <button class="b-alt" id="pasteBackup" type="button">Restore from text</button>
+      <button class="btn" id="copyBackup" type="button">Copy backup</button>
+      <button class="btn" id="pasteBackup" type="button">Restore</button>
     </div>
     <div id="restoreSlot"></div>
   </div>`;
+}
 
+function badgesHtml() {
+  const p = S.prog;
+  const got = Object.keys(p.achievements).length;
+  return `<div class="panel">
+    <h2>Achievements &mdash; ${got} of ${Progress.ACHIEVEMENTS.length}</h2>
+    <div class="badges">${Progress.ACHIEVEMENTS.map((a) => {
+      const on = !!p.achievements[a.id];
+      return `<div class="badge ${on ? 'on' : ''}"><b>${esc(a.name)}</b><span>${esc(a.hint)}</span></div>`;
+    }).join('')}</div>
+  </div>`;
+}
+
+function syncViews() {
+  for (const [id, name] of [['lifeView', 'life'], ['attrsView', 'attrs'], ['vaultView', 'vault'], ['badgesView', 'badges']]) {
+    $(id).classList.toggle('hidden', name !== S.view);
+  }
+  for (const [id, name] of [['navLife', 'life'], ['navAttrs', 'attrs'], ['navVault', 'vault'], ['navBadges', 'badges']]) {
+    $(id).setAttribute('aria-pressed', String(name === S.view));
+  }
+}
+
+function setView(v) {
+  S.view = v;
+  if (v === 'attrs') $('attrsView').innerHTML = attrsHtml();
+  if (v === 'vault') { $('vaultView').innerHTML = vaultHtml(); wireBackup(); }
+  if (v === 'badges') $('badgesView').innerHTML = badgesHtml();
+  syncViews();
+}
+
+function wireBackup() {
   $('copyBackup').onclick = async () => {
     const box = $('backupBox');
     try {
       await navigator.clipboard.writeText(box.value);
       $('copyBackup').textContent = 'Copied';
     } catch {
-      // iOS in standalone mode can refuse the clipboard API; selecting the text
-      // lets the user copy it with the normal long-press menu instead.
       box.removeAttribute('readonly');
       box.select();
       box.setSelectionRange(0, box.value.length);
@@ -515,72 +457,42 @@ function renderVault() {
     }
     setTimeout(() => ($('copyBackup').textContent = 'Copy backup'), 2200);
   };
-
   $('pasteBackup').onclick = () => {
     $('restoreSlot').innerHTML = `
-      <p class="note" style="margin-top:12px">Paste a backup below, then press Restore.
-      This replaces everything currently on this device.</p>
-      <textarea id="restoreBox" class="backup" rows="3" placeholder="Paste backup text here"></textarea>
-      <div class="row" style="margin-top:9px">
-        <button class="b-roll" id="doRestore" type="button">Restore</button>
-      </div>
+      <p class="note" style="margin-top:12px">Paste a backup, then press Restore. This replaces what is on this device.</p>
+      <textarea id="restoreBox" class="backup" rows="3" placeholder="Paste backup text"></textarea>
+      <div class="row" style="margin-top:9px"><button class="btn primary" id="doRestore" type="button">Restore</button></div>
       <div id="restoreMsg" class="note"></div>`;
     $('doRestore').onclick = () => {
       const r = Progress.importProgress($('restoreBox').value);
-      if (!r.ok) {
-        $('restoreMsg').innerHTML = `<span style="color:var(--t5)">${esc(r.error)}</span>`;
-        return;
-      }
+      if (!r.ok) { $('restoreMsg').innerHTML = `<span style="color:var(--bad)">${esc(r.error)}</span>`; return; }
       S.prog = r.progress;
       Progress.save(S.prog);
-      syncCounters();
-      renderVault();
+      setView('vault');
     };
   };
 }
 
-function renderBadges() {
-  const p = S.prog;
-  const got = Object.keys(p.achievements).length;
-  $('badgesView').innerHTML = `<div class="career">
-    <h2>Achievements &mdash; ${got} of ${Progress.ACHIEVEMENTS.length}</h2>
-    <div class="badges">${Progress.ACHIEVEMENTS.map((a) => {
-      const on = !!p.achievements[a.id];
-      return `<div class="badge ${on ? 'on' : ''}">
-        <b>${esc(a.name)}</b><span>${esc(a.hint)}</span>
-      </div>`;
-    }).join('')}</div>
-  </div>`;
-}
-
-$('navPlay').onclick = () => setView('play');
+$('navLife').onclick = () => setView('life');
+$('navAttrs').onclick = () => setView('attrs');
 $('navVault').onclick = () => setView('vault');
 $('navBadges').onclick = () => setView('badges');
 
-// iOS gives no install prompt and buries "Add to Home Screen" in the Share
-// sheet, so most people never find it. Shown once, dismissible, and only when
-// it is actually actionable: iOS, in Safari, not already installed.
-function maybeShowInstallHint() {
+// iOS buries "Add to Home Screen" in the Share sheet; shown once, dismissible.
+(function installHint() {
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Macintosh') && 'ontouchend' in document);
-  const standalone = window.navigator.standalone === true ||
-    window.matchMedia('(display-mode: standalone)').matches;
+  const standalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
   if (!isIOS || standalone) return;
-  try {
-    if (localStorage.getItem('hooper.installHint') === 'off') return;
-  } catch { /* ignore */ }
+  try { if (localStorage.getItem('hooper.installHint') === 'off') return; } catch { /* ignore */ }
   $('installHint').innerHTML =
-    `<span>Install it: tap <b>Share</b>, then <b>Add to Home Screen</b>. It then runs
-     offline with no browser bar.</span>
-     <button class="chip" id="hintClose" type="button" aria-label="Dismiss">Got it</button>`;
+    `<span>Install it: tap <b>Share</b>, then <b>Add to Home Screen</b>.</span>
+     <button class="btn" id="hintClose" type="button">Got it</button>`;
   $('installHint').classList.remove('hidden');
   $('hintClose').onclick = () => {
     $('installHint').classList.add('hidden');
     try { localStorage.setItem('hooper.installHint', 'off'); } catch { /* ignore */ }
   };
-}
+})();
 
-syncCounters();
-newBuild();
-setView('play');
-maybeShowInstallHint();
+resumeOrStart();

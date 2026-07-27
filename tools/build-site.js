@@ -18,12 +18,14 @@ const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 const DOCS = join(ROOT, 'docs');
 const TMP = join(ROOT, '.cache', 'site-body.html');
 
-const NAME = 'Build a Hooper';
-const SHORT = 'Hooper';
+const NAME = 'Hoop Life';
+const SHORT = 'Hoop Life';
 const DESC =
-  'Roll a basketball player one attribute at a time, scored against what is expected for his height, then simulate the career it was worth.';
-const THEME = '#150f0b';
-const ACCENT = '#ffa92b';
+  'Live a basketball career one year at a time. Start at fourteen, plan every ' +
+  'season of high school and college, and find out what the genetics you were ' +
+  'dealt were actually worth.';
+const THEME = '#eef1f6';
+const ACCENT = '#2563eb';
 
 await rm(DOCS, { recursive: true, force: true });
 await mkdir(DOCS, { recursive: true });

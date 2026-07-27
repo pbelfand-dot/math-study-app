@@ -7,8 +7,8 @@ function createWindow() {
     height: 860,
     minWidth: 900,
     minHeight: 650,
-    title: 'Build a Hooper',
-    backgroundColor: '#150f0b',
+    title: 'Hoop Life',
+    backgroundColor: '#eef1f6',
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,

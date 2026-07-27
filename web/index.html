@@ -2,56 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Build a Hooper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hoop Life</title>
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ffa92b'/%3E%3Cpath d='M2 16h28M16 2v28M6 6c8 5 8 15 0 20M26 6c-8 5-8 15 0 20' stroke='%23150f0b' stroke-width='2' fill='none'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232563eb'/%3E%3Cpath d='M2 16h28M16 2v28M6 6c8 5 8 15 0 20M26 6c-8 5-8 15 0 20' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="fonts.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="wrap">
-      <header>
-        <h1>Build a Hooper<span>archetype build</span></h1>
-        <div class="counter">
-          BUILDS <b id="cnt">0</b><br />
-          BEST GRADE <b id="best">&mdash;</b><br />
-          STREAK <b id="lg">0</b>
-        </div>
-      </header>
+      <div class="install-hint hidden" id="installHint"></div>
 
-      <nav class="modes nav">
-        <button class="chip" id="navPlay" type="button" aria-pressed="true">Play</button>
+      <nav class="nav">
+        <button class="chip" id="navLife" type="button" aria-pressed="true">Life</button>
+        <button class="chip" id="navAttrs" type="button" aria-pressed="false">Attributes</button>
         <button class="chip" id="navVault" type="button" aria-pressed="false">Vault</button>
-        <button class="chip" id="navBadges" type="button" aria-pressed="false">Badges <b id="badgeCount">0/20</b></button>
+        <button class="chip" id="navBadges" type="button" aria-pressed="false">Badges</button>
       </nav>
 
-      <div id="playView">
-        <div class="modes">
-          <button class="chip" id="quick" type="button" aria-pressed="false">Quick roll</button>
-          <button class="chip" id="daily" type="button" aria-pressed="false">Daily seed</button>
-        </div>
-
-      <div class="install-hint hidden" id="installHint"></div>
-        <div class="prog" id="prog"></div>
-      <div id="freakSlot"></div>
-
-      <div class="stage" id="stage"></div>
-
-      <div class="actions">
-        <button class="b-roll" id="roll" type="button">Roll height</button>
-        <button class="b-alt" id="rr" type="button" disabled>
-          Reroll <span class="rr-count" id="rrn"></span>
-        </button>
-      </div>
-
-        <div class="stats" id="stats"></div>
-        <div id="ovrSlot"></div>
-        <div id="car"></div>
-      </div>
-
+      <div id="lifeView"></div>
+      <div id="attrsView" class="hidden"></div>
       <div id="vaultView" class="hidden"></div>
       <div id="badgesView" class="hidden"></div>
     </div>
