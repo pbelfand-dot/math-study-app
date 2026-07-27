@@ -572,12 +572,14 @@ export function focusActions(life) {
 // ---------------------------------------------------------------------------
 export function actionsForPerson(life, p) {
   const out = [];
-  // Person actions are once a year like everything else. They were not filtered
-  // at all, so "Ask for money" and the trainer's summer could be repeated
-  // without limit inside a single year.
+  // Once a year PER PERSON. The dedupe key has to carry the person, because the
+  // action ids are generic — 'talk', 'mend', 'askmoney' — and keying on the id
+  // alone meant one "Spend time together" with a teammate removed it from your
+  // mother, your father, your coach and everyone else at the same time.
   const push = (id, name, run, extra = {}) => {
-    if (life.doneThisYear.includes(id)) return;
-    out.push({ id, name, price: 0, run, person: p.id, ...extra });
+    const key = `${p.id}:${id}`;
+    if (life.doneThisYear.includes(key)) return;
+    out.push({ id, key, name, price: 0, run, person: p.id, ...extra });
   };
 
   push('talk', 'Spend time together', (l, rng) => {
@@ -750,7 +752,9 @@ export function doAction(life, a, rng) {
   life.money -= a.price || 0;
   life.strain += a.wear || 0;
   const entry = a.run(life, rng) || { kind: 'note', text: a.name };
-  life.doneThisYear.push(a.id);
+  // `key` where one exists, so a per-person action only blocks itself and not
+  // the same-named action on somebody else.
+  life.doneThisYear.push(a.key ?? a.id);
   life.yearLog.push(entry);
   return entry;
 }
