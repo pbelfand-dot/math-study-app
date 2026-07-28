@@ -28,6 +28,7 @@ const MODULES = [
   'src/actions.js',
   'src/events.js',
   'src/career.js',
+  'src/league.js',
   'src/pro.js',
   'src/verdict.js',
   'src/progress.js',

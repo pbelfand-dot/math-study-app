@@ -22,6 +22,10 @@ import { randomTeam, randomName, TEAMS } from './names.js';
 import {
   runDraft, boxScore, injuryRoll, REPLACEMENT, REPLACEMENT_FLOOR,
 } from './career.js';
+import {
+  newRep, moveRep, repLine, makeRival, stepRival, leagueNews, TROUBLE, paycheck,
+  PURCHASES, INVESTMENTS, ADVISORS, MEDIA_ACTIONS,
+} from './league.js';
 
 // ---------------------------------------------------------------------------
 // The cap
@@ -192,7 +196,26 @@ export function newPro(build, life, draft, rng = defaultRng) {
     lastMinutes: 14,
     leaps: 0,
     morale: 60,
-    fanLove: draft.drafted && draft.pick <= 14 ? 62 : 48,
+    // Reputation is five meters, not one. The same action reads completely
+    // differently to the people who sign your cheques and the people who buy
+    // your shoes, and that split is most of the perceived depth.
+    rep: (() => {
+      const r = newRep(rng);
+      if (draft.drafted && draft.pick <= 14) { r.fans += 12; r.media += 8; }
+      return r;
+    })(),
+    rival: null,
+    news: [],
+    gamblingStep: 0,
+    techs: 0,
+    purchases: [],
+    investments: [],
+    advisor: null,
+    burn: 0,
+    netWorth: 0,
+    banned: false,
+    suspendedGames: 0,
+    firstCheck: null,
 
     seasons: [],
     awards: { allStars: 0, allLeague: 0, mvps: 0, rings: 0, roty: 0, dpoy: 0 },
@@ -206,6 +229,7 @@ export function newPro(build, life, draft, rng = defaultRng) {
     gameForm: 0,
     games: [],
     doneThisYear: [],
+    doneMedia: [],
     // How you intend to handle your body this season. This is the decision the
     // 65-game rule exists to make expensive: managing the load protects the
     // knee and can drop you under the award threshold, which costs you the
@@ -235,7 +259,19 @@ export const LOAD_POLICIES = {
 // ---------------------------------------------------------------------------
 // One season
 // ---------------------------------------------------------------------------
+export function resolveTrouble(pro, id, optionIndex, rng = defaultRng) {
+  const t = TROUBLE.find((x) => x.id === id);
+  pro.trouble = null;
+  const opt = t?.options[optionIndex];
+  if (!opt) return null;
+  return opt.run(pro, rng) || { kind: 'note', text: opt.label };
+}
+
 export function playSeason(pro, rng = defaultRng) {
+  // A retired player has career totals that have already been averaged out and
+  // written down. Playing one more season past that quietly makes the summary
+  // disagree with the seasons above it.
+  if (pro.retired) return null;
   const b = pro.build;
   const eff = pro.eff;
   const we = b.mentals.workEthic;
@@ -271,6 +307,10 @@ export function playSeason(pro, rng = defaultRng) {
   const rating = pro.rating;
   let minutes = clamp((rating - 54) * 1.35 + (b.physicals.stamina - 50) * 0.09, 0, 38);
 
+  // A suspension eats games before anything else does, which is exactly how it
+  // costs you the 65-game threshold.
+  const suspended = pro.suspendedGames || 0;
+  pro.suspendedGames = 0;
   const policy = LOAD_POLICIES[pro.loadPolicy] || LOAD_POLICIES.balanced;
   // Load policy scales the injury multiplier the roll already takes, rather
   // than rolling twice and keeping the second — which is what the first pass
@@ -278,7 +318,8 @@ export function playSeason(pro, rng = defaultRng) {
   const injury = injuryRoll(b, pro, minutes, { ...eff, injury: eff.injury * policy.risk }, rng);
   // Games missed to rest, before any injury. This is what can put you under 65
   // without a single thing going wrong.
-  let games = Math.round(82 * policy.games);
+  let games = Math.round(82 * policy.games) - suspended;
+  if (suspended) out.push({ kind: 'bad', text: `Suspended ${suspended} games.` });
   let seasonEnding = false;
   if (injury) {
     seasonEnding = injury.games >= 40;
@@ -397,8 +438,44 @@ export function playSeason(pro, rng = defaultRng) {
 
   // Morale, fan love, and the roster drifting around you.
   pro.morale = clamp(pro.morale + (playoffs ? 6 : -4) + (minutes > 24 ? 5 : -6) + (ring ? 15 : 0), 0, 100);
-  pro.fanLove = clamp(pro.fanLove + (allStar ? 9 : 0) + (ring ? 12 : 0) + (minutes > 26 ? 3 : -3), 0, 100);
+  moveRep(pro, {
+    fans: (allStar ? 9 : 0) + (ring ? 12 : 0) + (minutes > 26 ? 3 : -3),
+    media: (allStar ? 6 : 0) + (mvp ? 12 : 0) - (games < GAMES_THRESHOLD ? 5 : 0),
+    frontOffice: (playoffs ? 4 : -2) + (games >= GAMES_THRESHOLD ? 3 : -6),
+    teammates: (ring ? 8 : 0) + (minutes > 30 && !playoffs ? -3 : 1),
+    leagueOffice: 2,
+  });
   pro.teamStrength = clamp(pro.teamStrength + rng.gauss(0, 6) + (playoffs ? 1 : 3), 15, 78);
+
+  // Technicals accumulate and eventually become a suspension, which is the
+  // cheapest recognisable mechanic in the game.
+  pro.techs = (pro.techs || 0) + Math.max(0, Math.round(rng.gauss((b.mentality - 45) / 9, 2.5)));
+  if (pro.techs >= 16) {
+    const extra = 1 + Math.floor((pro.techs - 16) / 2);
+    pro.suspendedGames += extra;
+    out.push({ kind: 'bad', text: `${pro.techs} technicals — ${extra} game${extra > 1 ? 's' : ''} suspended next season.` });
+    pro.techs = 0;
+  }
+
+  // Money out. The first cheque is shown in full because almost nobody models
+  // what is actually left, and it is a genuinely memorable moment.
+  const cheque = paycheck(pro, pro.contract.salary);
+  if (!pro.firstCheck) pro.firstCheck = cheque;
+  pro.netWorth += cheque.net;
+  const upkeep = pro.purchases.reduce((a, x) => a + x.upkeep, 0) + (pro.entourage || 0) * 400_000;
+  pro.burn = upkeep;
+  pro.netWorth -= upkeep;
+  if (upkeep > cheque.net && cheque.net > 0) {
+    out.push({ kind: 'bad', text: `You spent ${proMoney(upkeep)} keeping things running and took home ${proMoney(cheque.net)}.` });
+  }
+  if (pro.netWorth < 0) {
+    out.push({ kind: 'bad', text: 'You are underwater. The advisor is not returning calls.' });
+  }
+
+  // The world moves without you.
+  if (!pro.rival) pro.rival = makeRival(pro, rng);
+  for (const line of stepRival(pro.rival, pro, rng)) out.push({ kind: 'note', text: line });
+  pro.news = leagueNews(rng, 3);
 
   pro.lastMinutes = minutes;
   pro.age++;
@@ -409,7 +486,19 @@ export function playSeason(pro, rng = defaultRng) {
   pro.doneThisYear = [];
 
   // What happens next: retire, negotiate, or hit the market.
-  const done = pro.rating < REPLACEMENT_FLOOR || pro.age > 40;
+  // Trouble, if any is eligible. Escalating chains take priority over one-offs
+  // because a chain that stalls is not a chain.
+  const seen = pro.seenTrouble || (pro.seenTrouble = []);
+  const pool = TROUBLE.filter((t) => !seen.includes(t.id) && t.when(pro));
+  if (pool.length && rng.chance(0.45)) {
+    const chained = pool.filter((t) => t.chain);
+    const t = (chained.length ? chained : pool).sort((a, b) => b.weight - a.weight)[0];
+    seen.push(t.id);
+    pro.trouble = { id: t.id, title: t.title, text: t.text(pro), options: t.options.map((o) => o.label) };
+  }
+
+  const done = pro.banned || pro.rating < REPLACEMENT_FLOOR || pro.age > 40;
+  if (pro.banned) out.push({ kind: 'bad', text: 'Banned from the league. That is the end of it.' });
   if (done) pro.pending = 'retire';
   else if (pro.contractLeft <= 0) pro.pending = 'freeagency';
   else if (rng.chance(0.08 * eff.tradeFreq)) pro.pending = 'trade';
@@ -475,7 +564,7 @@ export function freeAgencyOffers(pro, rng = defaultRng) {
 
   // Your own team, if they want you. They pay a little over the odds for
   // somebody the building already knows.
-  if (pro.fanLove > 35 || pro.rating >= 70) {
+  if (pro.rep.fans > 35 || pro.rating >= 70) {
     offers.push({
       team: pro.team, stay: true,
       // Only your own team can offer the top tier at seven-to-nine years, and
@@ -521,7 +610,7 @@ export function signWith(pro, offer) {
   pro.contract = { years: offer.years, salary: offer.salary, type: 'Free agency' };
   pro.contractLeft = offer.years;
   pro.pending = null;
-  if (moved) { pro.fanLove = 50; pro.morale = clamp(pro.morale + 4, 0, 100); }
+  if (moved) { moveRep(pro, { fans: 50 - pro.rep.fans }); pro.morale = clamp(pro.morale + 4, 0, 100); }
   return pro;
 }
 
@@ -531,7 +620,7 @@ export function acceptTrade(pro, rng = defaultRng) {
   while (t === pro.team && guard++ < 8) t = randomTeam(rng);
   pro.team = t;
   pro.teamStrength = clamp(Math.round(rng.gauss(48, 13)), 15, 78);
-  pro.fanLove = 48;
+  moveRep(pro, { fans: 48 - pro.rep.fans });
   pro.morale = clamp(pro.morale - 8, 0, 100);
   pro.pending = null;
   return pro;
@@ -638,9 +727,9 @@ export const PRO_ACTIONS = [
   {
     id: 'endorse', name: 'Sign an endorsement', blurb: 'A shoe, a drink, a car dealership.',
     cost: 0,
-    show: (p) => p.fanLove > 45,
+    show: (p) => p.rep.fans > 45,
     run: (p, rng) => {
-      const deal = Math.round((p.fanLove / 100) ** 2 * 26e6 * (0.5 + rng.random()) + 120_000);
+      const deal = Math.round((p.rep.fans / 100) ** 2 * 26e6 * (0.5 + rng.random()) + 120_000);
       p.earnings += deal;
       p.endorsements = (p.endorsements || 0) + deal;
       return { kind: 'good', text: `Endorsement signed — ${proMoney(deal)}.` };
@@ -650,7 +739,7 @@ export const PRO_ACTIONS = [
     id: 'community', name: 'Put your name on something', blurb: 'A gym, a scholarship, a foundation.',
     cost: 400_000,
     run: (p) => {
-      p.fanLove = clamp(p.fanLove + 11, 0, 100);
+      moveRep(p, { fans: 11 });
       p.morale = clamp(p.morale + 5, 0, 100);
       return { kind: 'good', text: 'Opened a gym in the neighbourhood you came from.' };
     },
@@ -660,15 +749,112 @@ export const PRO_ACTIONS = [
     cost: 0,
     show: (p) => p.teamStrength < 42 && p.rating > 70,
     run: (p, rng) => {
-      p.fanLove = clamp(p.fanLove - 18, 0, 100);
+      moveRep(p, { fans: -18, frontOffice: -14 });
       p.pending = 'trade';
       return { kind: 'bad', text: 'You asked out. It leaked within the hour.' };
     },
   },
 ];
 
+// Money out, media, and the things that keep costing. Generated rather than
+// listed so the catalogue grows with the tables in league.js.
+const spendActions = () => [
+  ...PURCHASES.map((x) => ({
+    id: `buy:${x.id}`, name: `Buy: ${x.name}`,
+    blurb: `${x.blurb} Upkeep ${proMoney(x.upkeep)} a year.`,
+    cost: x.price,
+    show: (p) => !p.purchases.some((q) => q.id === x.id),
+    run: (p) => {
+      p.purchases.push({ id: x.id, name: x.name, upkeep: x.upkeep });
+      moveRep(p, { fans: x.fans || 0 });
+      if (x.joy) p.morale = clamp(p.morale + x.joy, 0, 100);
+      return { kind: 'good', text: `Bought ${x.name.toLowerCase()}. ${proMoney(x.upkeep)} a year to keep.` };
+    },
+  })),
+  ...INVESTMENTS.map((x) => ({
+    id: `inv:${x.id}`, name: `Invest: ${x.name}`,
+    blurb: `${x.blurb} ${proMoney(x.price)} in.`,
+    cost: x.price,
+    show: (p) => !p.investments.some((q) => q.id === x.id),
+    run: (p, rng) => {
+      const q = p.advisor?.quality ?? 0.85;
+      const mult = Math.max(0, rng.gauss(x.mean * q, x.sd));
+      const back = Math.round(x.price * mult);
+      p.investments.push({ id: x.id, name: x.name, put: x.price, got: back });
+      p.earnings += back;
+      return {
+        kind: back > x.price ? 'good' : 'bad',
+        text: `${x.name}: put in ${proMoney(x.price)}, it came back ${proMoney(back)}.`,
+      };
+    },
+  })),
+  ...ADVISORS.map((x) => ({
+    id: `adv:${x.id}`, name: `Advisor: ${x.name}`,
+    blurb: `${x.blurb} ${x.fee ? `${proMoney(x.fee)} a year.` : ''}`,
+    cost: x.fee,
+    show: (p) => p.advisor?.id !== x.id,
+    run: (p, rng) => {
+      p.advisor = x;
+      // The cheap one has a real chance of being a fraud. This is ruthless and
+      // it is completely true to life.
+      if (rng.chance(x.fraud)) {
+        const lost = Math.round(p.earnings * 0.6);
+        p.earnings -= lost;
+        p.netWorth -= lost;
+        p.advisor = null;
+        return { kind: 'bad', text: `${x.name} was not who he said he was. ${proMoney(lost)} is gone and it is not coming back.` };
+      }
+      return { kind: 'good', text: `Signed with ${x.name.toLowerCase()}.` };
+    },
+  })),
+  {
+    id: 'entourage', name: 'Put friends on payroll',
+    blurb: 'People from home, on salary. $400,000 each a year.',
+    cost: 0,
+    show: (p) => (p.entourage || 0) < 4,
+    run: (p) => {
+      p.entourage = (p.entourage || 0) + 1;
+      p.morale = clamp(p.morale + 7, 0, 100);
+      return { kind: 'note', text: `Put another one on the payroll. Burn is now ${proMoney((p.entourage) * 400_000)} a year.` };
+    },
+  },
+  {
+    id: 'cutloose', name: 'Cut the payroll',
+    blurb: 'The conversation nobody wants to have.',
+    cost: 0,
+    show: (p) => (p.entourage || 0) > 0,
+    run: (p) => {
+      p.entourage -= 1;
+      p.morale = clamp(p.morale - 9, 0, 100);
+      return { kind: 'bad', text: 'You had the conversation. It did not go well and you saved $400,000.' };
+    },
+  },
+  ...MEDIA_ACTIONS.map((m) => ({
+    id: `media:${m.id}`, name: m.name, blurb: m.blurb, cost: m.cost || 0,
+    media: m,
+    show: (p) => !(m.once && p.doneMedia.includes(m.id)),
+    run: () => null, // handled through the media sheet, which asks what you say
+  })),
+];
+
 export const proActions = (pro) =>
-  PRO_ACTIONS.filter((a) => !pro.doneThisYear.includes(a.id) && (!a.show || a.show(pro)));
+  [...PRO_ACTIONS, ...spendActions()].filter(
+    (a) => !pro.doneThisYear.includes(a.id) && (!a.show || a.show(pro)),
+  );
+
+// Saying something is a two-step: pick the appearance, then pick what you say.
+export function resolveMedia(pro, mediaId, optionIndex, rng = defaultRng) {
+  const m = MEDIA_ACTIONS.find((x) => x.id === mediaId);
+  const opt = m?.options[optionIndex];
+  if (!opt) return null;
+  moveRep(pro, opt.rep || {});
+  if (opt.fine) pro.earnings -= opt.fine;
+  if (opt.income) pro.earnings += opt.income;
+  if (m.once) pro.doneMedia.push(m.id);
+  pro.doneThisYear.push(`media:${m.id}`);
+  const rl = repLine(opt.rep || {});
+  return { kind: 'note', text: `${opt.text}${rl ? ` (${rl})` : ''}` };
+}
 
 export function doProAction(pro, a, rng = defaultRng) {
   if ((a.cost || 0) > pro.earnings) return null;

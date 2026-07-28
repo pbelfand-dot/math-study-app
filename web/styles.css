@@ -340,6 +340,35 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   background: #fef3c7; color: #b45309;
 }
 
+/* The career card. One screenshot that says everything, so it has to hold
+   together on its own with no surrounding page. */
+.card {
+  background: linear-gradient(160deg, #111827, #1f2937);
+  border-radius: 16px; padding: 16px; color: #f9fafb; margin-top: 14px;
+}
+.card .chead h3 { color: #fff; font-size: 19px; margin: 0; border: 0; padding: 0; }
+.card .chead p { color: #9ca3af; font-size: 12px; font-weight: 600; margin: 2px 0 12px; }
+.cstats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.cstat { text-align: center; background: rgba(255, 255, 255, 0.06); border-radius: 9px; padding: 8px 2px; }
+.cstat b { display: block; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cstat span { display: block; font-size: 9px; letter-spacing: 0.08em; color: #9ca3af; font-weight: 700; }
+.card .hardware { margin-top: 10px; }
+.card .hardware span { background: rgba(251, 191, 36, 0.18); color: #fcd34d; }
+.card .cline { font-size: 13px; color: #d1d5db; margin: 10px 0 0; }
+.card .cfoot {
+  font-size: 10.5px; color: #6b7280; font-weight: 700; letter-spacing: 0.04em;
+  margin: 10px 0 0; border-top: 1px solid rgba(255, 255, 255, 0.09); padding-top: 8px;
+}
+
+/* Offseason months. The calendar is a heading, not a screen of its own. */
+.month { margin-bottom: 14px; }
+.month h4 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); font-weight: 800; margin: 0 0 2px;
+}
+.month .note { margin: 0 0 8px; }
+.month.quiet { opacity: 0.55; }
+
 /* The diagnosis under the projection. A verdict without a reason is not
    information, and "Nobody has you on a board" on its own reads as the game
    ignoring everything you did. */

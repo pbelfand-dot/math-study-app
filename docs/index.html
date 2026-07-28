@@ -468,6 +468,35 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   background: #fef3c7; color: #b45309;
 }
 
+/* The career card. One screenshot that says everything, so it has to hold
+   together on its own with no surrounding page. */
+.card {
+  background: linear-gradient(160deg, #111827, #1f2937);
+  border-radius: 16px; padding: 16px; color: #f9fafb; margin-top: 14px;
+}
+.card .chead h3 { color: #fff; font-size: 19px; margin: 0; border: 0; padding: 0; }
+.card .chead p { color: #9ca3af; font-size: 12px; font-weight: 600; margin: 2px 0 12px; }
+.cstats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.cstat { text-align: center; background: rgba(255, 255, 255, 0.06); border-radius: 9px; padding: 8px 2px; }
+.cstat b { display: block; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cstat span { display: block; font-size: 9px; letter-spacing: 0.08em; color: #9ca3af; font-weight: 700; }
+.card .hardware { margin-top: 10px; }
+.card .hardware span { background: rgba(251, 191, 36, 0.18); color: #fcd34d; }
+.card .cline { font-size: 13px; color: #d1d5db; margin: 10px 0 0; }
+.card .cfoot {
+  font-size: 10.5px; color: #6b7280; font-weight: 700; letter-spacing: 0.04em;
+  margin: 10px 0 0; border-top: 1px solid rgba(255, 255, 255, 0.09); padding-top: 8px;
+}
+
+/* Offseason months. The calendar is a heading, not a screen of its own. */
+.month { margin-bottom: 14px; }
+.month h4 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); font-weight: 800; margin: 0 0 2px;
+}
+.month .note { margin: 0 0 8px; }
+.month.quiet { opacity: 0.55; }
+
 /* The diagnosis under the projection. A verdict without a reason is not
    information, and "Nobody has you on a board" on its own reads as the game
    ignoring everything you did. */
@@ -4011,6 +4040,407 @@ function simulateCareer(b, rng = defaultRng) {
   return result;
 }
 
+/* ===== src/league.js ===== */
+// THE LEAGUE AROUND YOU — reputation, trouble, media, money out, and the world.
+//
+// Everything here exists to make one principle true, which is the principle the
+// design document opens with: every choice should cost something that matters
+// somewhere else. A presser that only moves "reputation" is a menu. A presser
+// that moves Fans up, Front Office down and Teammates either way depending on
+// whether they agreed with you is a decision.
+//
+// Five reputation meters, not one. That split alone is most of the perceived
+// depth — the same action reads completely differently to the people who sign
+// your cheques and the people who buy your shoes.
+
+
+
+
+
+const lgCash = (n) =>
+  Math.abs(n) >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : `$${Math.round(n).toLocaleString()}`;
+
+// ---------------------------------------------------------------------------
+// Reputation
+// ---------------------------------------------------------------------------
+const REP_METERS = [
+  ['fans', 'Fans', 'Ticket sales, jersey sales, All-Star votes.'],
+  ['teammates', 'Teammates', 'Whether the locker room is with you.'],
+  ['frontOffice', 'Front Office', 'Whether they extend you or move you.'],
+  ['media', 'Media', 'Award votes, and how a bad night gets written.'],
+  ['leagueOffice', 'League Office', 'Fines, suspensions, and how long they last.'],
+];
+
+const newRep = (rng = defaultRng) => ({
+  fans: 50 + rng.int(10),
+  teammates: 50 + rng.int(10),
+  frontOffice: 52 + rng.int(8),
+  media: 48 + rng.int(10),
+  leagueOffice: 62 + rng.int(10),
+});
+
+function moveRep(pro, deltas) {
+  pro.rep = pro.rep || newRep();
+  for (const [k, v] of Object.entries(deltas)) {
+    pro.rep[k] = clamp(pro.rep[k] + v, 0, 100);
+  }
+  return pro.rep;
+}
+
+// A short readable summary of a rep change, so the log says who noticed.
+function repLine(deltas) {
+  const names = Object.fromEntries(REP_METERS.map(([k, label]) => [k, label]));
+  return Object.entries(deltas)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `${names[k]} ${v > 0 ? '+' : ''}${v}`)
+    .join(', ');
+}
+
+// ---------------------------------------------------------------------------
+// Money out — where careers actually die
+//
+// Everybody models the salary. Almost nobody models what is left. The first
+// paycheck breakdown is a genuinely memorable moment and it costs nothing to
+// build, and after that the burn rate is a live number that can end you.
+// ---------------------------------------------------------------------------
+const TAX = {
+  federal: 0.37,
+  escrow: 0.10,
+  agent: 0.03,
+  union: 0.0025,
+};
+
+// State tax varies wildly by market, which is the point: the same offer is
+// worth meaningfully different amounts in two different cities, so free agency
+// gains a financial dimension and the player learns something true.
+const STATE_TAX = {
+  'Miami Swelter': 0, 'Dallas Wranglers': 0, 'Houston Launch': 0, 'Memphis Kodiaks': 0,
+  'Orlando Illusion': 0, 'Seattle Rainmakers': 0, 'Salt Lake Ragtime': 0.0465,
+  'Los Angeles Schooners': 0.133, 'Los Angeles Lagoons': 0.133, 'Sacramento Regents': 0.133,
+  'Golden Gate Guardians': 0.133, 'New York Bricklayers': 0.109, 'Brooklyn Baskets': 0.109,
+  'Portland Trailhead': 0.099, 'Minnesota Timber': 0.0985, 'New Orleans Herons': 0.0425,
+};
+const stateTaxFor = (team) => STATE_TAX[team] ?? 0.05;
+
+function paycheck(pro, gross) {
+  const state = stateTaxFor(pro.team);
+  const rows = [
+    ['Gross salary', gross],
+    ['Federal income tax', -gross * TAX.federal],
+    [`State tax (${(state * 100).toFixed(1)}%)`, -gross * state],
+    ['Escrow withheld', -gross * TAX.escrow],
+    ['Agent fee', -gross * TAX.agent],
+    ['Union dues', -gross * TAX.union],
+  ];
+  const net = rows.reduce((a, [, v]) => a + v, 0);
+  return { rows, net: Math.round(net), rate: 1 - net / gross };
+}
+
+// Things you buy that keep costing. Upkeep is the number that kills people.
+const PURCHASES = [
+  { id: 'car', name: 'A car worth talking about', price: 320_000, upkeep: 26_000, fans: 2,
+    blurb: 'Insurance on it costs more than most people earn.' },
+  { id: 'house', name: 'A house for your mother', price: 1_600_000, upkeep: 70_000, fans: 6, joy: 14,
+    blurb: 'The one purchase nobody ever regrets.' },
+  { id: 'mansion', name: 'Somewhere with a gate', price: 8_500_000, upkeep: 420_000, fans: 4,
+    blurb: 'Property tax, staff, and a pool nobody swims in.' },
+  { id: 'jewelry', name: 'Jewellery', price: 900_000, upkeep: 18_000, fans: 3,
+    blurb: 'Depreciates the moment it leaves the case.' },
+  { id: 'jet', name: 'A jet', price: 22_000_000, upkeep: 2_400_000, fans: 2,
+    blurb: 'The single fastest way anyone has ever gone broke.' },
+];
+
+const INVESTMENTS = [
+  { id: 'restaurant', name: 'A restaurant', price: 1_200_000, mean: 0.82, sd: 0.55,
+    blurb: 'Everyone does this. Almost nobody makes money.' },
+  { id: 'carwash', name: 'Car wash chain', price: 900_000, mean: 1.14, sd: 0.28,
+    blurb: 'Boring, unglamorous, quietly works.' },
+  { id: 'realestate', name: 'Commercial property', price: 4_000_000, mean: 1.22, sd: 0.4,
+    blurb: 'Slow, dull, and the thing rich people actually do.' },
+  { id: 'startup', name: 'A tech startup', price: 2_000_000, mean: 0.95, sd: 1.9,
+    blurb: 'Your cousin knows a guy. It is either nothing or everything.' },
+  { id: 'crypto', name: 'Whatever your barber recommended', price: 1_500_000, mean: 0.72, sd: 2.4,
+    blurb: 'You already know how this ends. You are going to do it anyway.' },
+  { id: 'friend', name: "A friend's business", price: 600_000, mean: 0.55, sd: 0.5,
+    blurb: 'This is not an investment and you know it.' },
+];
+
+// Three tiers of advisor. The cheap one has a real chance of being a fraud,
+// which is ruthless and completely true to life.
+const ADVISORS = [
+  { id: 'cousin', name: 'Your cousin, who did a course', fee: 0, quality: 0.72, fraud: 0.16,
+    blurb: 'Free. There is a reason it is free.' },
+  { id: 'boutique', name: 'A boutique firm', fee: 180_000, quality: 1.0, fraud: 0.03,
+    blurb: 'Competent, attentive, expensive enough to notice.' },
+  { id: 'bank', name: 'A private bank', fee: 600_000, quality: 1.18, fraud: 0.002,
+    blurb: 'They have managed money for a hundred years. They will not lose yours.' },
+];
+
+// ---------------------------------------------------------------------------
+// Trouble
+//
+// The doc is right that this is where the drama per line of code is highest.
+// Consequences are severe and asymmetric on purpose: the upside of the bad
+// choice is real money and the downside can end the career outright.
+// ---------------------------------------------------------------------------
+const TROUBLE = [
+  {
+    id: 'gamble1', chain: 'gambling', step: 1, weight: 8,
+    when: (p) => p.year >= 1,
+    title: 'A question from home',
+    text: (p) => `A friend from home asks how the ankle really feels. Not concerned — specific. He asks twice.`,
+    options: [
+      { label: 'Tell him the truth', run: (p, rng) => { p.gamblingStep = 1; return { kind: 'note', text: 'You told him. It felt like nothing at the time.' }; } },
+      { label: 'Say you are fine', run: () => ({ kind: 'note', text: 'You said you were fine and changed the subject.' }) },
+      { label: 'Ask why he wants to know', run: (p) => { moveRep(p, { teammates: 2 }); return { kind: 'good', text: 'You asked why. He laughed it off and did not ask again.' }; } },
+    ],
+  },
+  {
+    id: 'gamble2', chain: 'gambling', step: 2, weight: 9,
+    when: (p) => p.gamblingStep >= 1,
+    title: 'An offer',
+    text: () => 'Somebody offers you $50,000 for advance word on whether you are playing tomorrow. Just that. Nothing about the game itself.',
+    options: [
+      { label: 'Take the money', run: (p, rng) => { p.gamblingStep = 2; p.earnings += 50_000; return { kind: 'bad', text: 'You took $50,000 for a text message. It was the easiest money you have ever made.' }; } },
+      { label: 'Refuse', run: (p) => { p.gamblingStep = 0; moveRep(p, { leagueOffice: 4 }); return { kind: 'good', text: 'You said no, and you stopped answering that number.' }; } },
+      { label: 'Report it', run: (p) => { p.gamblingStep = 0; moveRep(p, { leagueOffice: 15, fans: 4, teammates: -6 }); return { kind: 'good', text: 'You reported it. The league was delighted. The locker room thought it was a lot.' }; } },
+    ],
+  },
+  {
+    id: 'gamble3', chain: 'gambling', step: 3, weight: 10,
+    when: (p) => p.gamblingStep >= 2,
+    title: 'The room upstairs',
+    text: () => 'The private game is in a hotel suite and the buy-in is more than most people earn in a year. Two people in the room you recognise from television.',
+    options: [
+      { label: 'Sit down', run: (p, rng) => {
+        p.gamblingStep = 3;
+        const won = rng.chance(0.42);
+        const amt = Math.round(180_000 * (0.5 + rng.random() * 1.5));
+        p.earnings += won ? amt : -amt;
+        return { kind: won ? 'good' : 'bad', text: won ? `You won ${lgCash(amt)}. You will be back.` : `You lost ${lgCash(amt)} in one night, and you will be back anyway.` };
+      } },
+      { label: 'Go home', run: (p) => { p.gamblingStep = 1; return { kind: 'note', text: 'You went home. Somebody made a joke about it that was not really a joke.' }; } },
+    ],
+  },
+  {
+    id: 'gamble4', chain: 'gambling', step: 4, weight: 12,
+    when: (p) => p.gamblingStep >= 3,
+    title: 'Come out early',
+    text: () => 'You are asked — carefully, by somebody who is not asking — to come out of tomorrow\'s game in the third quarter. There is a number attached and it has six figures in it.',
+    options: [
+      { label: 'Do it', run: (p, rng) => {
+        p.earnings += 400_000;
+        p.gamblingStep = 4;
+        // The end of the line. A real investigation, and a real chance the
+        // career simply stops here.
+        if (rng.chance(0.45)) {
+          p.banned = true;
+          moveRep(p, { leagueOffice: -100, fans: -60, media: -50, frontOffice: -70 });
+          return { kind: 'bad', text: 'You came out early. Eleven months later the league banned you for life. That is the whole story now.' };
+        }
+        moveRep(p, { leagueOffice: -25 });
+        return { kind: 'bad', text: 'You came out early and took the money. Nobody has said anything yet. Yet.' };
+      } },
+      { label: 'Refuse and say nothing', run: (p) => { p.gamblingStep = 2; return { kind: 'note', text: 'You refused. You also did not tell anybody, which you will think about later.' }; } },
+      { label: 'Report the whole thing', run: (p, rng) => {
+        p.gamblingStep = 0;
+        const exposed = rng.chance(0.5);
+        moveRep(p, { leagueOffice: 20, media: exposed ? -10 : 5, fans: exposed ? -8 : 6 });
+        return { kind: exposed ? 'bad' : 'good', text: exposed
+          ? 'You reported it, and the investigation found what you had already taken. It was survivable. Barely.'
+          : 'You reported it and cooperated fully. The league remembered.' };
+      } },
+    ],
+  },
+  {
+    id: 'techs', weight: 8,
+    when: (p) => (p.techs || 0) >= 12,
+    title: 'Sixteen',
+    text: (p) => `That is your sixteenth technical foul. One more game suspension, and another every two after it.`,
+    options: [
+      { label: 'Rein it in', run: (p) => { p.techs = 8; moveRep(p, { leagueOffice: 6, media: -2 }); return { kind: 'note', text: 'You stopped arguing. It cost you something on the floor and you know it.' }; } },
+      { label: 'This is who I am', run: (p) => { moveRep(p, { fans: 6, leagueOffice: -10 }); return { kind: 'bad', text: 'You did not change a thing. The fines became a line item.' }; } },
+    ],
+  },
+  {
+    id: 'supplement', weight: 6,
+    when: (p) => p.year >= 2,
+    title: 'The supplement',
+    text: () => 'Your trainer swears it is clean. It is not on any list he has seen. He has been right about everything else.',
+    options: [
+      { label: 'Take it', run: (p, rng) => {
+        if (rng.chance(0.18)) {
+          p.suspendedGames = 25;
+          moveRep(p, { leagueOffice: -30, media: -18, fans: -12 });
+          return { kind: 'bad', text: 'Twenty-five games. The appeal went nowhere and the word follows you for the rest of it.' };
+        }
+        p.morale = clamp(p.morale + 8, 0, 100);
+        return { kind: 'good', text: 'You felt better than you have in two years, and nothing ever came of it.' };
+      } },
+      { label: 'Have it tested first', run: (p) => { moveRep(p, { leagueOffice: 3 }); return { kind: 'note', text: 'You had it tested. It came back clean and you had already missed the window.' }; } },
+      { label: 'Do not touch it', run: () => ({ kind: 'note', text: 'You left it in the box.' }) },
+    ],
+  },
+  {
+    id: 'legal', weight: 6,
+    when: (p) => p.year >= 1 && (p.rep?.leagueOffice ?? 60) < 70,
+    title: 'Three in the morning',
+    text: () => 'You are stopped on the way home from somewhere you should have left three hours earlier.',
+    options: [
+      { label: 'Cooperate completely', run: (p, rng) => {
+        const charged = rng.chance(0.35);
+        moveRep(p, { fans: charged ? -14 : -4, media: charged ? -12 : -3, leagueOffice: charged ? -18 : -5, frontOffice: charged ? -12 : -3 });
+        if (charged) p.lostEndorsement = true;
+        return { kind: 'bad', text: charged
+          ? 'Charged. Two sponsors terminated inside a week and the league is deciding what to do.'
+          : 'No charges. It still ran everywhere for a day and a half.' };
+      } },
+      { label: 'Say nothing without a lawyer', run: (p, rng) => {
+        moveRep(p, { fans: -8, media: -10, leagueOffice: -4 });
+        return { kind: 'note', text: 'You said nothing. It looked worse and cost you less.' };
+      } },
+    ],
+  },
+  {
+    id: 'holdout', weight: 5,
+    when: (p) => p.contractLeft >= 1 && p.rating >= 76 && (p.rep?.frontOffice ?? 50) < 60,
+    title: 'Camp starts Monday',
+    text: () => 'Your agent thinks the deal you are on is two years and thirty million light. He thinks you should not get on the plane.',
+    options: [
+      { label: 'Hold out', run: (p, rng) => {
+        const worked = rng.chance(0.4);
+        moveRep(p, { frontOffice: worked ? -6 : -20, teammates: -10, fans: -8 });
+        if (worked) { p.contract.salary = Math.round(p.contract.salary * 1.35); return { kind: 'good', text: 'Eleven days of fines and they reworked it. Your agent was right.' }; }
+        p.earnings -= 900_000;
+        return { kind: 'bad', text: 'You missed camp, paid the fines, and signed the same deal you already had.' };
+      } },
+      { label: 'Report to camp', run: (p) => { moveRep(p, { frontOffice: 8, teammates: 6 }); return { kind: 'note', text: 'You turned up. The building noticed that too.' }; } },
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Media
+// ---------------------------------------------------------------------------
+const MEDIA_ACTIONS = [
+  {
+    id: 'presser', name: 'Postgame presser', blurb: 'Cameras, and a question you do not like.', cost: 0,
+    options: [
+      { label: 'Take the blame', rep: { teammates: 8, media: 5, fans: 2 }, text: 'You took it all yourself. The room went quiet.' },
+      { label: 'Credit your teammates', rep: { teammates: 6, fans: 3 }, text: 'You gave it all to them and meant it.' },
+      { label: 'Call out the coach', rep: { fans: 6, media: 9, frontOffice: -14, teammates: -4 }, text: 'You said it on camera. It led every show for two days.' },
+      { label: 'Blame the officiating', rep: { fans: 4, leagueOffice: -12, media: -3 }, text: 'A $35,000 fine arrived before you got home.', fine: 35_000 },
+      { label: 'One-word answers', rep: { media: -8, fans: -2 }, text: 'You gave them nothing. They wrote about that instead.' },
+    ],
+  },
+  {
+    id: 'social', name: 'Post something', blurb: 'You have the app open and a thought.', cost: 0,
+    options: [
+      { label: 'A cryptic emoji', rep: { fans: 5, media: 6, frontOffice: -3 }, text: 'Four hundred thousand people decided what it meant by lunchtime.' },
+      { label: 'Subtweet a teammate', rep: { fans: 3, media: 8, teammates: -16 }, text: 'Everyone knew who it was about, including him.' },
+      { label: 'Unfollow the team account', rep: { fans: 7, media: 12, frontOffice: -16 }, text: 'A beat writer noticed within nine minutes.' },
+      { label: 'Like a post about a rival team', rep: { media: 10, fans: 2, frontOffice: -9 }, text: 'The classic. You claimed it was an accident. Nobody believed you.' },
+      { label: 'Post nothing at all', rep: {}, text: 'You closed the app. Nothing happened, which was the idea.' },
+    ],
+  },
+  {
+    id: 'podcast', name: 'Start a podcast', blurb: 'Your own show, your own words.', cost: 60_000, once: true,
+    options: [
+      { label: 'Talk basketball', rep: { fans: 8, media: 7 }, text: 'It is good. People listen.', income: 900_000 },
+      { label: 'Say the quiet part', rep: { fans: 14, media: 16, frontOffice: -18, leagueOffice: -6 }, text: 'You said something you cannot take back and the numbers tripled.', income: 2_400_000 },
+    ],
+  },
+  {
+    id: 'debate', name: 'Go on the debate show', blurb: 'They want you to say something.', cost: 0,
+    options: [
+      { label: 'Give them the quote', rep: { fans: 7, media: 11, teammates: -5, frontOffice: -6 }, text: 'They ran the clip for a week.' },
+      { label: 'Be diplomatic', rep: { media: -4, frontOffice: 4 }, text: 'You said nothing memorable, which was the whole plan.' },
+    ],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// The living league
+// ---------------------------------------------------------------------------
+function makeRival(pro, rng = defaultRng) {
+  return {
+    name: randomName(rng),
+    team: randomTeam(rng),
+    // Drafted alongside you, and his career runs parallel to yours forever.
+    rating: clamp(Math.round((pro.rating || 65) + rng.gauss(2, 4)), 45, 92),
+    awards: { allStars: 0, mvps: 0, rings: 0 },
+  };
+}
+
+function stepRival(rival, pro, rng = defaultRng) {
+  const peak = 27;
+  rival.rating = clamp(
+    rival.rating + (pro.age < peak ? rng.gauss(1.6, 1.2) : rng.gauss(-1.4, 1.1)),
+    35, 99,
+  );
+  const lines = [];
+  if (rival.rating >= 78 && rng.chance(0.45)) { rival.awards.allStars++; lines.push(`${rival.name} made another All-Star team.`); }
+  if (rival.rating >= 88 && rng.chance(0.12)) { rival.awards.mvps++; lines.push(`${rival.name} won MVP.`); }
+  if (rng.chance(0.06)) { rival.awards.rings++; lines.push(`${rival.name} won a championship. You watched it.`); }
+  return lines;
+}
+
+const NEWS = [
+  (rng) => `${randomTeam(rng)} fire their head coach after a 4-14 start.`,
+  (rng) => `${randomName(rng)} requests a trade from the ${randomTeam(rng)}.`,
+  (rng) => `${randomTeam(rng)} and ${randomTeam(rng)} complete a three-team deal nobody understands.`,
+  (rng) => `${randomName(rng)} tears an achilles. He is 29.`,
+  (rng) => `The ${randomTeam(rng)} are over the second apron and cannot add a player.`,
+  (rng) => `${randomName(rng)} signs the largest deal in league history.`,
+  (rng) => `${randomTeam(rng)} announce a new arena and a relocation study.`,
+  (rng) => `${randomName(rng)} is suspended 25 games under the substance policy.`,
+  (rng) => `${randomName(rng)} retires at 34 after twelve seasons.`,
+  (rng) => `A ${randomTeam(rng)} assistant is hired away as a head coach.`,
+  (rng) => `${randomName(rng)} drops 61 and the league cannot stop talking about it.`,
+  (rng) => `The ${randomTeam(rng)} owner sells to a group nobody has heard of.`,
+  (rng) => `${randomName(rng)} is fined for public criticism of the officiating.`,
+  (rng) => `Expansion talks are reported. Two cities are named and neither is yours.`,
+  (rng) => `${randomTeam(rng)} win 19 in a row and everybody has an opinion about why.`,
+];
+
+const leagueNews = (rng, n = 3) =>
+  rng.shuffle(NEWS).slice(0, n).map((f) => f(rng));
+
+// ---------------------------------------------------------------------------
+// After it ends
+// ---------------------------------------------------------------------------
+const POST_CAREER = [
+  { id: 'analyst', name: 'Television analyst', pay: 2_200_000,
+    need: (p) => (p.rep?.media ?? 50) >= 55, blurb: 'They liked you on camera and they are still paying for it.' },
+  { id: 'assistant', name: 'Assistant coach', pay: 900_000,
+    need: (p) => (p.rep?.teammates ?? 50) >= 55, blurb: 'Four in the morning, film, and a whistle.' },
+  { id: 'frontoffice', name: 'Front office', pay: 1_400_000,
+    need: (p) => (p.rep?.frontOffice ?? 50) >= 60, blurb: 'The other side of the table, finally.' },
+  { id: 'agent', name: 'Become an agent', pay: 1_800_000,
+    need: (p) => (p.rep?.frontOffice ?? 50) >= 45, blurb: 'You know exactly how this works now.' },
+  { id: 'owner', name: 'Buy into a team', pay: 4_500_000,
+    need: (p) => p.earnings >= 120e6, blurb: 'A minority stake and a seat nobody can take.' },
+  { id: 'aau', name: 'Run an AAU programme', pay: 220_000,
+    need: () => true, blurb: 'Back where it started, on the other side of it.' },
+  { id: 'podcast', name: 'Podcast full time', pay: 1_100_000,
+    need: (p) => (p.rep?.fans ?? 50) >= 55, blurb: 'Three hours a week and nobody to answer to.' },
+  { id: 'nothing', name: 'Nothing at all', pay: 0,
+    need: () => true, blurb: 'You have enough. You have earned the quiet.' },
+];
+
+const postCareerFor = (pro) => POST_CAREER.filter((p) => p.need(pro));
+
+// The offseason, month by month. Same code pattern as one screen, six times the
+// content — which is the cheapest depth in the whole document.
+const CALENDAR = [
+  { id: 'exit', month: 'April', label: 'Exit interview', blurb: 'The coach asks how you think it went.' },
+  { id: 'draft', month: 'June', label: 'Draft night', blurb: 'Your team picks somebody who plays where you play.' },
+  { id: 'fa', month: 'July 1', label: 'Free agency opens', blurb: 'Phones start at midnight.' },
+  { id: 'summer', month: 'July', label: 'Summer', blurb: 'Recruiting, summer league, the player movement feed.' },
+  { id: 'training', month: 'August', label: 'Training block', blurb: 'The work that decides next season.' },
+  { id: 'mediaday', month: 'September', label: 'Media day', blurb: 'Cameras, and the extension window.' },
+];
+
 /* ===== src/pro.js ===== */
 // THE LEAGUE — the pro career, one season at a time.
 //
@@ -4026,6 +4456,7 @@ function simulateCareer(b, rng = defaultRng) {
 // everything around a season: a draft night with a board, contracts that run
 // out, free agency, trades, a team that is good or bad at basketball
 // independently of you, and the decision to walk away.
+
 
 
 
@@ -4204,7 +4635,26 @@ function newPro(build, life, draft, rng = defaultRng) {
     lastMinutes: 14,
     leaps: 0,
     morale: 60,
-    fanLove: draft.drafted && draft.pick <= 14 ? 62 : 48,
+    // Reputation is five meters, not one. The same action reads completely
+    // differently to the people who sign your cheques and the people who buy
+    // your shoes, and that split is most of the perceived depth.
+    rep: (() => {
+      const r = newRep(rng);
+      if (draft.drafted && draft.pick <= 14) { r.fans += 12; r.media += 8; }
+      return r;
+    })(),
+    rival: null,
+    news: [],
+    gamblingStep: 0,
+    techs: 0,
+    purchases: [],
+    investments: [],
+    advisor: null,
+    burn: 0,
+    netWorth: 0,
+    banned: false,
+    suspendedGames: 0,
+    firstCheck: null,
 
     seasons: [],
     awards: { allStars: 0, allLeague: 0, mvps: 0, rings: 0, roty: 0, dpoy: 0 },
@@ -4218,6 +4668,7 @@ function newPro(build, life, draft, rng = defaultRng) {
     gameForm: 0,
     games: [],
     doneThisYear: [],
+    doneMedia: [],
     // How you intend to handle your body this season. This is the decision the
     // 65-game rule exists to make expensive: managing the load protects the
     // knee and can drop you under the award threshold, which costs you the
@@ -4247,7 +4698,19 @@ const LOAD_POLICIES = {
 // ---------------------------------------------------------------------------
 // One season
 // ---------------------------------------------------------------------------
+function resolveTrouble(pro, id, optionIndex, rng = defaultRng) {
+  const t = TROUBLE.find((x) => x.id === id);
+  pro.trouble = null;
+  const opt = t?.options[optionIndex];
+  if (!opt) return null;
+  return opt.run(pro, rng) || { kind: 'note', text: opt.label };
+}
+
 function playSeason(pro, rng = defaultRng) {
+  // A retired player has career totals that have already been averaged out and
+  // written down. Playing one more season past that quietly makes the summary
+  // disagree with the seasons above it.
+  if (pro.retired) return null;
   const b = pro.build;
   const eff = pro.eff;
   const we = b.mentals.workEthic;
@@ -4283,6 +4746,10 @@ function playSeason(pro, rng = defaultRng) {
   const rating = pro.rating;
   let minutes = clamp((rating - 54) * 1.35 + (b.physicals.stamina - 50) * 0.09, 0, 38);
 
+  // A suspension eats games before anything else does, which is exactly how it
+  // costs you the 65-game threshold.
+  const suspended = pro.suspendedGames || 0;
+  pro.suspendedGames = 0;
   const policy = LOAD_POLICIES[pro.loadPolicy] || LOAD_POLICIES.balanced;
   // Load policy scales the injury multiplier the roll already takes, rather
   // than rolling twice and keeping the second — which is what the first pass
@@ -4290,7 +4757,8 @@ function playSeason(pro, rng = defaultRng) {
   const injury = injuryRoll(b, pro, minutes, { ...eff, injury: eff.injury * policy.risk }, rng);
   // Games missed to rest, before any injury. This is what can put you under 65
   // without a single thing going wrong.
-  let games = Math.round(82 * policy.games);
+  let games = Math.round(82 * policy.games) - suspended;
+  if (suspended) out.push({ kind: 'bad', text: `Suspended ${suspended} games.` });
   let seasonEnding = false;
   if (injury) {
     seasonEnding = injury.games >= 40;
@@ -4409,8 +4877,44 @@ function playSeason(pro, rng = defaultRng) {
 
   // Morale, fan love, and the roster drifting around you.
   pro.morale = clamp(pro.morale + (playoffs ? 6 : -4) + (minutes > 24 ? 5 : -6) + (ring ? 15 : 0), 0, 100);
-  pro.fanLove = clamp(pro.fanLove + (allStar ? 9 : 0) + (ring ? 12 : 0) + (minutes > 26 ? 3 : -3), 0, 100);
+  moveRep(pro, {
+    fans: (allStar ? 9 : 0) + (ring ? 12 : 0) + (minutes > 26 ? 3 : -3),
+    media: (allStar ? 6 : 0) + (mvp ? 12 : 0) - (games < GAMES_THRESHOLD ? 5 : 0),
+    frontOffice: (playoffs ? 4 : -2) + (games >= GAMES_THRESHOLD ? 3 : -6),
+    teammates: (ring ? 8 : 0) + (minutes > 30 && !playoffs ? -3 : 1),
+    leagueOffice: 2,
+  });
   pro.teamStrength = clamp(pro.teamStrength + rng.gauss(0, 6) + (playoffs ? 1 : 3), 15, 78);
+
+  // Technicals accumulate and eventually become a suspension, which is the
+  // cheapest recognisable mechanic in the game.
+  pro.techs = (pro.techs || 0) + Math.max(0, Math.round(rng.gauss((b.mentality - 45) / 9, 2.5)));
+  if (pro.techs >= 16) {
+    const extra = 1 + Math.floor((pro.techs - 16) / 2);
+    pro.suspendedGames += extra;
+    out.push({ kind: 'bad', text: `${pro.techs} technicals — ${extra} game${extra > 1 ? 's' : ''} suspended next season.` });
+    pro.techs = 0;
+  }
+
+  // Money out. The first cheque is shown in full because almost nobody models
+  // what is actually left, and it is a genuinely memorable moment.
+  const cheque = paycheck(pro, pro.contract.salary);
+  if (!pro.firstCheck) pro.firstCheck = cheque;
+  pro.netWorth += cheque.net;
+  const upkeep = pro.purchases.reduce((a, x) => a + x.upkeep, 0) + (pro.entourage || 0) * 400_000;
+  pro.burn = upkeep;
+  pro.netWorth -= upkeep;
+  if (upkeep > cheque.net && cheque.net > 0) {
+    out.push({ kind: 'bad', text: `You spent ${proMoney(upkeep)} keeping things running and took home ${proMoney(cheque.net)}.` });
+  }
+  if (pro.netWorth < 0) {
+    out.push({ kind: 'bad', text: 'You are underwater. The advisor is not returning calls.' });
+  }
+
+  // The world moves without you.
+  if (!pro.rival) pro.rival = makeRival(pro, rng);
+  for (const line of stepRival(pro.rival, pro, rng)) out.push({ kind: 'note', text: line });
+  pro.news = leagueNews(rng, 3);
 
   pro.lastMinutes = minutes;
   pro.age++;
@@ -4421,7 +4925,19 @@ function playSeason(pro, rng = defaultRng) {
   pro.doneThisYear = [];
 
   // What happens next: retire, negotiate, or hit the market.
-  const done = pro.rating < REPLACEMENT_FLOOR || pro.age > 40;
+  // Trouble, if any is eligible. Escalating chains take priority over one-offs
+  // because a chain that stalls is not a chain.
+  const seen = pro.seenTrouble || (pro.seenTrouble = []);
+  const pool = TROUBLE.filter((t) => !seen.includes(t.id) && t.when(pro));
+  if (pool.length && rng.chance(0.45)) {
+    const chained = pool.filter((t) => t.chain);
+    const t = (chained.length ? chained : pool).sort((a, b) => b.weight - a.weight)[0];
+    seen.push(t.id);
+    pro.trouble = { id: t.id, title: t.title, text: t.text(pro), options: t.options.map((o) => o.label) };
+  }
+
+  const done = pro.banned || pro.rating < REPLACEMENT_FLOOR || pro.age > 40;
+  if (pro.banned) out.push({ kind: 'bad', text: 'Banned from the league. That is the end of it.' });
   if (done) pro.pending = 'retire';
   else if (pro.contractLeft <= 0) pro.pending = 'freeagency';
   else if (rng.chance(0.08 * eff.tradeFreq)) pro.pending = 'trade';
@@ -4487,7 +5003,7 @@ function freeAgencyOffers(pro, rng = defaultRng) {
 
   // Your own team, if they want you. They pay a little over the odds for
   // somebody the building already knows.
-  if (pro.fanLove > 35 || pro.rating >= 70) {
+  if (pro.rep.fans > 35 || pro.rating >= 70) {
     offers.push({
       team: pro.team, stay: true,
       // Only your own team can offer the top tier at seven-to-nine years, and
@@ -4533,7 +5049,7 @@ function signWith(pro, offer) {
   pro.contract = { years: offer.years, salary: offer.salary, type: 'Free agency' };
   pro.contractLeft = offer.years;
   pro.pending = null;
-  if (moved) { pro.fanLove = 50; pro.morale = clamp(pro.morale + 4, 0, 100); }
+  if (moved) { moveRep(pro, { fans: 50 - pro.rep.fans }); pro.morale = clamp(pro.morale + 4, 0, 100); }
   return pro;
 }
 
@@ -4543,7 +5059,7 @@ function acceptTrade(pro, rng = defaultRng) {
   while (t === pro.team && guard++ < 8) t = randomTeam(rng);
   pro.team = t;
   pro.teamStrength = clamp(Math.round(rng.gauss(48, 13)), 15, 78);
-  pro.fanLove = 48;
+  moveRep(pro, { fans: 48 - pro.rep.fans });
   pro.morale = clamp(pro.morale - 8, 0, 100);
   pro.pending = null;
   return pro;
@@ -4650,9 +5166,9 @@ const PRO_ACTIONS = [
   {
     id: 'endorse', name: 'Sign an endorsement', blurb: 'A shoe, a drink, a car dealership.',
     cost: 0,
-    show: (p) => p.fanLove > 45,
+    show: (p) => p.rep.fans > 45,
     run: (p, rng) => {
-      const deal = Math.round((p.fanLove / 100) ** 2 * 26e6 * (0.5 + rng.random()) + 120_000);
+      const deal = Math.round((p.rep.fans / 100) ** 2 * 26e6 * (0.5 + rng.random()) + 120_000);
       p.earnings += deal;
       p.endorsements = (p.endorsements || 0) + deal;
       return { kind: 'good', text: `Endorsement signed — ${proMoney(deal)}.` };
@@ -4662,7 +5178,7 @@ const PRO_ACTIONS = [
     id: 'community', name: 'Put your name on something', blurb: 'A gym, a scholarship, a foundation.',
     cost: 400_000,
     run: (p) => {
-      p.fanLove = clamp(p.fanLove + 11, 0, 100);
+      moveRep(p, { fans: 11 });
       p.morale = clamp(p.morale + 5, 0, 100);
       return { kind: 'good', text: 'Opened a gym in the neighbourhood you came from.' };
     },
@@ -4672,15 +5188,112 @@ const PRO_ACTIONS = [
     cost: 0,
     show: (p) => p.teamStrength < 42 && p.rating > 70,
     run: (p, rng) => {
-      p.fanLove = clamp(p.fanLove - 18, 0, 100);
+      moveRep(p, { fans: -18, frontOffice: -14 });
       p.pending = 'trade';
       return { kind: 'bad', text: 'You asked out. It leaked within the hour.' };
     },
   },
 ];
 
+// Money out, media, and the things that keep costing. Generated rather than
+// listed so the catalogue grows with the tables in league.js.
+const spendActions = () => [
+  ...PURCHASES.map((x) => ({
+    id: `buy:${x.id}`, name: `Buy: ${x.name}`,
+    blurb: `${x.blurb} Upkeep ${proMoney(x.upkeep)} a year.`,
+    cost: x.price,
+    show: (p) => !p.purchases.some((q) => q.id === x.id),
+    run: (p) => {
+      p.purchases.push({ id: x.id, name: x.name, upkeep: x.upkeep });
+      moveRep(p, { fans: x.fans || 0 });
+      if (x.joy) p.morale = clamp(p.morale + x.joy, 0, 100);
+      return { kind: 'good', text: `Bought ${x.name.toLowerCase()}. ${proMoney(x.upkeep)} a year to keep.` };
+    },
+  })),
+  ...INVESTMENTS.map((x) => ({
+    id: `inv:${x.id}`, name: `Invest: ${x.name}`,
+    blurb: `${x.blurb} ${proMoney(x.price)} in.`,
+    cost: x.price,
+    show: (p) => !p.investments.some((q) => q.id === x.id),
+    run: (p, rng) => {
+      const q = p.advisor?.quality ?? 0.85;
+      const mult = Math.max(0, rng.gauss(x.mean * q, x.sd));
+      const back = Math.round(x.price * mult);
+      p.investments.push({ id: x.id, name: x.name, put: x.price, got: back });
+      p.earnings += back;
+      return {
+        kind: back > x.price ? 'good' : 'bad',
+        text: `${x.name}: put in ${proMoney(x.price)}, it came back ${proMoney(back)}.`,
+      };
+    },
+  })),
+  ...ADVISORS.map((x) => ({
+    id: `adv:${x.id}`, name: `Advisor: ${x.name}`,
+    blurb: `${x.blurb} ${x.fee ? `${proMoney(x.fee)} a year.` : ''}`,
+    cost: x.fee,
+    show: (p) => p.advisor?.id !== x.id,
+    run: (p, rng) => {
+      p.advisor = x;
+      // The cheap one has a real chance of being a fraud. This is ruthless and
+      // it is completely true to life.
+      if (rng.chance(x.fraud)) {
+        const lost = Math.round(p.earnings * 0.6);
+        p.earnings -= lost;
+        p.netWorth -= lost;
+        p.advisor = null;
+        return { kind: 'bad', text: `${x.name} was not who he said he was. ${proMoney(lost)} is gone and it is not coming back.` };
+      }
+      return { kind: 'good', text: `Signed with ${x.name.toLowerCase()}.` };
+    },
+  })),
+  {
+    id: 'entourage', name: 'Put friends on payroll',
+    blurb: 'People from home, on salary. $400,000 each a year.',
+    cost: 0,
+    show: (p) => (p.entourage || 0) < 4,
+    run: (p) => {
+      p.entourage = (p.entourage || 0) + 1;
+      p.morale = clamp(p.morale + 7, 0, 100);
+      return { kind: 'note', text: `Put another one on the payroll. Burn is now ${proMoney((p.entourage) * 400_000)} a year.` };
+    },
+  },
+  {
+    id: 'cutloose', name: 'Cut the payroll',
+    blurb: 'The conversation nobody wants to have.',
+    cost: 0,
+    show: (p) => (p.entourage || 0) > 0,
+    run: (p) => {
+      p.entourage -= 1;
+      p.morale = clamp(p.morale - 9, 0, 100);
+      return { kind: 'bad', text: 'You had the conversation. It did not go well and you saved $400,000.' };
+    },
+  },
+  ...MEDIA_ACTIONS.map((m) => ({
+    id: `media:${m.id}`, name: m.name, blurb: m.blurb, cost: m.cost || 0,
+    media: m,
+    show: (p) => !(m.once && p.doneMedia.includes(m.id)),
+    run: () => null, // handled through the media sheet, which asks what you say
+  })),
+];
+
 const proActions = (pro) =>
-  PRO_ACTIONS.filter((a) => !pro.doneThisYear.includes(a.id) && (!a.show || a.show(pro)));
+  [...PRO_ACTIONS, ...spendActions()].filter(
+    (a) => !pro.doneThisYear.includes(a.id) && (!a.show || a.show(pro)),
+  );
+
+// Saying something is a two-step: pick the appearance, then pick what you say.
+function resolveMedia(pro, mediaId, optionIndex, rng = defaultRng) {
+  const m = MEDIA_ACTIONS.find((x) => x.id === mediaId);
+  const opt = m?.options[optionIndex];
+  if (!opt) return null;
+  moveRep(pro, opt.rep || {});
+  if (opt.fine) pro.earnings -= opt.fine;
+  if (opt.income) pro.earnings += opt.income;
+  if (m.once) pro.doneMedia.push(m.id);
+  pro.doneThisYear.push(`media:${m.id}`);
+  const rl = repLine(opt.rep || {});
+  return { kind: 'note', text: `${opt.text}${rl ? ` (${rl})` : ''}` };
+}
 
 function doProAction(pro, a, rng = defaultRng) {
   if ((a.cost || 0) > pro.earnings) return null;
@@ -5887,11 +6500,14 @@ function barsHtml() {
   const L = S.life;
   if (S.pro) {
     const P = S.pro;
+    // Reputation is five separate audiences. One number told you nothing —
+    // whether the front office likes you and whether the fans do are different
+    // questions with different consequences.
+    const COLS = { fans: 'var(--hype)', teammates: 'var(--chem)', frontOffice: 'var(--accent)',
+      media: 'var(--warn)', leagueOffice: 'var(--rep)' };
     const rows = [
-      [Math.round(P.morale), 'Morale', 'var(--happy)'],
       [clamp(Math.round(100 - P.injuryHistory * 22), 0, 100), 'Body', 'var(--health)'],
-      [Math.round(P.fanLove), 'Fan love', 'var(--rep)'],
-      [clamp(Math.round((P.rating / 99) * 100), 0, 100), 'Rating', 'var(--smarts)'],
+      ...REP_METERS.map(([k, label]) => [Math.round(P.rep?.[k] ?? 50), label, COLS[k]]),
     ];
     return rows.map(([v, label, col]) => `<div class="row ${v < 25 ? 'low' : ''} ${v >= 88 ? 'full' : ''}">
       <div class="k">${label}</div>
@@ -6094,20 +6710,33 @@ function drawSheet() {
     const acts = proActions(S.pro);
     S.sheetActions = acts;
     title.textContent = 'Offseason';
-    hint.textContent = 'Four months. Money is the constraint now, not time.';
-    body.innerHTML = acts.length
-      ? acts.map((a, i) => {
-          const broke = (a.cost || 0) > S.pro.earnings;
-          return `<button class="opt" data-pro="${i}" type="button" ${broke ? 'disabled' : ''}>
-            <span><span class="t">${esc(a.name)}</span><span class="d">${esc(a.blurb)}</span>
-            <span class="tags">${a.cost ? `<span class="tag spend">${proMoney(a.cost)}</span>` : '<span class="tag gain">free</span>'}
-            ${broke ? '<span class="tag no">Cannot afford it</span>' : ''}</span></span>
-            <span class="go">&rsaquo;</span></button>`;
-        }).join('')
-      : '<p class="note">Nothing left to do but play.</p>';
+    hint.textContent = 'April to September. Money is the constraint now, not time.';
+    const P = S.pro;
+    const row = (a, i) => {
+      const broke = (a.cost || 0) > P.earnings;
+      return `<button class="opt" data-pro="${i}" type="button" ${broke ? 'disabled' : ''}>
+        <span><span class="t">${esc(a.name)}</span><span class="d">${esc(a.blurb)}</span>
+        <span class="tags">${a.cost ? `<span class="tag spend">${proMoney(a.cost)}</span>` : '<span class="tag gain">free</span>'}
+        ${broke ? '<span class="tag no">Cannot afford it</span>' : ''}</span></span>
+        <span class="go">&rsaquo;</span></button>`;
+    };
+    // The offseason reads as a calendar rather than one long list: same actions,
+    // sorted into the month they would actually happen in.
+    // Months with nothing to decide still appear: draft night and the opening
+    // of free agency happen to you whether or not you have a button for them,
+    // and leaving them out would make the summer look like a list again.
+    const months = CALENDAR.map((m) => {
+      const rows = acts.map((a, i) => [a, i]).filter(([a]) => monthFor(a) === m.id);
+      return `<div class="month${rows.length ? '' : ' quiet'}"><h4>${m.month} &middot; ${esc(m.label)}</h4>
+        <p class="note">${esc(m.blurb)}</p>
+        ${rows.map(([a, i]) => row(a, i)).join('')}</div>`;
+    }).join('');
+    body.innerHTML = acts.length ? months : '<p class="note">Nothing left to do but play.</p>';
     for (const el of body.querySelectorAll('[data-pro]')) {
       el.onclick = () => {
-        doProAction(S.pro, S.sheetActions[Number(el.dataset.pro)], defaultRng);
+        const a = S.sheetActions[Number(el.dataset.pro)];
+        if (a.media) { openMedia(a.media); return; }
+        doProAction(S.pro, a, defaultRng);
         render(true);
         drawSheet();
       };
@@ -6137,6 +6766,18 @@ function drawSheet() {
       : (focusEntry ? '' : '<p class="note">Nothing here for you right now. That changes as your situation does.</p>'));
   }
   wireSheet();
+}
+
+// Which month of the offseason an action belongs to. Derived from the id so
+// the catalogue in pro.js stays a catalogue and does not have to know about
+// the calendar at all.
+function monthFor(a) {
+  const id = a.id;
+  if (id === 'trade demand') return 'exit';
+  if (id.startsWith('load:') || id.startsWith('media:')) return 'mediaday';
+  if (id.startsWith('buy:') || id.startsWith('inv:') || id.startsWith('adv:')) return 'summer';
+  if (id === 'entourage' || id === 'cutloose' || id === 'endorse' || id === 'community') return 'summer';
+  return 'training';
 }
 
 function wireSheet() {
@@ -6214,7 +6855,51 @@ function finishSeason() {
   P.log = [];
   closeSheet();
   render(true);
-  if (P.pending) openProDecision();
+  afterSeason();
+}
+
+// Everything the game wants to show you between seasons, in the order it has
+// to happen: the money first, because the first one only lands once.
+function afterSeason() {
+  const P = S.pro;
+  if (P.firstCheck && !P.firstCheckSeen) { openPaycheck(); return; }
+  if (P.trouble || P.pending) openProDecision();
+}
+
+// The first cheque. Nobody is ever ready for the difference between the number
+// on the contract and the number in the account, and the city you signed in is
+// a visible line in it.
+function openPaycheck() {
+  const P = S.pro;
+  const c = P.firstCheck;
+  S.sheet = { kind: 'paycheck' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'Your first cheque';
+  $('sheetHint').textContent = `${P.team} — one year of it.`;
+  $('sheetBody').innerHTML = `
+    <div class="attrs">
+      ${c.rows.map(([k, v]) => {
+        const n = Math.round(v);
+        return `<div class="attr"><span class="k">${esc(k)}</span>
+        <span class="v" style="color:${n < 0 ? 'var(--bad)' : n > 0 ? 'var(--good)' : 'var(--muted)'}">${
+          n < 0 ? `−${proMoney(-n)}` : n > 0 ? proMoney(n) : '—'}</span></div>`;
+      }).join('')}
+      <div class="attr"><span class="k"><b>What you actually keep</b></span>
+        <span class="v"><b>${proMoney(c.net)}</b></span></div>
+    </div>
+    <p class="note">${(c.rate * 100).toFixed(0)}% of it never reaches you. ${
+      stateTaxFor(P.team) > 0
+        ? 'The same contract in a state with no income tax would have left you with more, which is why free agency is never only about the number.'
+        : 'You signed in a state with no income tax, which is worth more than most people realise.'}</p>
+    <button class="btn primary" id="checkOk" type="button">Right</button>`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  $('checkOk').onclick = () => {
+    P.firstCheckSeen = true;
+    closeSheet();
+    render(true);
+    afterSeason();
+  };
 }
 
 // The season resolves once the games are played, so form is already set.
@@ -6422,19 +7107,28 @@ function proHeaderHtml() {
   const a = P.totals.games
     ? `${(P.totals.points / P.totals.games).toFixed(1)}`
     : '—';
+  // Once he is retired the contract and the 65-game counter are meaningless,
+  // and leaving them up made a finished career look like it was still running.
+  const line2 = P.retired
+    ? `<div class="sub"><b style="color:var(--accent)">${esc(P.team)}</b>
+        &middot; ${P.seasons.length} season${P.seasons.length === 1 ? '' : 's'}
+        &middot; ${P.hof ? 'Hall of Fame' : 'retired'}</div>`
+    : `<div class="sub"><b style="color:var(--accent)">${esc(P.team)}</b>
+        &middot; ${proMoney(P.contract.salary)}/yr, ${P.contractLeft} left</div>`;
   return `
     <div>
       <div class="nm">${esc(P.name)}</div>
-      <div class="sub">Age ${P.age} &middot; ${esc(P.pos)} &middot; OVR ${Math.round(P.rating)}
+      <div class="sub">Age ${P.age} &middot; ${esc(P.pos)} &middot; ${
+        P.retired ? `peak OVR ${Math.round(P.peak)}` : `OVR ${Math.round(P.rating)}`}
         &middot; ${P.drafted ? `pick ${P.pick}` : 'undrafted'}</div>
-      <div class="sub"><b style="color:var(--accent)">${esc(P.team)}</b>
-        &middot; ${proMoney(P.contract.salary)}/yr, ${P.contractLeft} left</div>
+      ${line2}
     </div>
     <div class="stack">
-      <div class="cash ppg"><b>${last ? last.ppg.toFixed(1) : a}</b><span>PPG &middot; ${a} career</span></div>
+      <div class="cash ppg"><b>${P.retired ? a : last ? last.ppg.toFixed(1) : a}</b>
+        <span>PPG &middot; ${P.retired ? 'career' : `${a} career`}</span></div>
       <div class="cash"><b>${proMoney(P.earnings)}</b><span>Career earnings</span></div>
     </div>
-    ${gamesBarHtml(P)}`;
+    ${P.retired ? '' : gamesBarHtml(P)}`;
 }
 
 // The 65-game counter, and what it is currently costing you. This is the whole
@@ -6485,7 +7179,28 @@ function proFeedHtml() {
       ? P.log.map((v) => `<div class="line ${v.kind}">${esc(v.text)}</div>`).join('')
       : '<div class="empty">Offseason. Use the buttons below, then play the season.</div>'}
   </article>`;
-  return past + now;
+  return past + leagueHtml() + now;
+}
+
+// The league goes on without you: one player whose career runs alongside yours
+// and gets compared to it forever, and a handful of things that happened
+// somewhere else this week.
+function leagueHtml() {
+  const P = S.pro;
+  if (!P.rival && !P.news?.length) return '';
+  const r = P.rival;
+  const rivalRow = r
+    ? `<div class="box">${esc(r.name)} &middot; ${esc(r.team)} &middot; OVR ${Math.round(r.rating)}
+        &middot; ${r.awards.mvps} MVP, ${r.awards.allStars} All-Star, ${r.awards.rings} ring${
+          r.awards.rings === 1 ? '' : 's'}
+        <b style="color:${r.rating > P.rating ? 'var(--bad)' : 'var(--good)'}">
+          &middot; ${r.rating > P.rating ? 'ahead of you' : 'behind you'}</b></div>`
+    : '';
+  return `<article class="yr">
+    <h3>Around the league${r ? ` <span class="meta">your draft class</span>` : ''}</h3>
+    ${rivalRow}
+    ${(P.news || []).map((t) => `<div class="line note">${esc(t)}</div>`).join('')}
+  </article>`;
 }
 
 function retiredHtml() {
@@ -6504,8 +7219,10 @@ function retiredHtml() {
       ${line('Rookie of the Year', a.roty ? 'Yes' : '—')}
       ${line('Career earnings', proMoney(P.earnings))}
       ${line('Hall of Fame', P.hof ? 'Inducted' : 'Not inducted')}
+      ${P.postCareer ? line('Afterwards', P.postCareer.name) : ''}
     </div>
   </article>
+  ${cardHtml()}
   ${(S.wonBadges || []).length
     ? `<article class="yr"><h3>Unlocked</h3><div class="badges">${S.wonBadges
         .map((x) => `<div class="badge on"><b>${esc(x.name)}</b><span>${esc(x.hint)}</span></div>`).join('')}</div></article>`
@@ -6519,9 +7236,87 @@ function retiredHtml() {
   </article>`;
 }
 
+// One screenshot. Everything a person would want to show somebody else about
+// this career, on a single card, in the order they would read it out.
+function cardHtml() {
+  const P = S.pro;
+  const L = S.life;
+  const a = P.careerAverages;
+  const hw = [
+    P.awards.rings ? `${P.awards.rings}× champion` : null,
+    P.awards.mvps ? `${P.awards.mvps}× MVP` : null,
+    P.awards.allStars ? `${P.awards.allStars}× All-Star` : null,
+    P.awards.allLeague ? `${P.awards.allLeague}× All-League` : null,
+    P.awards.roty ? 'Rookie of the Year' : null,
+    P.hof ? 'Hall of Fame' : null,
+  ].filter(Boolean);
+  const stat = (v, k) => `<div class="cstat"><b>${v}</b><span>${k}</span></div>`;
+  return `<article class="yr card" id="careerCard">
+    <div class="chead">
+      <h3>${esc(L.name)}</h3>
+      <p>${positionFor(P.build.height).short} &middot; ${formatHeight(P.build.height)} &middot; ${
+        S.draft.drafted ? `pick #${S.draft.pick}` : 'undrafted'} &middot; ${P.seasons.length} season${
+        P.seasons.length === 1 ? '' : 's'}</p>
+    </div>
+    <div class="cstats">
+      ${stat(a.ppg, 'PPG')}${stat(a.rpg, 'RPG')}${stat(a.apg, 'APG')}
+      ${stat(Math.round(P.peak), 'PEAK')}${stat(Math.round(P.totals.points).toLocaleString(), 'POINTS')}
+    </div>
+    ${hw.length ? `<div class="hardware">${hw.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+    <p class="cline">${esc(titleFor(P.build).title)} &middot; last stop ${esc(P.team)}${
+      S.verdict ? ` &mdash; ${esc(S.verdict.body.split('. ')[0])}.` : ''}</p>
+    <p class="cfoot">${proMoney(P.earnings)} earned &middot; ${esc(P.postCareer?.name || 'no plans')} &middot; Hoop Life</p>
+  </article>`;
+}
+
+// Trouble. No way out but answering, and the branches are severe on purpose.
+function openTrouble() {
+  const P = S.pro;
+  const t = P.trouble;
+  S.sheet = { kind: 'trouble' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = t.title;
+  $('sheetHint').textContent = '';
+  $('sheetBody').innerHTML = `
+    <p class="choice-text">${esc(t.text)}</p>
+    ${t.options.map((l, i) => `<button class="btn choice" data-tr="${i}" type="button">${esc(l)}</button>`).join('')}`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-tr]')) {
+    el.onclick = () => {
+      const line = resolveTrouble(P, t.id, Number(el.dataset.tr), defaultRng);
+      if (line && P.seasons.length) P.seasons[P.seasons.length - 1].events.push(line);
+      closeSheet();
+      render(true);
+      if (P.pending) openProDecision();
+    };
+  }
+}
+
+// Saying something is two steps: the appearance, then what you actually say.
+function openMedia(m) {
+  S.sheet = { kind: 'media' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = m.name;
+  $('sheetHint').textContent = m.blurb;
+  $('sheetBody').innerHTML = m.options
+    .map((o, i) => `<button class="btn choice" data-md="${i}" type="button">${esc(o.label)}</button>`).join('');
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-md]')) {
+    el.onclick = () => {
+      const line = resolveMedia(S.pro, m.id, Number(el.dataset.md), defaultRng);
+      if (line) S.pro.log.push(line);
+      closeSheet();
+      render(true);
+    };
+  }
+}
+
 // Everything the pro career is waiting on, in one place.
 function openProDecision() {
   const P = S.pro;
+  if (P.trouble) { openTrouble(); return; }
   S.sheet = { kind: 'prodecision' };
   $('sheetBack').classList.add('off');
   $('scrim').classList.remove('hidden');
@@ -6577,6 +7372,35 @@ function openProDecision() {
 
 function endCareer(P) {
   if (P) retire(P);
+  // What you do with the rest of it, and the doors that are open depend on who
+  // you were to people rather than on what you averaged.
+  if (P && P.seasons.length) { openPostCareer(P); return; }
+  finalizeCareer(P);
+}
+
+function openPostCareer(P) {
+  const paths = postCareerFor(P);
+  S.sheet = { kind: 'postcareer' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'The rest of it';
+  $('sheetHint').textContent = 'Some of these were only ever open to the person you were off the floor.';
+  $('sheetBody').innerHTML = paths.map((p, i) => `
+    <button class="opt" data-post="${i}" type="button">
+      <span><span class="t">${esc(p.name)}</span><span class="d">${esc(p.blurb)}</span>
+      <span class="tags">${p.pay ? `<span class="tag gain">${proMoney(p.pay)} a year</span>`
+        : '<span class="tag">no income</span>'}</span></span>
+      <span class="go">&rsaquo;</span></button>`).join('');
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-post]')) {
+    el.onclick = () => {
+      P.postCareer = paths[Number(el.dataset.post)];
+      finalizeCareer(P);
+    };
+  }
+}
+
+function finalizeCareer(P) {
   const b = S.proBuild;
   // The vault and the achievements speak the one-shot engine's shape, so the
   // stepped career is translated into it rather than given a second format.
@@ -6589,10 +7413,24 @@ function endCareer(P) {
     hof: !!P?.hof,
     teams: P ? [P.team] : [],
     rarity: buildRarityTier(b),
-    title: { title: 'Pro', failure: null },
-    careerAverages: P ? { ppg: P.careerAverages.ppg, rpg: P.careerAverages.rpg, apg: P.careerAverages.apg, points: P.totals.points } : { ppg: 0, rpg: 0, apg: 0, points: 0 },
+    title: titleFor(b),
+    traits: traitsFor(b),
+    // The stepped engine does not track these, and the verdict reads them, so
+    // they are filled from what it does track rather than left undefined.
+    overall: S.draft.draftOvr,
+    hype: S.draft.hype ?? S.draft.draftOvr,
+    fit: 0,
+    dependence: 0,
+    bust: !!P && S.draft.drafted && S.draft.pick <= 14 && Math.round(P.peak) < S.draft.draftOvr + 3,
+    peakAge: P ? P.peakAge ?? 27 : 27,
+    seasonsLostToInjury: P ? P.seasons.filter((s) => s.games < 20).length : 0,
+    guaranteedByArchetype: false,
+    careerAverages: P ? { ppg: P.careerAverages.ppg, rpg: P.careerAverages.rpg, apg: P.careerAverages.apg, points: Math.round(P.totals.points) } : { ppg: 0, rpg: 0, apg: 0, points: 0 },
   };
   S.career = asCareer;
+  // Written once, here, so the end-of-career screen always has one. Without it
+  // an undrafted career reached a screen that read a field nobody had set.
+  S.verdict = writeVerdict(asCareer, b, defaultRng);
   S.pro = P || S.pro;
   Progress.record(S.prog, asCareer, b, {
     name: S.life.name, pos: positionFor(b.height).short, height: b.height,
@@ -6765,7 +7603,7 @@ function render(scrollToEnd = false) {
   const age = $('ageBtn');
   const P = S.pro;
   const waiting = P
-    ? !!P.pending || !!P.games?.length
+    ? !!P.pending || !!P.games?.length || (P.retired && !over)
     : !!L.pending || !!L.choices?.length || !!L.games?.length;
   const playing = P ? !!P.games?.length : !!L.games?.length;
   age.classList.toggle('decide', waiting || over);
@@ -6809,6 +7647,10 @@ $('ageBtn').onclick = () => {
   if (S.career) { openNewLife(); return; }
   const P = S.pro;
   if (P) {
+    // Retired but the career is not written up yet: the only thing left is
+    // choosing what comes after. Without this the button plays another season
+    // for a man who has already retired.
+    if (P.retired) { openPostCareer(P); return; }
     if (P.pending) { openProDecision(); return; }
     if (P.games?.length) { openGameDay(); return; }
     P.gameForm = 0;

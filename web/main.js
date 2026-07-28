@@ -1,12 +1,15 @@
 import { SKILLS, SKILL_KEYS, PHYSICALS, MENTALS, MENTAL_KEYS } from '../src/constants.js';
 import { rollCompleteBuild, formatHeight, clamp } from '../src/roll.js';
 import { titleFor } from '../src/archetypes.js';
+import { traitsFor } from '../src/traits.js';
+import { writeVerdict } from '../src/verdict.js';
 import { potentialGrade, positionFor, buildRarityTier } from '../src/overall.js';
 import {
   draftNight, newPro, playSeason, freeAgencyOffers, signWith, acceptTrade, retire,
   proActions, doProAction, proMoney, careerLine, contractCeiling, supermaxEligible,
-  LOAD_POLICIES, GAMES_THRESHOLD,
+  LOAD_POLICIES, GAMES_THRESHOLD, resolveTrouble, resolveMedia,
 } from '../src/pro.js';
+import { REP_METERS, postCareerFor, CALENDAR, stateTaxFor } from '../src/league.js';
 import { defaultRng } from '../src/rng.js';
 import { randomName, randomTeam, randomOpponent } from '../src/names.js';
 import { Progress } from '../src/progress.js';
@@ -126,11 +129,14 @@ function barsHtml() {
   const L = S.life;
   if (S.pro) {
     const P = S.pro;
+    // Reputation is five separate audiences. One number told you nothing —
+    // whether the front office likes you and whether the fans do are different
+    // questions with different consequences.
+    const COLS = { fans: 'var(--hype)', teammates: 'var(--chem)', frontOffice: 'var(--accent)',
+      media: 'var(--warn)', leagueOffice: 'var(--rep)' };
     const rows = [
-      [Math.round(P.morale), 'Morale', 'var(--happy)'],
       [clamp(Math.round(100 - P.injuryHistory * 22), 0, 100), 'Body', 'var(--health)'],
-      [Math.round(P.fanLove), 'Fan love', 'var(--rep)'],
-      [clamp(Math.round((P.rating / 99) * 100), 0, 100), 'Rating', 'var(--smarts)'],
+      ...REP_METERS.map(([k, label]) => [Math.round(P.rep?.[k] ?? 50), label, COLS[k]]),
     ];
     return rows.map(([v, label, col]) => `<div class="row ${v < 25 ? 'low' : ''} ${v >= 88 ? 'full' : ''}">
       <div class="k">${label}</div>
@@ -333,20 +339,33 @@ function drawSheet() {
     const acts = proActions(S.pro);
     S.sheetActions = acts;
     title.textContent = 'Offseason';
-    hint.textContent = 'Four months. Money is the constraint now, not time.';
-    body.innerHTML = acts.length
-      ? acts.map((a, i) => {
-          const broke = (a.cost || 0) > S.pro.earnings;
-          return `<button class="opt" data-pro="${i}" type="button" ${broke ? 'disabled' : ''}>
-            <span><span class="t">${esc(a.name)}</span><span class="d">${esc(a.blurb)}</span>
-            <span class="tags">${a.cost ? `<span class="tag spend">${proMoney(a.cost)}</span>` : '<span class="tag gain">free</span>'}
-            ${broke ? '<span class="tag no">Cannot afford it</span>' : ''}</span></span>
-            <span class="go">&rsaquo;</span></button>`;
-        }).join('')
-      : '<p class="note">Nothing left to do but play.</p>';
+    hint.textContent = 'April to September. Money is the constraint now, not time.';
+    const P = S.pro;
+    const row = (a, i) => {
+      const broke = (a.cost || 0) > P.earnings;
+      return `<button class="opt" data-pro="${i}" type="button" ${broke ? 'disabled' : ''}>
+        <span><span class="t">${esc(a.name)}</span><span class="d">${esc(a.blurb)}</span>
+        <span class="tags">${a.cost ? `<span class="tag spend">${proMoney(a.cost)}</span>` : '<span class="tag gain">free</span>'}
+        ${broke ? '<span class="tag no">Cannot afford it</span>' : ''}</span></span>
+        <span class="go">&rsaquo;</span></button>`;
+    };
+    // The offseason reads as a calendar rather than one long list: same actions,
+    // sorted into the month they would actually happen in.
+    // Months with nothing to decide still appear: draft night and the opening
+    // of free agency happen to you whether or not you have a button for them,
+    // and leaving them out would make the summer look like a list again.
+    const months = CALENDAR.map((m) => {
+      const rows = acts.map((a, i) => [a, i]).filter(([a]) => monthFor(a) === m.id);
+      return `<div class="month${rows.length ? '' : ' quiet'}"><h4>${m.month} &middot; ${esc(m.label)}</h4>
+        <p class="note">${esc(m.blurb)}</p>
+        ${rows.map(([a, i]) => row(a, i)).join('')}</div>`;
+    }).join('');
+    body.innerHTML = acts.length ? months : '<p class="note">Nothing left to do but play.</p>';
     for (const el of body.querySelectorAll('[data-pro]')) {
       el.onclick = () => {
-        doProAction(S.pro, S.sheetActions[Number(el.dataset.pro)], defaultRng);
+        const a = S.sheetActions[Number(el.dataset.pro)];
+        if (a.media) { openMedia(a.media); return; }
+        doProAction(S.pro, a, defaultRng);
         render(true);
         drawSheet();
       };
@@ -376,6 +395,18 @@ function drawSheet() {
       : (focusEntry ? '' : '<p class="note">Nothing here for you right now. That changes as your situation does.</p>'));
   }
   wireSheet();
+}
+
+// Which month of the offseason an action belongs to. Derived from the id so
+// the catalogue in pro.js stays a catalogue and does not have to know about
+// the calendar at all.
+function monthFor(a) {
+  const id = a.id;
+  if (id === 'trade demand') return 'exit';
+  if (id.startsWith('load:') || id.startsWith('media:')) return 'mediaday';
+  if (id.startsWith('buy:') || id.startsWith('inv:') || id.startsWith('adv:')) return 'summer';
+  if (id === 'entourage' || id === 'cutloose' || id === 'endorse' || id === 'community') return 'summer';
+  return 'training';
 }
 
 function wireSheet() {
@@ -453,7 +484,51 @@ function finishSeason() {
   P.log = [];
   closeSheet();
   render(true);
-  if (P.pending) openProDecision();
+  afterSeason();
+}
+
+// Everything the game wants to show you between seasons, in the order it has
+// to happen: the money first, because the first one only lands once.
+function afterSeason() {
+  const P = S.pro;
+  if (P.firstCheck && !P.firstCheckSeen) { openPaycheck(); return; }
+  if (P.trouble || P.pending) openProDecision();
+}
+
+// The first cheque. Nobody is ever ready for the difference between the number
+// on the contract and the number in the account, and the city you signed in is
+// a visible line in it.
+function openPaycheck() {
+  const P = S.pro;
+  const c = P.firstCheck;
+  S.sheet = { kind: 'paycheck' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'Your first cheque';
+  $('sheetHint').textContent = `${P.team} — one year of it.`;
+  $('sheetBody').innerHTML = `
+    <div class="attrs">
+      ${c.rows.map(([k, v]) => {
+        const n = Math.round(v);
+        return `<div class="attr"><span class="k">${esc(k)}</span>
+        <span class="v" style="color:${n < 0 ? 'var(--bad)' : n > 0 ? 'var(--good)' : 'var(--muted)'}">${
+          n < 0 ? `−${proMoney(-n)}` : n > 0 ? proMoney(n) : '—'}</span></div>`;
+      }).join('')}
+      <div class="attr"><span class="k"><b>What you actually keep</b></span>
+        <span class="v"><b>${proMoney(c.net)}</b></span></div>
+    </div>
+    <p class="note">${(c.rate * 100).toFixed(0)}% of it never reaches you. ${
+      stateTaxFor(P.team) > 0
+        ? 'The same contract in a state with no income tax would have left you with more, which is why free agency is never only about the number.'
+        : 'You signed in a state with no income tax, which is worth more than most people realise.'}</p>
+    <button class="btn primary" id="checkOk" type="button">Right</button>`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  $('checkOk').onclick = () => {
+    P.firstCheckSeen = true;
+    closeSheet();
+    render(true);
+    afterSeason();
+  };
 }
 
 // The season resolves once the games are played, so form is already set.
@@ -661,19 +736,28 @@ function proHeaderHtml() {
   const a = P.totals.games
     ? `${(P.totals.points / P.totals.games).toFixed(1)}`
     : '—';
+  // Once he is retired the contract and the 65-game counter are meaningless,
+  // and leaving them up made a finished career look like it was still running.
+  const line2 = P.retired
+    ? `<div class="sub"><b style="color:var(--accent)">${esc(P.team)}</b>
+        &middot; ${P.seasons.length} season${P.seasons.length === 1 ? '' : 's'}
+        &middot; ${P.hof ? 'Hall of Fame' : 'retired'}</div>`
+    : `<div class="sub"><b style="color:var(--accent)">${esc(P.team)}</b>
+        &middot; ${proMoney(P.contract.salary)}/yr, ${P.contractLeft} left</div>`;
   return `
     <div>
       <div class="nm">${esc(P.name)}</div>
-      <div class="sub">Age ${P.age} &middot; ${esc(P.pos)} &middot; OVR ${Math.round(P.rating)}
+      <div class="sub">Age ${P.age} &middot; ${esc(P.pos)} &middot; ${
+        P.retired ? `peak OVR ${Math.round(P.peak)}` : `OVR ${Math.round(P.rating)}`}
         &middot; ${P.drafted ? `pick ${P.pick}` : 'undrafted'}</div>
-      <div class="sub"><b style="color:var(--accent)">${esc(P.team)}</b>
-        &middot; ${proMoney(P.contract.salary)}/yr, ${P.contractLeft} left</div>
+      ${line2}
     </div>
     <div class="stack">
-      <div class="cash ppg"><b>${last ? last.ppg.toFixed(1) : a}</b><span>PPG &middot; ${a} career</span></div>
+      <div class="cash ppg"><b>${P.retired ? a : last ? last.ppg.toFixed(1) : a}</b>
+        <span>PPG &middot; ${P.retired ? 'career' : `${a} career`}</span></div>
       <div class="cash"><b>${proMoney(P.earnings)}</b><span>Career earnings</span></div>
     </div>
-    ${gamesBarHtml(P)}`;
+    ${P.retired ? '' : gamesBarHtml(P)}`;
 }
 
 // The 65-game counter, and what it is currently costing you. This is the whole
@@ -724,7 +808,28 @@ function proFeedHtml() {
       ? P.log.map((v) => `<div class="line ${v.kind}">${esc(v.text)}</div>`).join('')
       : '<div class="empty">Offseason. Use the buttons below, then play the season.</div>'}
   </article>`;
-  return past + now;
+  return past + leagueHtml() + now;
+}
+
+// The league goes on without you: one player whose career runs alongside yours
+// and gets compared to it forever, and a handful of things that happened
+// somewhere else this week.
+function leagueHtml() {
+  const P = S.pro;
+  if (!P.rival && !P.news?.length) return '';
+  const r = P.rival;
+  const rivalRow = r
+    ? `<div class="box">${esc(r.name)} &middot; ${esc(r.team)} &middot; OVR ${Math.round(r.rating)}
+        &middot; ${r.awards.mvps} MVP, ${r.awards.allStars} All-Star, ${r.awards.rings} ring${
+          r.awards.rings === 1 ? '' : 's'}
+        <b style="color:${r.rating > P.rating ? 'var(--bad)' : 'var(--good)'}">
+          &middot; ${r.rating > P.rating ? 'ahead of you' : 'behind you'}</b></div>`
+    : '';
+  return `<article class="yr">
+    <h3>Around the league${r ? ` <span class="meta">your draft class</span>` : ''}</h3>
+    ${rivalRow}
+    ${(P.news || []).map((t) => `<div class="line note">${esc(t)}</div>`).join('')}
+  </article>`;
 }
 
 function retiredHtml() {
@@ -743,8 +848,10 @@ function retiredHtml() {
       ${line('Rookie of the Year', a.roty ? 'Yes' : '—')}
       ${line('Career earnings', proMoney(P.earnings))}
       ${line('Hall of Fame', P.hof ? 'Inducted' : 'Not inducted')}
+      ${P.postCareer ? line('Afterwards', P.postCareer.name) : ''}
     </div>
   </article>
+  ${cardHtml()}
   ${(S.wonBadges || []).length
     ? `<article class="yr"><h3>Unlocked</h3><div class="badges">${S.wonBadges
         .map((x) => `<div class="badge on"><b>${esc(x.name)}</b><span>${esc(x.hint)}</span></div>`).join('')}</div></article>`
@@ -758,9 +865,87 @@ function retiredHtml() {
   </article>`;
 }
 
+// One screenshot. Everything a person would want to show somebody else about
+// this career, on a single card, in the order they would read it out.
+function cardHtml() {
+  const P = S.pro;
+  const L = S.life;
+  const a = P.careerAverages;
+  const hw = [
+    P.awards.rings ? `${P.awards.rings}× champion` : null,
+    P.awards.mvps ? `${P.awards.mvps}× MVP` : null,
+    P.awards.allStars ? `${P.awards.allStars}× All-Star` : null,
+    P.awards.allLeague ? `${P.awards.allLeague}× All-League` : null,
+    P.awards.roty ? 'Rookie of the Year' : null,
+    P.hof ? 'Hall of Fame' : null,
+  ].filter(Boolean);
+  const stat = (v, k) => `<div class="cstat"><b>${v}</b><span>${k}</span></div>`;
+  return `<article class="yr card" id="careerCard">
+    <div class="chead">
+      <h3>${esc(L.name)}</h3>
+      <p>${positionFor(P.build.height).short} &middot; ${formatHeight(P.build.height)} &middot; ${
+        S.draft.drafted ? `pick #${S.draft.pick}` : 'undrafted'} &middot; ${P.seasons.length} season${
+        P.seasons.length === 1 ? '' : 's'}</p>
+    </div>
+    <div class="cstats">
+      ${stat(a.ppg, 'PPG')}${stat(a.rpg, 'RPG')}${stat(a.apg, 'APG')}
+      ${stat(Math.round(P.peak), 'PEAK')}${stat(Math.round(P.totals.points).toLocaleString(), 'POINTS')}
+    </div>
+    ${hw.length ? `<div class="hardware">${hw.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
+    <p class="cline">${esc(titleFor(P.build).title)} &middot; last stop ${esc(P.team)}${
+      S.verdict ? ` &mdash; ${esc(S.verdict.body.split('. ')[0])}.` : ''}</p>
+    <p class="cfoot">${proMoney(P.earnings)} earned &middot; ${esc(P.postCareer?.name || 'no plans')} &middot; Hoop Life</p>
+  </article>`;
+}
+
+// Trouble. No way out but answering, and the branches are severe on purpose.
+function openTrouble() {
+  const P = S.pro;
+  const t = P.trouble;
+  S.sheet = { kind: 'trouble' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = t.title;
+  $('sheetHint').textContent = '';
+  $('sheetBody').innerHTML = `
+    <p class="choice-text">${esc(t.text)}</p>
+    ${t.options.map((l, i) => `<button class="btn choice" data-tr="${i}" type="button">${esc(l)}</button>`).join('')}`;
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-tr]')) {
+    el.onclick = () => {
+      const line = resolveTrouble(P, t.id, Number(el.dataset.tr), defaultRng);
+      if (line && P.seasons.length) P.seasons[P.seasons.length - 1].events.push(line);
+      closeSheet();
+      render(true);
+      if (P.pending) openProDecision();
+    };
+  }
+}
+
+// Saying something is two steps: the appearance, then what you actually say.
+function openMedia(m) {
+  S.sheet = { kind: 'media' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = m.name;
+  $('sheetHint').textContent = m.blurb;
+  $('sheetBody').innerHTML = m.options
+    .map((o, i) => `<button class="btn choice" data-md="${i}" type="button">${esc(o.label)}</button>`).join('');
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-md]')) {
+    el.onclick = () => {
+      const line = resolveMedia(S.pro, m.id, Number(el.dataset.md), defaultRng);
+      if (line) S.pro.log.push(line);
+      closeSheet();
+      render(true);
+    };
+  }
+}
+
 // Everything the pro career is waiting on, in one place.
 function openProDecision() {
   const P = S.pro;
+  if (P.trouble) { openTrouble(); return; }
   S.sheet = { kind: 'prodecision' };
   $('sheetBack').classList.add('off');
   $('scrim').classList.remove('hidden');
@@ -816,6 +1001,35 @@ function openProDecision() {
 
 function endCareer(P) {
   if (P) retire(P);
+  // What you do with the rest of it, and the doors that are open depend on who
+  // you were to people rather than on what you averaged.
+  if (P && P.seasons.length) { openPostCareer(P); return; }
+  finalizeCareer(P);
+}
+
+function openPostCareer(P) {
+  const paths = postCareerFor(P);
+  S.sheet = { kind: 'postcareer' };
+  $('sheetBack').classList.add('off');
+  $('sheetTitle').textContent = 'The rest of it';
+  $('sheetHint').textContent = 'Some of these were only ever open to the person you were off the floor.';
+  $('sheetBody').innerHTML = paths.map((p, i) => `
+    <button class="opt" data-post="${i}" type="button">
+      <span><span class="t">${esc(p.name)}</span><span class="d">${esc(p.blurb)}</span>
+      <span class="tags">${p.pay ? `<span class="tag gain">${proMoney(p.pay)} a year</span>`
+        : '<span class="tag">no income</span>'}</span></span>
+      <span class="go">&rsaquo;</span></button>`).join('');
+  $('sheet').classList.remove('hidden');
+  $('scrim').classList.remove('hidden');
+  for (const el of $('sheetBody').querySelectorAll('[data-post]')) {
+    el.onclick = () => {
+      P.postCareer = paths[Number(el.dataset.post)];
+      finalizeCareer(P);
+    };
+  }
+}
+
+function finalizeCareer(P) {
   const b = S.proBuild;
   // The vault and the achievements speak the one-shot engine's shape, so the
   // stepped career is translated into it rather than given a second format.
@@ -828,10 +1042,24 @@ function endCareer(P) {
     hof: !!P?.hof,
     teams: P ? [P.team] : [],
     rarity: buildRarityTier(b),
-    title: { title: 'Pro', failure: null },
-    careerAverages: P ? { ppg: P.careerAverages.ppg, rpg: P.careerAverages.rpg, apg: P.careerAverages.apg, points: P.totals.points } : { ppg: 0, rpg: 0, apg: 0, points: 0 },
+    title: titleFor(b),
+    traits: traitsFor(b),
+    // The stepped engine does not track these, and the verdict reads them, so
+    // they are filled from what it does track rather than left undefined.
+    overall: S.draft.draftOvr,
+    hype: S.draft.hype ?? S.draft.draftOvr,
+    fit: 0,
+    dependence: 0,
+    bust: !!P && S.draft.drafted && S.draft.pick <= 14 && Math.round(P.peak) < S.draft.draftOvr + 3,
+    peakAge: P ? P.peakAge ?? 27 : 27,
+    seasonsLostToInjury: P ? P.seasons.filter((s) => s.games < 20).length : 0,
+    guaranteedByArchetype: false,
+    careerAverages: P ? { ppg: P.careerAverages.ppg, rpg: P.careerAverages.rpg, apg: P.careerAverages.apg, points: Math.round(P.totals.points) } : { ppg: 0, rpg: 0, apg: 0, points: 0 },
   };
   S.career = asCareer;
+  // Written once, here, so the end-of-career screen always has one. Without it
+  // an undrafted career reached a screen that read a field nobody had set.
+  S.verdict = writeVerdict(asCareer, b, defaultRng);
   S.pro = P || S.pro;
   Progress.record(S.prog, asCareer, b, {
     name: S.life.name, pos: positionFor(b.height).short, height: b.height,
@@ -1004,7 +1232,7 @@ function render(scrollToEnd = false) {
   const age = $('ageBtn');
   const P = S.pro;
   const waiting = P
-    ? !!P.pending || !!P.games?.length
+    ? !!P.pending || !!P.games?.length || (P.retired && !over)
     : !!L.pending || !!L.choices?.length || !!L.games?.length;
   const playing = P ? !!P.games?.length : !!L.games?.length;
   age.classList.toggle('decide', waiting || over);
@@ -1048,6 +1276,10 @@ $('ageBtn').onclick = () => {
   if (S.career) { openNewLife(); return; }
   const P = S.pro;
   if (P) {
+    // Retired but the career is not written up yet: the only thing left is
+    // choosing what comes after. Without this the button plays another season
+    // for a man who has already retired.
+    if (P.retired) { openPostCareer(P); return; }
     if (P.pending) { openProDecision(); return; }
     if (P.games?.length) { openGameDay(); return; }
     P.gameForm = 0;
